@@ -1,0 +1,1077 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Scorebook</title>
+<meta name="description" content="Record shooting results and photos of your paper targets. All data stays on this device.">
+<meta name="theme-color" content="#2c5a38">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Scorebook">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+/* Layout: one narrow phone column like a range scorebook; sticky top bar, cards only for sessions and the keypad. */
+:root {
+  --bg: #eef0ec;
+  --surface: #ffffff;
+  --sunken: #e4e7e1;
+  --ink: #161b17;
+  --muted: #5b645c;
+  --line: #d3d8d0;
+  --accent: #2c5a38;
+  --accent-ink: #ffffff;
+  --accent-soft: #dbe8dd;
+  --ring: #161b17;
+  --danger: #a3261d;
+  --danger-soft: #f6dedb;
+  --gold: #a87a12;
+  --display: "Avenir Next Condensed", "Roboto Condensed", "Arial Narrow", sans-serif-condensed, sans-serif;
+  --body: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111512; --surface: #1a201b; --sunken: #232a24; --ink: #e8ece6; --muted: #9aa49a;
+    --line: #2f3830; --accent: #7fbf8c; --accent-ink: #0f1a12; --accent-soft: #24382a;
+    --ring: #e8ece6; --danger: #f08a80; --danger-soft: #3a2220; --gold: #e2b54a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111512; --surface: #1a201b; --sunken: #232a24; --ink: #e8ece6; --muted: #9aa49a;
+  --line: #2f3830; --accent: #7fbf8c; --accent-ink: #0f1a12; --accent-soft: #24382a;
+  --ring: #e8ece6; --danger: #f08a80; --danger-soft: #3a2220; --gold: #e2b54a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; font-size: 15px; overscroll-behavior-y: none; }
+html, body { background: var(--bg); }
+body { color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45; -webkit-tap-highlight-color: transparent; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--display); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+
+.bar { position: sticky; top: 0; padding-top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.bar-in { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding-block: 10px; min-height: 56px; }
+.brand { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.brand h1 { font-family: var(--display); font-weight: 700; font-size: 24px; letter-spacing: .02em; text-transform: uppercase; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wrap { max-width: 640px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 96px; display: grid; gap: 18px; }
+
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px; font-weight: 600; min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.danger { color: var(--danger); border-color: var(--danger); background: transparent; }
+.btn.danger.solid { background: var(--danger); color: var(--surface); }
+.btn.ghost { background: transparent; border-color: transparent; }
+.btn:disabled { opacity: .5; cursor: default; }
+.iconbtn { width: 42px; height: 42px; padding: 0; }
+
+.eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 2px solid var(--ink); border-bottom: 1px solid var(--line); }
+.stat { padding: 10px 0 12px; display: grid; gap: 2px; }
+.stat + .stat { padding-left: 14px; border-left: 1px solid var(--line); }
+.stat .v { font-size: 34px; font-weight: 600; line-height: 1; }
+.stat .v small { font-size: 18px; color: var(--muted); }
+
+.trend { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 12px 6px; }
+.trend svg { display: block; width: 100%; height: 130px; }
+.trend-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+
+.list { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; text-align: left; width: 100%; }
+.thumb { width: 64px; height: 64px; border-radius: 10px; background: var(--sunken); object-fit: cover; display: grid; place-items: center; overflow: hidden; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.card .meta { min-width: 0; display: grid; gap: 2px; }
+.card .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .s { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.score { text-align: right; }
+.score .big { font-size: 30px; font-weight: 700; line-height: 1; }
+.score .of { font-size: 13px; color: var(--muted); }
+.seg3 { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.seg3 button { border: 0; background: transparent; min-height: 44px; font-weight: 600; font-size: 15px; padding: 0 6px; }
+.seg3 button + button { border-left: 1px solid var(--line); }
+.seg3 button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.chip.multi[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chip.multi[aria-pressed="true"]::before { content: "✓ "; }
+.filters { display: grid; gap: 8px; }
+.cat-tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .04em; padding: 2px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); margin-top: 4px; }
+.pct-pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); margin-top: 4px; }
+
+.empty { border: 1.5px dashed var(--line); border-radius: 14px; padding: 28px 20px; text-align: center; display: grid; gap: 10px; justify-items: center; color: var(--muted); }
+.empty h2 { margin: 0; color: var(--ink); font-size: 18px; }
+.note { font-size: 13px; color: var(--muted); }
+.warn { font-size: 13px; padding: 10px 12px; border-radius: 10px; background: var(--danger-soft); color: var(--danger); }
+
+/* Editor */
+.form { display: grid; gap: 14px; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field label, .field .flabel { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.field input, .field select, .field textarea { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 12px; min-height: 44px; font-size: 16px; }
+.field textarea { min-height: 72px; resize: vertical; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 380px) { .row2 { grid-template-columns: 1fr; } }
+.section-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 2px solid var(--ink); padding-bottom: 6px; }
+.section-h h2 { font-family: var(--display); font-size: 22px; text-transform: uppercase; letter-spacing: .03em; margin: 0; }
+
+.series { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 10px; }
+.series.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.series-head { display: flex; align-items: center; gap: 8px; }
+.series-head .name { font-weight: 600; flex: 1; min-width: 0; }
+.series-head .tot { font-size: 26px; font-weight: 700; }
+.series-head .tot small { font-size: 14px; color: var(--muted); font-weight: 500; }
+.shots { display: flex; flex-wrap: wrap; gap: 6px; }
+.shot { width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--ring); background: transparent; display: grid; place-items: center; font-family: var(--display); font-weight: 600; font-size: 18px; padding: 0; }
+.shot.x { background: var(--ring); color: var(--bg); }
+.shot.top { border-color: var(--gold); color: var(--gold); }
+.shot.slot { border-style: dashed; border-color: var(--line); color: var(--muted); font-size: 14px; }
+.shot.slot.next { border-color: var(--accent); color: var(--accent); }
+.shot.prac { border-color: var(--muted); color: var(--muted); border-style: dotted; }
+.shot.slot.prac.next { border-color: var(--accent); color: var(--accent); }
+.seg { display: grid; gap: 4px; }
+.seg-l { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.seg-l:empty { display: none; }
+.series .field select { min-height: 40px; font-size: 15px; padding: 8px 10px; }
+.series-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.stepper { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); }
+.stepper button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: transparent; padding: 0; }
+.manual { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.manual input { width: 76px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; background: var(--surface); font-size: 16px; }
+
+.keypad { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--surface); border-top: 1px solid var(--line);
+  padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); padding-top: 8px; box-shadow: 0 -6px 20px rgba(0,0,0,.08); }
+.keypad-in { max-width: 640px; margin: 0 auto; display: grid; gap: 8px; }
+.keypad-top { display: flex; justify-content: space-between; gap: 12px; align-items: center; font-size: 13px; color: var(--muted); }
+.keys { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.key { min-height: 48px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); font-family: var(--display); font-size: 24px; font-weight: 600; padding: 0; }
+.key.x { background: var(--ring); color: var(--bg); border-color: var(--ring); }
+.key.back { font-family: var(--body); font-size: 15px; }
+.numentry { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; }
+.numentry input { min-width: 0; min-height: 48px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 0 12px; font-family: var(--display); font-size: 26px; font-weight: 600; }
+.numentry .key { padding: 0 16px; }
+.key.add { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-family: var(--body); font-size: 16px; }
+.shot { font-variant-numeric: tabular-nums; }
+.has-keypad .wrap { padding-bottom: calc(260px + env(safe-area-inset-bottom, 0px)); }
+.wrap { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+.local { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 10px; }
+.local .actions .btn { flex: 1 1 140px; }
+.lockrow { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--muted); }
+.lockrow svg { flex: none; margin-top: 2px; }
+
+.photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.ph { position: relative; aspect-ratio: 3/4; max-width: 100%; border-radius: 10px; overflow: hidden; background: var(--sunken); border: 1px solid var(--line); padding: 0; }
+.ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ph .rm { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); color: #fff; font-size: 16px; line-height: 1; padding: 0; }
+.ph.busy { display: grid; place-items: center; font-size: 12px; color: var(--muted); }
+.addph { border: 1.5px dashed var(--line); background: transparent; color: var(--accent); font-weight: 600; font-size: 13px; display: grid; place-items: center; gap: 4px; text-align: center; padding: 8px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.actions .btn { flex: 1; }
+
+/* Detail */
+.hero-score { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; border-top: 2px solid var(--ink); padding-top: 12px; }
+.hero-score .big { font-size: 64px; font-weight: 700; line-height: .9; }
+.hero-score .big small { font-size: 26px; color: var(--muted); font-weight: 500; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 14px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+td.r, th.r { text-align: right; }
+.shots-line { font-family: var(--display); font-size: 17px; letter-spacing: .04em; color: var(--muted); }
+
+.lightbox { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.92); display: grid; grid-template-rows: auto 1fr; padding: calc(8px + env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
+.lightbox .lb-bar { display: flex; justify-content: space-between; align-items: center; color: #fff; }
+.lightbox .lb-bar button { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.4); border-radius: 10px; min-height: 40px; padding: 0 14px; }
+.lightbox img { max-width: 100%; max-height: 100%; margin: auto; object-fit: contain; align-self: center; justify-self: center; }
+
+.card[aria-pressed] { grid-template-columns: 24px 64px 1fr auto; }
+.card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.tick { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--line); display: grid; place-items: center; color: var(--accent-ink); }
+.card[aria-pressed="true"] .tick { background: var(--accent); border-color: var(--accent); }
+.selbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--surface); border-top: 1px solid var(--line);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
+.selbar-in { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 10px; }
+.selbar-in .count { flex: 1; font-weight: 600; min-width: 0; }
+.selbar-in.ask { flex-wrap: wrap; }
+@media (max-width: 460px) { .selbar-in { flex-wrap: wrap; } .selbar-in .count { flex-basis: 100%; } .selbar-in .btn { flex: 1; } }
+.selbar-in.ask .msg { flex-basis: 100%; color: var(--danger); font-weight: 600; font-size: 14px; }
+.selbar-in.ask .btn { flex: 1; }
+.mailbox { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 12px; }
+.mailbox textarea { min-height: 260px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+.steps { display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; }
+.step .n { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--ink); display: grid; place-items: center; font-family: var(--display); font-weight: 700; }
+.step .b { display: grid; gap: 6px; min-width: 0; }
+.step .b .btn { justify-self: start; text-decoration: none; color: inherit; }
+.step .b .btn.primary { color: var(--accent-ink); }
+.addr { font-family: ui-monospace, Menlo, monospace; font-size: 13px; user-select: all; }
+.confirm { border: 1px solid var(--danger); background: var(--danger-soft); color: var(--danger); border-radius: 12px; padding: 12px; display: grid; gap: 10px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; z-index: 30; max-width: calc(100% - 32px); }
+@media (prefers-reduced-motion: no-preference) { .toast { animation: rise .2s ease-out; } @keyframes rise { from { transform: translate(-50%, 8px); opacity: 0; } } }
+.langsw { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; flex: none; }
+.langsw button { border: 0; background: transparent; padding: 0 9px; min-height: 34px; font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--muted); }
+.langsw button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.baract { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.bar-in { flex-wrap: wrap; row-gap: 8px; }
+@media (max-width: 460px) { .baract { flex-basis: 100%; } .baract .btn { flex: 1; } }
+</style>
+</head>
+<body>
+
+<header class="bar"><div class="bar-in">
+  <div class="brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="13" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="14" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="14" r="5" fill="currentColor"/></svg>
+    <h1 id="title">Range Scorebook</h1>
+  </div>
+  <div class="langsw" role="group" aria-label="Language / Sprache"><button data-act="setlang" data-v="en" aria-pressed="true">EN</button><button data-act="setlang" data-v="de" aria-pressed="false">DE</button></div>
+  <div id="barActions" class="baract"></div>
+</div></header>
+<main class="wrap" id="app" aria-live="polite"></main>
+<div id="keypad" class="keypad" hidden></div>
+<div id="selbar" class="selbar" hidden></div>
+<div id="lightbox" class="lightbox" hidden></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+/* ---------- language ---------- */
+const STR = {
+  en: {
+    appName: "Range Scorebook", locale: "en-GB",
+    pl: (n, one, many) => (n === 1 ? one : many),
+    // presets
+    "p.r300a10": "Rifle 300 m · A10", "p.r300a100": "Rifle 300 m · A100", "p.r300a5": "Rifle 300 m · A5", "p.r300b4": "Rifle 300 m · B4 (Feldschiessen)",
+    "p.r50": "Rifle 50 m", "p.p25": "Pistol 25 m", "p.p50": "Pistol 50 m", "p.custom": "Custom",
+    "ps.r50": "50 m rifle", "ps.p25": "25 m pistol", "ps.p50": "50 m pistol", "ps.custom": "Custom",
+    "f.All": "All", "f.Rifle": "Rifle", "f.Pistol": "Pistol", "f.Custom": "Custom",
+    "st.s10": "10 shots", "st.p2s6r4": "12 shots · 2 practice, 6 single, 4 in series", "st.p2s5r23": "12 shots · 2 practice, 5 single, series of 2 and 3",
+    "seg.practice": "Practice · not counted", "seg.single": "Single shots", seriesOf: (n) => `Series of ${n}`,
+    // bar & list
+    none: "None", all: "All", selected: (n) => `${n} selected`, cancel: "Cancel", email: "Email", export: "Export", newBtn: "+ New", back: "Back",
+    loading: "Loading your scorebook…", signInH: "Storage isn't available", signInP: "This browser doesn't allow saving data on this device. Turn off private browsing and open the app again.",
+    localH: "Data on this phone", localP: "Sessions and photos are stored only on this device. Nothing is uploaded. Save a backup now and then, and before changing phones.",
+    selectBtn: "Select", deleteN: (n) => `Delete${n ? " (" + n + ")" : ""}`,
+    confirmBulk: (n, p) => `Delete ${n} ${n === 1 ? "session" : "sessions"}${p ? ` and ${p} ${p === 1 ? "photo" : "photos"}` : ""}? This can't be undone.`,
+    bulkDeleted: (n) => `${n} ${n === 1 ? "session" : "sessions"} deleted`,
+    emailBackup: "Email backup", backupMailSubject: (d) => `Scorebook backup ${d}`,
+    backupMailText: "Backup of my scorebook with all sessions and target photos. To load it: open Scorebook, tap Restore backup and choose this file.",
+    backupNoShare: "This browser can't attach files to an email, so the backup was saved instead. Attach it from Files or Downloads.",
+    backup: "Save backup", restore: "Restore backup", backupBusy: "Preparing backup…", restored: (n) => `${n} ${n === 1 ? "session" : "sessions"} restored`,
+    badBackup: "This file isn't a Scorebook backup.", restoreFail: "The backup couldn't be restored.", backupFile: "scorebook-backup",
+    sharePhotos: "Share with photos", sharePhotosNote: "Opens the share sheet with the text and all target photos attached. Choose Mail and add the recipient.",
+    shareTextNote: "Opens the share sheet with this text. Choose Mail and add the recipient.", shareText: "Share",
+    fileSaved: "File ready", storageWarn: "This browser may delete stored data if the app isn't installed. Add it to your home screen to keep your data safe.",
+    loadErr: (c) => `Your sessions can't be loaded right now (${c}). Reload the page to try again.`, filterLabel: "Filter by discipline",
+    slow: "Still connecting. What you see may be out of date.", emptyH: "No sessions yet",
+    emptyP: "Record your first range session: pick the discipline, tap in each shot, and photograph the paper target.", newSession: "+ New session",
+    category: "Category", "cat.training": "Training", "cat.championship": "Championship", "cat.other": "Other", catFilterLabel: "Filter by category",
+    avg: "Average", trendScore: (n) => `Score · last ${n} sessions`, trendScoreAria: "Score trend",
+    mixNote: "These sessions use different targets, so the average mixes scales. Pick a discipline above for a fair comparison.",
+    sessions: "Sessions", avg10: "Avg · last 10", best: "Best", noneInFilter: (f) => `No ${f.toLowerCase()} sessions yet.`,
+    trend: (n) => `Score % · last ${n} sessions`, trendAria: "Score percentage trend",
+    shotsN: (n) => `${n} ${n === 1 ? "shot" : "shots"}`, photosN: (n) => `${n} ${n === 1 ? "photo" : "photos"}`,
+    // detail
+    innerTens: (n) => `${n} inner ${n === 1 ? "ten" : "tens"} (X)`, discipline: "Discipline", scoring: "Scoring",
+    scoringV: (m, x) => `0–${m} per shot${x ? ", X = inner 10" : ""}`, range: "Range", weapon: "Weapon", conditions: "Conditions",
+    series: "Series", shotsH: "Shots", score: "Score", practiceTitle: "Practice, not counted", totalEntered: "total entered",
+    notes: "Notes", targets: "Targets", openPhoto: (i) => `Open photo ${i}`, targetPhoto: (i) => `Target photo ${i}`,
+    noPhotos: "No photos for this session. Edit it to add one.",
+    confirmDel: (n) => `Delete this session and its ${n} ${n === 1 ? "photo" : "photos"}? This can't be undone.`, keepIt: "Keep it", del: "Delete", editSession: "Edit session",
+    // editor
+    date: "Date", maxPerShot: "Max per shot", innerTen: "Inner ten (X)", notUsed: "Not used", countX: "Count X",
+    program: "Program / match", programPh: "e.g. Obligatorisch, Training, Club match", rangePh: "Shooting range", weaponPh: "e.g. Stgw 90",
+    condPh: "Light, wind, temperature", addSeries: "+ Add series", targetPhotos: "Target photos", saving: "Saving…",
+    takePhoto: "Take photo", fromLibrary: "From library", removePhoto: (i) => `Remove photo ${i}`,
+    photoNote: "Photos are resized to about 2000 px so they stay sharp enough to read every hole.",
+    ownerOnly: "", notesPh: "Sight adjustments, what went well, what to work on",
+    uploadingPhoto: "Uploading photo…", saveSession: "Save session",
+    seriesN: (n) => `Series ${n}`, removeSeries: (n) => `Remove series ${n}`, seriesFormat: "Series format",
+    practiceShot: "Practice shot", shot: "Shot", tapRemove: "Tap to remove", practiceSum: (n) => `Practice: ${n} (not in total)`,
+    countedShots: (n) => `${n} counted shots`, shotsLbl: "Shots", fewer: "Fewer shots", more: "More shots", orTotal: "or total",
+    // keypad
+    removeLast: "Remove last shot", shotValue: (m) => `Shot value, 0 to ${m}`, add: "Add", complete: "complete",
+    practiceShotN: (n) => `practice shot ${n}`, shotN: (n) => `shot ${n}`, typeThenAdd: (m) => `Type 0–${m}, then Add`, tapToRemove: "Tap a scored shot to remove it",
+    // toasts
+    seriesFull: "This series is complete. Add a series for more shots.", tooLarge: "That photo is too large. Try a smaller one.",
+    storageFull: "Photo storage is full. Delete old sessions to make room.", photoFail: "The photo couldn't be saved. Try again.",
+    addDate: "Add a date first.", saved: "Session saved", dbFull: "The scorebook is full. Delete old sessions to save new ones.",
+    saveFail: "The session couldn't be saved. Check your connection and try again.", deleted: "Session deleted", delFail: "The session couldn't be deleted. Try again.",
+    exportFail: "The export couldn't be saved.", wholeNumber: (m) => `Enter a whole number from 0 to ${m}.`,
+    copied: "Email text copied", selectedText: "Text selected. Use Copy from your keyboard menu.",
+    reportFail: "The report couldn't be saved. Try again.", photosMissing: (n) => `${n} ${n === 1 ? "photo" : "photos"} couldn't be included.`,
+    prev: "‹ Prev", next: "Next ›", close: "Close",
+    // email
+    mailSubject1: (d) => `Shooting results ${d}`, mailSubjectN: (n, a, b) => `Shooting results: ${n} sessions, ${a} – ${b}`,
+    mailGreeting: "Hello,\n\nhere are my shooting results.", mDiscipline: "Discipline", mScore: "Score", totalOnly: "total only",
+    mPractice: (n) => `practice ${n}, not counted`, mPhotos: "Target photos",
+    emailResults: "Email results", sessionsN: (n) => `${n} ${n === 1 ? "session" : "sessions"}`, to: "To", toPh: "coach@example.ch (optional)",
+    subject: "Subject", message: "Message", openMail: "Open in mail app",
+    openMailNote: "Opens a new email with this text filled in, ready to send from your own account.",
+    longNote: " This message is long, so some mail apps may cut it off. If that happens, use Copy text below.",
+    copyText: "Copy text", copyNote: "If the mail app didn't open, copy the text and paste it into a new email.", recipient: "Recipient",
+    preparing: "Preparing report…", saveReport: "Save report with photos",
+    reportNote: (n) => `Saves one file with the results and all ${n} target photos, to attach to an email or keep.`,
+    copyTo: "To", copySubject: "Subject", reportFile: "shooting-results", csvFile: "scorebook",
+    csvHead: ["date", "discipline", "category", "range", "weapon", "conditions", "score", "max", "percent", "inner_tens", "shots", "series_scores", "notes"],
+    language: "Language",
+  },
+  de: {
+    appName: "Schiessbuch", locale: "de-CH",
+    "p.r300a10": "Gewehr 300 m · A10", "p.r300a100": "Gewehr 300 m · A100", "p.r300a5": "Gewehr 300 m · A5", "p.r300b4": "Gewehr 300 m · B4 (Feldschiessen)",
+    "p.r50": "Gewehr 50 m", "p.p25": "Pistole 25 m", "p.p50": "Pistole 50 m", "p.custom": "Eigene Wertung",
+    "ps.r50": "Gewehr 50 m", "ps.p25": "Pistole 25 m", "ps.p50": "Pistole 50 m", "ps.custom": "Eigene",
+    "f.All": "Alle", "f.Rifle": "Gewehr", "f.Pistol": "Pistole", "f.Custom": "Eigene",
+    "st.s10": "10 Schüsse", "st.p2s6r4": "12 Schüsse · 2 Probe, 6 Einzel, 4 Serie", "st.p2s5r23": "12 Schüsse · 2 Probe, 5 Einzel, Serien zu 2 und 3",
+    "seg.practice": "Probe · zählt nicht", "seg.single": "Einzelschüsse", seriesOf: (n) => `Serie zu ${n}`,
+    none: "Keine", all: "Alle", selected: (n) => `${n} ausgewählt`, cancel: "Abbrechen", email: "E-Mail", export: "Export", newBtn: "+ Neu", back: "Zurück",
+    loading: "Schiessbuch wird geladen…", signInH: "Speicher nicht verfügbar", signInP: "Dieser Browser erlaubt keine Datenspeicherung auf dem Gerät. Schalte das private Surfen aus und öffne die App erneut.",
+    localH: "Daten auf diesem Telefon", localP: "Übungen und Fotos werden nur auf diesem Gerät gespeichert. Nichts wird hochgeladen. Speichere ab und zu ein Backup, und vor einem Telefonwechsel.",
+    selectBtn: "Auswählen", deleteN: (n) => `Löschen${n ? " (" + n + ")" : ""}`,
+    confirmBulk: (n, p) => `${n} ${n === 1 ? "Übung" : "Übungen"}${p ? ` und ${p} ${p === 1 ? "Foto" : "Fotos"}` : ""} löschen? Das kann nicht rückgängig gemacht werden.`,
+    bulkDeleted: (n) => `${n} ${n === 1 ? "Übung" : "Übungen"} gelöscht`,
+    emailBackup: "Backup per E-Mail", backupMailSubject: (d) => `Schiessbuch-Backup ${d}`,
+    backupMailText: "Backup meines Schiessbuchs mit allen Übungen und Scheibenfotos. Zum Laden: Schiessbuch öffnen, «Backup wiederherstellen» antippen und diese Datei wählen.",
+    backupNoShare: "Dieser Browser kann keine Dateien an E-Mails anhängen, darum wurde das Backup gespeichert. Hänge es aus «Dateien» oder «Downloads» an.",
+    backup: "Backup speichern", restore: "Backup wiederherstellen", backupBusy: "Backup wird erstellt…", restored: (n) => `${n} ${n === 1 ? "Übung" : "Übungen"} wiederhergestellt`,
+    badBackup: "Diese Datei ist kein Schiessbuch-Backup.", restoreFail: "Das Backup konnte nicht wiederhergestellt werden.", backupFile: "schiessbuch-backup",
+    sharePhotos: "Mit Fotos teilen", sharePhotosNote: "Öffnet das Teilen-Menü mit dem Text und allen Scheibenfotos im Anhang. Wähle «Mail» und gib den Empfänger ein.",
+    shareTextNote: "Öffnet das Teilen-Menü mit diesem Text. Wähle «Mail» und gib den Empfänger ein.", shareText: "Teilen",
+    fileSaved: "Datei bereit", storageWarn: "Dieser Browser löscht gespeicherte Daten evtl., wenn die App nicht installiert ist. Füge sie zum Home-Bildschirm hinzu, damit deine Daten sicher sind.",
+    loadErr: (c) => `Deine Übungen können gerade nicht geladen werden (${c}). Lade die Seite neu und versuche es nochmals.`, filterLabel: "Nach Disziplin filtern",
+    slow: "Verbindung wird noch aufgebaut. Die Anzeige ist evtl. nicht aktuell.", emptyH: "Noch keine Übungen",
+    emptyP: "Erfasse deine erste Übung: Disziplin wählen, jeden Schuss eintippen und die Scheibe fotografieren.", newSession: "+ Neue Übung",
+    category: "Kategorie", "cat.training": "Training", "cat.championship": "Meisterschaft", "cat.other": "Andere", catFilterLabel: "Nach Kategorie filtern",
+    avg: "Durchschnitt", trendScore: (n) => `Resultat · letzte ${n} Übungen`, trendScoreAria: "Verlauf der Resultate",
+    mixNote: "Diese Übungen haben unterschiedliche Scheiben, der Durchschnitt mischt also Wertungen. Wähle oben eine Disziplin für einen fairen Vergleich.",
+    sessions: "Übungen", avg10: "Ø · letzte 10", best: "Bestes", noneInFilter: (f) => `Noch keine Übungen in «${f}».`,
+    trend: (n) => `Resultat % · letzte ${n} Übungen`, trendAria: "Verlauf der Resultate in Prozent",
+    shotsN: (n) => `${n} ${n === 1 ? "Schuss" : "Schüsse"}`, photosN: (n) => `${n} ${n === 1 ? "Foto" : "Fotos"}`,
+    innerTens: (n) => `${n} ${n === 1 ? "Innenzehner" : "Innenzehner"} (X)`, discipline: "Disziplin", scoring: "Wertung",
+    scoringV: (m, x) => `0–${m} pro Schuss${x ? ", X = Innenzehner" : ""}`, range: "Schiessstand", weapon: "Waffe", conditions: "Bedingungen",
+    series: "Serien", shotsH: "Schüsse", score: "Resultat", practiceTitle: "Probe, zählt nicht", totalEntered: "Total eingegeben",
+    notes: "Notizen", targets: "Scheiben", openPhoto: (i) => `Foto ${i} öffnen`, targetPhoto: (i) => `Scheibenfoto ${i}`,
+    noPhotos: "Keine Fotos zu dieser Übung. Bearbeite sie, um eines hinzuzufügen.",
+    confirmDel: (n) => `Diese Übung und ${n === 1 ? "ihr Foto" : `ihre ${n} Fotos`} löschen? Das kann nicht rückgängig gemacht werden.`, keepIt: "Behalten", del: "Löschen", editSession: "Übung bearbeiten",
+    date: "Datum", maxPerShot: "Max. pro Schuss", innerTen: "Innenzehner (X)", notUsed: "Nicht verwendet", countX: "X zählen",
+    program: "Programm / Stich", programPh: "z. B. Obligatorisch, Training, Vereinsstich", rangePh: "Schiessanlage", weaponPh: "z. B. Stgw 90",
+    condPh: "Licht, Wind, Temperatur", addSeries: "+ Serie hinzufügen", targetPhotos: "Scheibenfotos", saving: "Wird gespeichert…",
+    takePhoto: "Foto aufnehmen", fromLibrary: "Aus Mediathek", removePhoto: (i) => `Foto ${i} entfernen`,
+    photoNote: "Fotos werden auf etwa 2000 px verkleinert und bleiben scharf genug, um jedes Loch zu erkennen.",
+    ownerOnly: "", notesPh: "Visierkorrekturen, was gut lief, woran arbeiten",
+    uploadingPhoto: "Foto wird hochgeladen…", saveSession: "Übung speichern",
+    seriesN: (n) => `Serie ${n}`, removeSeries: (n) => `Serie ${n} entfernen`, seriesFormat: "Serienformat",
+    practiceShot: "Probeschuss", shot: "Schuss", tapRemove: "Tippen zum Entfernen", practiceSum: (n) => `Probe: ${n} (nicht im Total)`,
+    countedShots: (n) => `${n} gezählte Schüsse`, shotsLbl: "Schüsse", fewer: "Weniger Schüsse", more: "Mehr Schüsse", orTotal: "oder Total",
+    removeLast: "Letzten Schuss entfernen", shotValue: (m) => `Schusswert, 0 bis ${m}`, add: "Hinzufügen", complete: "vollständig",
+    practiceShotN: (n) => `Probeschuss ${n}`, shotN: (n) => `Schuss ${n}`, typeThenAdd: (m) => `0–${m} eingeben, dann Hinzufügen`, tapToRemove: "Erfassten Schuss antippen zum Entfernen",
+    seriesFull: "Diese Serie ist vollständig. Füge eine Serie für weitere Schüsse hinzu.", tooLarge: "Dieses Foto ist zu gross. Versuche ein kleineres.",
+    storageFull: "Der Fotospeicher ist voll. Lösche alte Übungen, um Platz zu schaffen.", photoFail: "Das Foto konnte nicht gespeichert werden. Versuche es nochmals.",
+    addDate: "Bitte zuerst ein Datum eingeben.", saved: "Übung gespeichert", dbFull: "Das Schiessbuch ist voll. Lösche alte Übungen, um neue zu speichern.",
+    saveFail: "Die Übung konnte nicht gespeichert werden. Prüfe die Verbindung und versuche es nochmals.", deleted: "Übung gelöscht", delFail: "Die Übung konnte nicht gelöscht werden. Versuche es nochmals.",
+    exportFail: "Der Export konnte nicht gespeichert werden.", wholeNumber: (m) => `Gib eine ganze Zahl von 0 bis ${m} ein.`,
+    copied: "E-Mail-Text kopiert", selectedText: "Text markiert. Kopiere ihn über das Tastaturmenü.",
+    reportFail: "Der Bericht konnte nicht gespeichert werden. Versuche es nochmals.", photosMissing: (n) => `${n} ${n === 1 ? "Foto konnte" : "Fotos konnten"} nicht eingefügt werden.`,
+    prev: "‹ Zurück", next: "Weiter ›", close: "Schliessen",
+    mailSubject1: (d) => `Schiessresultate ${d}`, mailSubjectN: (n, a, b) => `Schiessresultate: ${n} Übungen, ${a} – ${b}`,
+    mailGreeting: "Hallo\n\nHier sind meine Schiessresultate.", mDiscipline: "Disziplin", mScore: "Resultat", totalOnly: "nur Total",
+    mPractice: (n) => `Probe ${n}, zählt nicht`, mPhotos: "Scheibenfotos",
+    emailResults: "Resultate per E-Mail", sessionsN: (n) => `${n} ${n === 1 ? "Übung" : "Übungen"}`, to: "An", toPh: "trainer@beispiel.ch (optional)",
+    subject: "Betreff", message: "Nachricht", openMail: "In Mail-App öffnen",
+    openMailNote: "Öffnet eine neue E-Mail mit diesem Text, bereit zum Senden von deinem eigenen Konto.",
+    longNote: " Diese Nachricht ist lang, manche Mail-Apps schneiden sie evtl. ab. Verwende dann «Text kopieren».",
+    copyText: "Text kopieren", copyNote: "Falls sich die Mail-App nicht geöffnet hat, kopiere den Text und füge ihn in eine neue E-Mail ein.", recipient: "Empfänger",
+    preparing: "Bericht wird erstellt…", saveReport: "Bericht mit Fotos speichern",
+    reportNote: (n) => `Speichert eine Datei mit den Resultaten und allen ${n} Scheibenfotos, zum Anhängen an eine E-Mail oder zum Aufbewahren.`,
+    copyTo: "An", copySubject: "Betreff", reportFile: "schiessresultate", csvFile: "schiessbuch",
+    csvHead: ["datum", "disziplin", "kategorie", "schiessstand", "waffe", "bedingungen", "resultat", "maximum", "prozent", "innenzehner", "schuesse", "serien", "notizen"],
+    language: "Sprache",
+  },
+};
+let LANG = "en";
+try { LANG = localStorage.getItem("scorebook-lang") || ((navigator.language || "").toLowerCase().startsWith("de") ? "de" : "en"); } catch {}
+if (!STR[LANG]) LANG = "en";
+const t = (k, ...a) => { const v = STR[LANG][k] ?? STR.en[k]; return typeof v === "function" ? v(...a) : v ?? k; };
+
+const PRESETS = {
+  r300a10:  { short: "300 m A10", group: "Rifle", max: 10, x: false },
+  r300a100: { short: "300 m A100", group: "Rifle", max: 100, x: false },
+  r300a5:   { short: "300 m A5", group: "Rifle", max: 5, x: false, hidden: true },
+  r300b4:   { short: "300 m B4", group: "Rifle", max: 4, x: false },
+  r50:      { group: "Rifle", max: 10, x: true, hidden: true },
+  p25:      { group: "Pistol", max: 10, x: true },
+  p50:      { group: "Pistol", max: 10, x: true },
+  custom:   { group: "Custom", max: 10, x: false },
+};
+const pkey = (x) => (PRESETS[x.preset] ? x.preset : "custom");
+const plabel = (k) => t("p." + k);
+const pshort = (k) => PRESETS[k].short || t("ps." + k);
+const FILTERS = ["All", "Rifle", "Pistol", "Custom"];
+const CATS = ["training", "championship", "other"];
+const catOf = (x) => (CATS.includes(x.category) ? x.category : /training/i.test(x.program || "") ? "training" : "other");
+const catLabel = (x) => t("cat." + catOf(x));
+function loadCats() { try { const v = JSON.parse(localStorage.getItem("scorebook-cats")); if (Array.isArray(v) && v.length && v.every((c) => CATS.includes(c))) return new Set(v); } catch {} return new Set(CATS); }
+const fmtScore = (v) => (Math.round(v * 10) / 10).toLocaleString(t("locale"), { maximumFractionDigits: 1 });
+const SERIES_TYPES = {
+  s10:     { segs: [{ k: "single", n: 10 }] },
+  p2s6r4:  { segs: [{ k: "practice", n: 2 }, { k: "single", n: 6 }, { k: "series", n: 4 }] },
+  p2s5r23: { segs: [{ k: "practice", n: 2 }, { k: "single", n: 5 }, { k: "series", n: 2 }, { k: "series", n: 3 }] },
+};
+const stlabel = (k) => t("st." + k);
+const newSeries = () => ({ type: "s10", planned: 10, shots: [], total: null });
+const fixed = (s) => s.type && s.type !== "s10" && SERIES_TYPES[s.type];
+function segments(s) {
+  if (fixed(s)) { let start = 0; return SERIES_TYPES[s.type].segs.map((g) => { const r = { ...g, start }; start += g.n; return r; }); }
+  return [{ k: "single", n: Math.max(s.planned || 0, s.shots.length), start: 0 }];
+}
+const isPractice = (s, j) => segments(s).some((g) => g.k === "practice" && j >= g.start && j < g.start + g.n);
+
+const S = { db: null, assets: null, downloads: null, uid: null, sessions: [], loaded: false, slow: false, error: null,
+  view: "list", filter: "All", draft: null, active: 0, current: null, confirmDel: false, saving: false, uploads: 0,
+  selecting: false, picked: new Set(), mail: null, building: false, cats: loadCats() };
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+/* ---------- local storage (IndexedDB) ---------- */
+const IDB = { db: null };
+function idbOpen() {
+  return new Promise((res, rej) => {
+    if (!("indexedDB" in window)) return rej(new Error("no indexedDB"));
+    const r = indexedDB.open("scorebook", 1);
+    r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains("sessions")) d.createObjectStore("sessions", { keyPath: "id" }); if (!d.objectStoreNames.contains("photos")) d.createObjectStore("photos", { keyPath: "id" }); };
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); r.onblocked = () => rej(new Error("blocked"));
+  });
+}
+function idb(store, mode, fn) {
+  return new Promise((res, rej) => {
+    const tx = IDB.db.transaction(store, mode), os = tx.objectStore(store); let out;
+    const q = fn(os); if (q) q.onsuccess = () => (out = q.result);
+    tx.oncomplete = () => res(out); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error || new Error("abort"));
+  });
+}
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+const dbAll = () => idb("sessions", "readonly", (os) => os.getAll());
+const dbPut = (x) => idb("sessions", "readwrite", (os) => os.put(x));
+const dbDel = (id) => idb("sessions", "readwrite", (os) => os.delete(id));
+const photoGet = (id) => idb("photos", "readonly", (os) => os.get(id)).then((r) => (r ? r.blob : null));
+async function photoPut(b, id) { id = id || newId(); await idb("photos", "readwrite", (os) => os.put({ id, blob: b, type: b.type || "image/jpeg" })); return id; }
+async function photoDel(id) { await idb("photos", "readwrite", (os) => os.delete(id)); const u = URLS.get(id); if (u) { URL.revokeObjectURL(u); URLS.delete(id); } }
+const URLS = new Map(), LOADING = new Set();
+const PLACEHOLDER = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
+function blob(id) {
+  if (URLS.has(id)) return URLS.get(id);
+  if (!LOADING.has(id)) {
+    LOADING.add(id);
+    photoGet(id).then((b) => { if (b) { URLS.set(id, URL.createObjectURL(b)); document.querySelectorAll(`img[data-pid="${id}"]`).forEach((im) => (im.src = URLS.get(id))); } }).catch(() => {}).finally(() => LOADING.delete(id));
+  }
+  return PLACEHOLDER;
+}
+async function shareOrSave(filename, data, type) {
+  const b = data instanceof Blob ? data : new Blob([data], { type });
+  const file = new File([b], filename, { type: b.type || type });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] }) && /iPhone|iPad|Android/i.test(navigator.userAgent)) { await navigator.share({ files: [file], title: filename }); return; }
+  } catch (e) { if (e && e.name === "AbortError") return; }
+  const url = URL.createObjectURL(b), a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+const fmtDate = (s) => { try { return new Date(s + "T12:00:00").toLocaleDateString(t("locale"), { weekday: "short", day: "numeric", month: "short", year: "numeric" }); } catch { return s; } };
+const shotVal = (v) => (v === "X" ? 10 : Number(v) || 0);
+
+function seriesStats(s, max) {
+  const segs = segments(s);
+  const planned = segs.reduce((a, g) => a + g.n, 0);
+  const practiceN = segs.filter((g) => g.k === "practice").reduce((a, g) => a + g.n, 0);
+  const manual = s.total !== null && s.total !== undefined && s.total !== "";
+  let sum = 0, x = 0, practice = 0;
+  s.shots.forEach((v, j) => { if (isPractice(s, j)) practice += shotVal(v); else { sum += shotVal(v); if (v === "X") x++; } });
+  const counted = planned - practiceN;
+  return { total: manual ? Number(s.total) : sum, max: counted * max, x, planned, counted, practice, practiceN, manual };
+}
+function sessionStats(x) {
+  let total = 0, max = 0, xs = 0, shots = 0;
+  for (const s of x.series || []) { const st = seriesStats(s, x.max); total += st.total; max += st.max; xs += st.x; shots += st.counted; }
+  return { total: Math.round(total * 10) / 10, max, xs, shots, pct: max ? (total / max) * 100 : 0 };
+}
+function toast(msg) { const el = $("#toast"); el.textContent = msg; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (el.hidden = true), 2400); }
+
+/* ---------- data ---------- */
+async function refresh() {
+  const all = await dbAll();
+  S.sessions = all.sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.createdAt || 0) - (a.createdAt || 0));
+  if (S.current) S.current = S.sessions.find((x) => x.id === S.current.id) || null;
+  if (S.view === "detail" && !S.current) S.view = "list";
+  for (const id of [...S.picked]) if (!S.sessions.some((x) => x.id === id)) S.picked.delete(id);
+}
+async function boot() {
+  render();
+  try { IDB.db = await idbOpen(); } catch { S.error = "nodb"; S.loaded = true; return render(); }
+  S.db = true; S.uid = "local";
+  S.assets = { upload: async (b) => ({ id: await photoPut(b) }), delete: async (id) => { await photoDel(id); return { deleted: true }; } };
+  S.downloads = { save: async ({ filename, data }) => shareOrSave(filename, data, filename.endsWith(".csv") ? "text/csv" : filename.endsWith(".json") ? "application/json" : "text/html") };
+  try { await refresh(); } catch { S.error = "read"; }
+  S.loaded = true; render();
+  try { if (navigator.storage && navigator.storage.persist) { const ok = await navigator.storage.persisted() || await navigator.storage.persist(); S.persisted = ok; } } catch {}
+}
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+
+/* ---------- views ---------- */
+function render() {
+  document.documentElement.lang = LANG;
+  $("#title").textContent = t("appName");
+  document.querySelectorAll(".langsw button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === LANG)));
+  const bar = $("#barActions");
+  const sel = $("#selbar");
+  sel.hidden = !(S.view === "list" && S.selecting);
+  document.body.classList.toggle("has-keypad", S.view === "edit" || !sel.hidden);
+  if (S.view === "list" && S.selecting) {
+    bar.innerHTML = `<button class="btn" data-act="selall">${S.picked.size === S.sessions.length ? t("none") : t("all")}</button>`;
+    $("#app").innerHTML = listView();
+    const np = S.sessions.filter((x) => S.picked.has(x.id)).reduce((a, x) => a + (x.photos || []).length, 0);
+    sel.innerHTML = S.bulkAsk && S.picked.size
+      ? `<div class="selbar-in ask" role="alertdialog" aria-label="${t("del")}"><span class="msg">${t("confirmBulk", S.picked.size, np)}</span><button class="btn" data-act="bulkno">${t("keepIt")}</button><button class="btn danger solid" data-act="bulkyes">${t("del")}</button></div>`
+      : `<div class="selbar-in"><span class="count">${t("selected", S.picked.size)}</span><button class="btn" data-act="selcancel">${t("cancel")}</button><button class="btn danger" data-act="bulkdel" ${S.picked.size ? "" : "disabled"}>${t("deleteN", 0)}</button><button class="btn primary" data-act="mailpicked" ${S.picked.size ? "" : "disabled"}>${t("email")}</button></div>`;
+  } else if (S.view === "list") {
+    bar.innerHTML = S.sessions.length && S.downloads ? `<button class="btn ghost" data-act="csv">${t("export")}</button>` : "";
+    if (S.sessions.length) bar.innerHTML += `<button class="btn" data-act="select">${t("selectBtn")}</button>`;
+    if (S.db && S.uid) bar.innerHTML += `<button class="btn primary" data-act="new">${t("newBtn")}</button>`;
+    $("#app").innerHTML = listView();
+  } else if (S.view === "detail") {
+    bar.innerHTML = `<button class="btn" data-act="back">${t("back")}</button>`;
+    $("#app").innerHTML = detailView();
+  } else if (S.view === "mail") {
+    bar.innerHTML = `<button class="btn" data-act="mailback">${t("back")}</button>`;
+    $("#app").innerHTML = mailView();
+  } else {
+    bar.innerHTML = `<button class="btn" data-act="cancel">${t("cancel")}</button>`;
+    $("#app").innerHTML = editView();
+  }
+  renderKeypad();
+}
+
+function listView() {
+  if (!S.loaded) return `<p class="note">${t("loading")}</p>`;
+  if (S.error === "nodb") return `<div class="empty"><h2>${t("signInH")}</h2><p>${t("signInP")}</p></div>`;
+  if (S.error) return `<div class="warn">${esc(t("loadErr", S.error))}</div>`;
+  const local = localPanel();
+  const rows = S.sessions.filter((x) => (S.filter === "All" || PRESETS[pkey(x)].group === S.filter) && S.cats.has(catOf(x)));
+  const chips = `<div class="filters"><div class="chips" role="group" aria-label="${t("filterLabel")}">${FILTERS.map((f) => `<button class="chip" data-act="filter" data-v="${f}" aria-pressed="${S.filter === f}">${t("f." + f)}</button>`).join("")}</div>
+    <div class="chips" role="group" aria-label="${t("catFilterLabel")}">${CATS.map((c) => `<button class="chip multi" data-act="catfilter" data-v="${c}" aria-pressed="${S.cats.has(c)}">${t("cat." + c)}</button>`).join("")}</div></div>`;
+  const slow = S.slow ? `<p class="note">${t("slow")}</p>` : "";
+  if (!S.sessions.length) return slow + `<div class="empty">
+      <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="28" cy="28" r="26"/><circle cx="28" cy="28" r="18"/><circle cx="28" cy="28" r="10"/></g><circle cx="28" cy="28" r="4" fill="currentColor"/></svg>
+      <h2>${t("emptyH")}</h2>
+      <p>${t("emptyP")}</p>
+      <button class="btn primary" data-act="new">${t("newSession")}</button></div>${local}`;
+  const st = rows.map(sessionStats);
+  const avg = st.length ? st.reduce((a, s) => a + s.total, 0) / st.length : 0;
+  const best = st.length ? Math.max(...st.map((s) => s.total)) : 0;
+  const mixed = new Set(st.map((s) => s.max)).size > 1;
+  return `${chips}${slow}
+    <div class="stats">
+      <div class="stat"><span class="eyebrow">${t("sessions")}</span><span class="v num">${rows.length}</span></div>
+      <div class="stat"><span class="eyebrow">${t("avg")}</span><span class="v num">${rows.length ? fmtScore(avg) : "–"}</span></div>
+      <div class="stat"><span class="eyebrow">${t("best")}</span><span class="v num">${rows.length ? fmtScore(best) : "–"}</span></div>
+    </div>
+    ${mixed ? `<p class="note" style="margin:0">${t("mixNote")}</p>` : ""}
+    ${rows.length >= 2 ? trendView(rows) : ""}
+    <div class="list">${rows.length ? rows.map(cardView).join("") : `<p class="note">${esc(t("noneInFilter", [S.filter === "All" ? "" : t("f." + S.filter), ...CATS.filter((c) => S.cats.has(c)).map((c) => t("cat." + c))].filter(Boolean).join(" · ")))}</p>`}</div>${S.selecting ? "" : local}`;
+}
+
+function localPanel() {
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  return `<section class="local" aria-labelledby="local-h">
+    <div class="lockrow"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+      <div><strong id="local-h" style="color:var(--ink)">${t("localH")}</strong><br>${t("localP")}${!standalone && !S.persisted ? `<br>${t("storageWarn")}` : ""}</div></div>
+    <div class="actions">${S.sessions.length ? `<button class="btn" data-act="backup" ${S.backingUp ? "disabled" : ""}>${S.backingUp ? t("backupBusy") : t("backup")}</button>
+      <button class="btn" data-act="mailbackup" ${S.backingUp ? "disabled" : ""}>${t("emailBackup")}</button>` : ""}
+      <label class="btn" for="restore-file">${t("restore")}</label><input id="restore-file" class="visually-hidden" type="file" accept=".json,.txt,application/json,text/plain"></div>
+  </section>`;
+}
+async function backupJson() {
+  const photos = [];
+  for (const x of S.sessions) for (const id of x.photos || []) { try { photos.push({ id, data: await toDataUrl(id) }); } catch {} }
+  return JSON.stringify({ app: "scorebook", version: 1, exported: new Date().toISOString(), sessions: S.sessions, photos });
+}
+async function makeBackup(mail) {
+  S.backingUp = true; render();
+  try {
+    const json = await backupJson(), name = `${t("backupFile")}-${today()}`;
+    if (mail) {
+      // Some phones only attach common file types, so fall back to .txt; Restore accepts both.
+      const cands = [new File([json], name + ".json", { type: "application/json" }), new File([json], name + ".txt", { type: "text/plain" })];
+      const f = navigator.share && navigator.canShare ? cands.find((c) => navigator.canShare({ files: [c] })) : null;
+      if (f) {
+        try { await navigator.share({ files: [f], title: t("backupMailSubject", fmtDate(today())), text: t("backupMailText") }); }
+        catch (e) { if (!(e && e.name === "AbortError")) throw e; }
+      } else { await shareOrSave(name + ".json", json, "application/json"); toast(t("backupNoShare")); }
+    } else {
+      await shareOrSave(name + ".json", json, "application/json");
+    }
+  } catch { toast(t("exportFail")); } finally { S.backingUp = false; render(); }
+}
+async function bulkDelete() {
+  const ids = [...S.picked], n = ids.length;
+  try {
+    for (const id of ids) {
+      const x = S.sessions.find((s) => s.id === id); if (!x) continue;
+      await dbDel(id);
+      for (const pid of x.photos || []) { try { await photoDel(pid); } catch {} }
+    }
+    S.picked.clear(); S.selecting = false; S.bulkAsk = false;
+    await refresh(); render(); toast(t("bulkDeleted", n));
+  } catch { S.bulkAsk = false; await refresh(); render(); toast(t("delFail")); }
+}
+async function restoreBackup(file) {
+  try {
+    const data = JSON.parse(await file.text());
+    if (!data || data.app !== "scorebook" || !Array.isArray(data.sessions)) return toast(t("badBackup"));
+    for (const p of data.photos || []) { const b = await (await fetch(p.data)).blob(); await photoPut(b, p.id); }
+    for (const x of data.sessions) if (x && x.id && Array.isArray(x.series)) await dbPut(x);
+    await refresh(); render(); toast(t("restored", data.sessions.length));
+  } catch { toast(t("restoreFail")); }
+}
+
+function trendView(rows) {
+  const pts = rows.slice(0, 20).reverse().map((x) => ({ x, p: sessionStats(x).total }));
+  const W = 600, H = 130, pl = 34, pr = 10, pt = 10, pb = 22;
+  const mn = Math.min(...pts.map((d) => d.p)), mx = Math.max(...pts.map((d) => d.p));
+  const pad = Math.max((mx - mn) * 0.15, mx * 0.02, 1);
+  const lo = Math.max(0, Math.floor(mn - pad)), hi = Math.ceil(mx + pad);
+  const sx = (i) => pl + (pts.length === 1 ? 0 : (i * (W - pl - pr)) / (pts.length - 1));
+  const sy = (v) => pt + ((hi - v) * (H - pt - pb)) / (hi - lo || 1);
+  const ticks = [lo, (lo + hi) / 2, hi];
+  const line = pts.map((d, i) => `${i ? "L" : "M"}${sx(i).toFixed(1)},${sy(d.p).toFixed(1)}`).join("");
+  const area = `${line}L${sx(pts.length - 1)},${H - pb}L${sx(0)},${H - pb}Z`;
+  const last = pts[pts.length - 1];
+  return `<div class="trend"><div class="trend-head"><span class="eyebrow">${t("trendScore", pts.length)}</span><span class="note">${esc(fmtDate(pts[0].x.date))} – ${esc(fmtDate(last.x.date))}</span></div>
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${t("trendScoreAria")}">
+      ${ticks.map((v) => `<line x1="${pl}" x2="${W - pr}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)" stroke-width="1" vector-effect="non-scaling-stroke"/><text x="${pl - 6}" y="${sy(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="Public Sans, sans-serif">${Math.round(v)}</text>`).join("")}
+      <path d="${area}" fill="var(--accent-soft)"/>
+      <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+      <circle cx="${sx(pts.length - 1)}" cy="${sy(last.p)}" r="4" fill="var(--accent)"/>
+    </svg></div>`;
+}
+
+function cardView(x) {
+  const st = sessionStats(x), k = pkey(x);
+  const th = x.photos && x.photos[0] ? `<img data-pid="${x.photos[0]}" src="${blob(x.photos[0])}" alt="" loading="lazy">` : `<svg width="30" height="30" viewBox="0 0 28 28" aria-hidden="true"><g fill="none" stroke="var(--muted)" stroke-width="1.3"><circle cx="14" cy="14" r="12"/><circle cx="14" cy="14" r="7"/></g></svg>`;
+  const on = S.picked.has(x.id);
+  return `<button class="card" data-act="${S.selecting ? "pick" : "open"}" data-id="${esc(x.id)}"${S.selecting ? ` aria-pressed="${on}"` : ""}>
+    ${S.selecting ? `<span class="tick" aria-hidden="true">${on ? `<svg width="14" height="14" viewBox="0 0 14 14"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2"/></svg>` : ""}</span>` : ""}
+    <span class="thumb">${th}</span>
+    <span class="meta"><span class="t">${esc(catLabel(x))}</span>
+      <span class="s">${esc(fmtDate(x.date))} · ${esc(pshort(k))}${x.location ? " · " + esc(x.location) : ""}</span>
+      <span class="s">${t("shotsN", st.shots)}${x.photos && x.photos.length ? ` · ${t("photosN", x.photos.length)}` : ""}</span></span>
+    <span class="score"><span class="big num">${st.total}</span><br><span class="of num">/ ${st.max}${st.xs ? ` · ${st.xs}X` : ""}</span></span>
+  </button>`;
+}
+
+function detailView() {
+  const x = S.current; if (!x) return "";
+  const st = sessionStats(x), k = pkey(x), np = (x.photos || []).length;
+  return `<div style="display:grid;gap:4px"><span class="eyebrow">${esc(fmtDate(x.date))}</span><h2 style="margin:0;font-size:22px">${esc(catLabel(x))} · ${esc(pshort(k))}</h2></div>
+    <div class="hero-score"><span class="big num">${st.total}<small> / ${st.max}</small></span>
+      <span style="text-align:right"><span class="pct-pill" style="font-size:14px">${st.pct.toFixed(1)}%</span>${st.xs ? `<br><span class="note">${t("innerTens", st.xs)}</span>` : ""}</span></div>
+    <dl class="kv"><dt>${t("discipline")}</dt><dd>${esc(plabel(k))}</dd><dt>${t("scoring")}</dt><dd>${t("scoringV", x.max, x.x)}</dd>
+      ${x.location ? `<dt>${t("range")}</dt><dd>${esc(x.location)}</dd>` : ""}${x.weapon ? `<dt>${t("weapon")}</dt><dd>${esc(x.weapon)}</dd>` : ""}
+      ${x.conditions ? `<dt>${t("conditions")}</dt><dd>${esc(x.conditions)}</dd>` : ""}</dl>
+    <div class="section-h"><h2>${t("series")}</h2><span class="note">${t("shotsN", st.shots)}</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>#</th><th>${t("shotsH")}</th><th class="r">${t("score")}</th></tr></thead><tbody>
+      ${x.series.map((s, i) => { const ss = seriesStats(s, x.max); return `<tr><td class="num">${i + 1}</td><td class="shots-line">${s.shots.length ? segments(s).map((g) => { const v = s.shots.slice(g.start, g.start + g.n); if (!v.length) return ""; return g.k === "practice" ? `<span title="${t("practiceTitle")}">(${esc(v.join(" "))})</span>` : esc(v.join(" ")); }).filter(Boolean).join(" · ") : (ss.manual ? t("totalEntered") : "—")}${fixed(s) ? `<br><span class="note" style="font-family:var(--body);letter-spacing:0">${esc(stlabel(s.type))}</span>` : ""}</td><td class="r num" style="font-size:18px;font-weight:600">${ss.total}<span class="note"> / ${ss.max}</span></td></tr>`; }).join("")}
+    </tbody></table></div>
+    ${x.notes ? `<div class="section-h"><h2>${t("notes")}</h2></div><p style="margin:0;white-space:pre-wrap">${esc(x.notes)}</p>` : ""}
+    <div class="section-h"><h2>${t("targets")}</h2><span class="note">${t("photosN", np)}</span></div>
+    ${np ? `<div class="photos">${x.photos.map((id, i) => `<button class="ph" data-act="zoom" data-i="${i}" aria-label="${t("openPhoto", i + 1)}"><img data-pid="${id}" src="${blob(id)}" alt="${t("targetPhoto", i + 1)}" loading="lazy"></button>`).join("")}</div>` : `<p class="note">${t("noPhotos")}</p>`}
+    ${S.confirmDel ? `<div class="confirm"><strong>${t("confirmDel", np)}</strong><div class="actions"><button class="btn" data-act="nodel">${t("keepIt")}</button><button class="btn danger solid" data-act="yesdel">${t("del")}</button></div></div>`
+      : `<div class="actions"><button class="btn danger" data-act="del">${t("del")}</button><button class="btn" data-act="mailone">${t("email")}</button><button class="btn primary" data-act="edit">${t("editSession")}</button></div>`}`;
+}
+
+function editView() {
+  const d = S.draft, st = sessionStats(d);
+  return `<div class="form">
+    <div class="row2">
+      <div class="field"><label for="f-date">${t("date")}</label><input id="f-date" type="date" lang="${t("locale")}" value="${esc(d.date)}" data-f="date"></div>
+      <div class="field"><label for="f-preset">${t("discipline")}</label><select id="f-preset" data-f="preset">${Object.entries(PRESETS).filter(([k, p]) => !p.hidden || k === d.preset).map(([k]) => `<option value="${k}"${k === d.preset ? " selected" : ""}>${esc(plabel(k))}</option>`).join("")}</select></div>
+    </div>
+    ${d.preset === "custom" ? `<div class="row2"><div class="field"><label for="f-max">${t("maxPerShot")}</label><input id="f-max" type="number" inputmode="numeric" min="1" max="100" value="${d.max}" data-f="max"></div>
+      <div class="field"><label for="f-x">${t("innerTen")}</label><select id="f-x" data-f="x"><option value="0"${d.x ? "" : " selected"}>${t("notUsed")}</option><option value="1"${d.x ? " selected" : ""}>${t("countX")}</option></select></div></div>` : ""}
+    <div class="field"><span class="flabel" id="cat-l">${t("category")}</span><div class="seg3" role="group" aria-labelledby="cat-l">${CATS.map((c) => `<button type="button" data-act="cat" data-v="${c}" aria-pressed="${d.category === c}">${t("cat." + c)}</button>`).join("")}</div></div>
+    <div class="row2">
+      <div class="field"><label for="f-loc">${t("range")}</label><input id="f-loc" type="text" placeholder="${t("rangePh")}" value="${esc(d.location)}" data-f="location"></div>
+      <div class="field"><label for="f-weapon">${t("weapon")}</label><input id="f-weapon" type="text" placeholder="${t("weaponPh")}" value="${esc(d.weapon)}" data-f="weapon"></div>
+    </div>
+    <div class="field"><label for="f-cond">${t("conditions")}</label><input id="f-cond" type="text" placeholder="${t("condPh")}" value="${esc(d.conditions)}" data-f="conditions"></div>
+
+    <div class="section-h"><h2>${t("series")}</h2><span class="num" style="font-size:22px;font-weight:700">${st.total}<span class="note" style="font-family:var(--body)"> / ${st.max} · ${st.pct.toFixed(1)}%</span></span></div>
+    ${d.series.map((s, i) => seriesView(s, i)).join("")}
+    <button class="btn" data-act="addseries">${t("addSeries")}</button>
+
+    <div class="section-h"><h2>${t("targetPhotos")}</h2><span class="note">${d.photos.length}</span></div>
+    ${S.assets ? `<div class="photos">
+        ${d.photos.map((id, i) => `<div class="ph"><img data-pid="${id}" src="${blob(id)}" alt="${t("targetPhoto", i + 1)}"><button class="rm" data-act="rmphoto" data-i="${i}" aria-label="${t("removePhoto", i + 1)}">×</button></div>`).join("")}
+        ${S.uploads ? Array.from({ length: S.uploads }, () => `<div class="ph busy">${t("saving")}</div>`).join("") : ""}
+        <label class="ph addph" for="cam"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>${t("takePhoto")}</label>
+        <label class="ph addph" for="pick"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 16l5-5 4 4 3-3 5 5"/></svg>${t("fromLibrary")}</label>
+      </div>
+      <input id="cam" class="visually-hidden" type="file" accept="image/*" capture="environment">
+      <input id="pick" class="visually-hidden" type="file" accept="image/*" multiple>
+      <p class="note">${t("photoNote")}</p>`
+      : `<p class="note">${t("ownerOnly")}</p>`}
+
+    <div class="field"><label for="f-notes">${t("notes")}</label><textarea id="f-notes" placeholder="${t("notesPh")}" data-f="notes">${esc(d.notes)}</textarea></div>
+    <div class="actions"><button class="btn" data-act="cancel">${t("cancel")}</button><button class="btn primary" data-act="save" ${S.saving || S.uploads ? "disabled" : ""}>${S.saving ? t("saving") : S.uploads ? t("uploadingPhoto") : t("saveSession")}</button></div>
+  </div>`;
+}
+
+/* ---------- email ---------- */
+function shotsText(s) {
+  return segments(s).map((g) => { const v = s.shots.slice(g.start, g.start + g.n); if (!v.length) return ""; return g.k === "practice" ? `(${v.join(" ")})` : v.join(" "); }).filter(Boolean).join(" · ");
+}
+function sessionText(x) {
+  const st = sessionStats(x), k = pkey(x);
+  const L = [`${fmtDate(x.date)} — ${catLabel(x)}`, `${t("mDiscipline")}: ${plabel(k)}`];
+  if (x.location) L.push(`${t("range")}: ${x.location}`);
+  if (x.weapon) L.push(`${t("weapon")}: ${x.weapon}`);
+  if (x.conditions) L.push(`${t("conditions")}: ${x.conditions}`);
+  L.push(`${t("mScore")}: ${st.total} / ${st.max} (${st.pct.toFixed(1)}%)${st.xs ? ` · ${st.xs} X` : ""}`);
+  x.series.forEach((s, i) => { const ss = seriesStats(s, x.max);
+    L.push(`  ${t("seriesN", i + 1)}${fixed(s) ? ` [${stlabel(s.type)}]` : ""}: ${s.shots.length ? shotsText(s) : ss.manual ? t("totalOnly") : "—"} = ${ss.total}/${ss.max}${ss.practiceN && s.shots.length ? ` (${t("mPractice", ss.practice)})` : ""}`); });
+  if (x.notes) L.push(`${t("notes")}: ${x.notes}`);
+  if ((x.photos || []).length) L.push(`${t("mPhotos")}: ${x.photos.length}`);
+  return L.join("\n");
+}
+function buildMail(ids, to) {
+  const xs = S.sessions.filter((x) => ids.includes(x.id)).sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  const subject = xs.length === 1 ? t("mailSubject1", fmtDate(xs[0].date)) : t("mailSubjectN", xs.length, fmtDate(xs[0].date), fmtDate(xs[xs.length - 1].date));
+  const body = `${t("mailGreeting")}\n\n${xs.map(sessionText).join("\n\n")}\n\n`;
+  return { ids: xs.map((x) => x.id), to, subject, body, photos: xs.reduce((a, x) => a + (x.photos || []).length, 0), edited: false };
+}
+function startMail(ids) {
+  if (!S.sessions.some((x) => ids.includes(x.id))) return;
+  let to = ""; try { to = localStorage.getItem("scorebook-mailto") || ""; } catch {}
+  S.mail = buildMail(ids, to);
+  S.view = "mail"; render(); scrollTo(0, 0);
+}
+const mailHref = () => `mailto:${encodeURIComponent(S.mail.to.trim()).replace(/%40/g, "@")}?subject=${encodeURIComponent(S.mail.subject)}&body=${encodeURIComponent(S.mail.body)}`;
+function mailView() {
+  const m = S.mail, long = m.body.length > 1800;
+  return `<div style="display:grid;gap:4px"><span class="eyebrow">${t("emailResults")}</span><h2 style="margin:0;font-size:22px">${t("sessionsN", m.ids.length)}${m.photos ? ` · ${t("photosN", m.photos)}` : ""}</h2></div>
+    <div class="mailbox">
+      <div class="field"><label for="m-to">${t("to")}</label><input id="m-to" type="email" inputmode="email" autocomplete="email" placeholder="${t("toPh")}" value="${esc(m.to)}" data-m="to"></div>
+      <div class="field"><label for="m-subj">${t("subject")}</label><input id="m-subj" type="text" value="${esc(m.subject)}" data-m="subject"></div>
+      <div class="field"><label for="m-body">${t("message")}</label><textarea id="m-body" data-m="body">${esc(m.body)}</textarea></div>
+    </div>
+    <div class="steps">
+      ${navigator.share ? `<div class="step"><span class="n">★</span><div class="b"><button class="btn primary" data-act="shareall">${m.photos ? t("sharePhotos") : t("shareText")}</button>
+        <span class="note">${m.photos ? t("sharePhotosNote") : t("shareTextNote")}</span></div></div>` : ""}
+      <div class="step"><span class="n">1</span><div class="b"><a class="btn${navigator.share ? "" : " primary"}" id="m-open" href="${esc(mailHref())}" target="_blank" rel="noopener">${t("openMail")}</a>
+        <span class="note">${t("openMailNote")}${long ? t("longNote") : ""}</span></div></div>
+      <div class="step"><span class="n">2</span><div class="b"><button class="btn" data-act="mailcopy">${t("copyText")}</button>
+        <span class="note">${t("copyNote")}${m.to ? ` ${t("recipient")}: <span class="addr">${esc(m.to)}</span>` : ""}</span></div></div>
+      ${m.photos && S.downloads ? `<div class="step"><span class="n">3</span><div class="b"><button class="btn" data-act="mailreport" ${S.building ? "disabled" : ""}>${S.building ? t("preparing") : t("saveReport")}</button>
+        <span class="note">${t("reportNote", m.photos)}</span></div></div>` : ""}
+    </div>`;
+}
+async function shareMail() {
+  const m = S.mail, files = [];
+  try {
+    if (m.photos) {
+      const xs = S.sessions.filter((x) => m.ids.includes(x.id)).sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+      for (const x of xs) { let n = 0; for (const id of x.photos || []) { const b = await photoGet(id); if (b) files.push(new File([b], `${x.date}-${++n}.jpg`, { type: b.type || "image/jpeg" })); } }
+    }
+    const payload = { title: m.subject, text: m.body };
+    if (files.length && navigator.canShare && navigator.canShare({ files })) payload.files = files;
+    await navigator.share(payload);
+  } catch (e) { if (!(e && e.name === "AbortError")) toast(t("reportFail")); }
+}
+async function toDataUrl(id) {
+  const b = await photoGet(id); if (!b) throw new Error("photo");
+  return await new Promise((res, rej) => { const f = new FileReader(); f.onload = () => res(f.result); f.onerror = rej; f.readAsDataURL(b); });
+}
+async function saveReport() {
+  S.building = true; render();
+  try {
+    const xs = S.sessions.filter((x) => S.mail.ids.includes(x.id)).sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+    let missing = 0;
+    const parts = [];
+    for (const x of xs) {
+      const st = sessionStats(x), k = pkey(x);
+      const imgs = [];
+      for (const id of x.photos || []) { try { imgs.push(await toDataUrl(id)); } catch { missing++; } }
+      parts.push(`<section><h2>${esc(fmtDate(x.date))} · ${esc(catLabel(x))}</h2>
+        <p class="score">${st.total} <small>/ ${st.max} · ${st.pct.toFixed(1)}%${st.xs ? ` · ${st.xs} X` : ""}</small></p>
+        <p class="meta">${esc([plabel(k), x.location, x.weapon, x.conditions].filter(Boolean).join(" · "))}</p>
+        <table><tr><th>${t("series")}</th><th>${t("shotsH")}</th><th>${t("score")}</th></tr>${x.series.map((s, i) => { const ss = seriesStats(s, x.max); return `<tr><td>${i + 1}${fixed(s) ? `<br><small>${esc(stlabel(s.type))}</small>` : ""}</td><td>${esc(s.shots.length ? shotsText(s) : ss.manual ? t("totalOnly") : "—")}</td><td>${ss.total} / ${ss.max}</td></tr>`; }).join("")}</table>
+        ${x.notes ? `<p><b>${t("notes")}:</b> ${esc(x.notes)}</p>` : ""}
+        ${imgs.map((u, i) => `<img src="${u}" alt="${t("targetPhoto", i + 1)}">`).join("")}</section>`);
+    }
+    const html = `<!doctype html><html lang="${LANG}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(S.mail.subject)}</title>
+<style>body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:720px;margin:0 auto;padding:16px;color:#161b17}h1{font-size:22px}h2{font-size:18px;border-top:2px solid #161b17;padding-top:10px;margin-top:28px}.score{font-size:28px;font-weight:700;margin:4px 0}.score small{font-size:15px;color:#5b645c;font-weight:400}.meta{color:#5b645c;margin:0 0 8px}table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}th,td{text-align:left;padding:6px;border-bottom:1px solid #d3d8d0;vertical-align:top}th{font-size:11px;text-transform:uppercase;color:#5b645c}small{color:#5b645c}img{display:block;max-width:100%;margin:10px 0;border-radius:8px}</style></head>
+<body><h1>${esc(S.mail.subject)}</h1>${parts.join("")}</body></html>`;
+    await S.downloads.save({ filename: `${t("reportFile")}-${today()}.html`, data: html });
+    if (missing) toast(t("photosMissing", missing));
+  } catch (e) {
+    if (!(e && (e.code === "declined" || e.code === "cancelled"))) toast(t("reportFail"));
+  } finally { S.building = false; if (S.view === "mail") render(); }
+}
+
+function seriesView(s, i) {
+  const d = S.draft, ss = seriesStats(s, d.max), active = i === S.active, segs = segments(s);
+  const chip = (j) => {
+    const v = s.shots[j], p = isPractice(s, j);
+    if (v === undefined) return `<span class="shot slot${p ? " prac" : ""}${active && j === s.shots.length ? " next" : ""}" aria-hidden="true">${p ? "P" : j + 1 - ss.practiceN}</span>`;
+    return `<button class="shot${p ? " prac" : ""}${!p && v === "X" ? " x" : ""}${!p && v !== "X" && Number(v) === d.max ? " top" : ""}" data-act="rmshot" data-s="${i}" data-j="${j}" aria-label="${p ? t("practiceShot") : t("shot")} ${v}. ${t("tapRemove")}">${v}</button>`;
+  };
+  const groups = segs.map((g) => {
+    const chips = []; for (let j = g.start; j < g.start + g.n; j++) chips.push(chip(j));
+    return `<div class="seg"><span class="seg-l">${segs.length > 1 ? (g.k === "series" ? t("seriesOf", g.n) : t("seg." + g.k)) : ""}</span><div class="shots">${chips.join("")}</div></div>`;
+  }).join("");
+  return `<div class="series${active ? " active" : ""}" data-act="activate" data-s="${i}">
+    <div class="series-head"><span class="name">${t("seriesN", i + 1)}</span><span class="tot num">${ss.total}<small> / ${ss.max}</small></span>
+      ${d.series.length > 1 ? `<button class="btn ghost iconbtn" data-act="rmseries" data-s="${i}" aria-label="${t("removeSeries", i + 1)}">×</button>` : ""}</div>
+    <div class="field"><label for="st-${i}" class="visually-hidden">${t("seriesFormat")}</label><select id="st-${i}" data-stype="${i}">${Object.keys(SERIES_TYPES).map((k) => `<option value="${k}"${(s.type || "s10") === k ? " selected" : ""}>${esc(stlabel(k))}</option>`).join("")}</select></div>
+    ${groups}
+    ${ss.practiceN && s.shots.some((v, j) => isPractice(s, j)) ? `<p class="note" style="margin:0">${t("practiceSum", ss.practice)}</p>` : ""}
+    <div class="series-tools">
+      ${fixed(s) ? `<span class="note">${t("countedShots", ss.counted)}</span>` : `<span class="stepper">${t("shotsLbl")} <button data-act="planned" data-s="${i}" data-d="-1" aria-label="${t("fewer")}">−</button><span class="num" style="font-size:18px;color:var(--ink);min-width:22px;text-align:center">${ss.planned}</span><button data-act="planned" data-s="${i}" data-d="1" aria-label="${t("more")}">+</button></span>`}
+      <label class="manual" for="tot-${i}">${t("orTotal")} <input id="tot-${i}" type="number" inputmode="decimal" step="0.1" min="0" value="${s.total ?? ""}" data-tot="${i}" placeholder="—"></label>
+    </div></div>`;
+}
+
+function renderKeypad() {
+  const k = $("#keypad");
+  if (S.view !== "edit") { k.hidden = true; return; }
+  const d = S.draft, keys = [];
+  const big = d.max > 20;
+  if (!big) { if (d.x) keys.push(`<button class="key x" data-key="X">X</button>`); for (let v = d.max; v >= 0; v--) keys.push(`<button class="key" data-key="${v}">${v}</button>`); }
+  keys.push(`<button class="key back" data-key="back" aria-label="${t("removeLast")}">⌫</button>`);
+  const s = d.series[S.active], ss = seriesStats(s, d.max);
+  const entry = big ? `<form class="numentry" id="kp-form"><label class="visually-hidden" for="kp-num">${t("shotValue", d.max)}</label>
+      <input id="kp-num" type="number" inputmode="numeric" min="0" max="${d.max}" step="1" placeholder="0–${d.max}" autocomplete="off">
+      <button class="key add" type="submit">${t("add")}</button><button class="key back" type="button" data-key="back" aria-label="${t("removeLast")}">⌫</button></form>` : `<div class="keys">${keys.join("")}</div>`;
+  const nj = s.shots.length, full = fixed(s) && nj >= ss.planned;
+  const where = full ? t("complete") : isPractice(s, nj) ? t("practiceShotN", nj + 1) : t("shotN", nj + 1 - Math.min(ss.practiceN, nj));
+  k.innerHTML = `<div class="keypad-in"><div class="keypad-top"><span>${t("seriesN", S.active + 1)} · ${where}</span><span>${big ? t("typeThenAdd", d.max) : t("tapToRemove")}</span></div>
+    ${entry}</div>`;
+  k.hidden = false;
+}
+
+/* ---------- actions ---------- */
+function newDraft() {
+  const last = S.sessions[0];
+  let preset = last ? pkey(last) : "r300a10";
+  if (PRESETS[preset].hidden) preset = "r300a10";
+  const p = PRESETS[preset];
+  return { id: null, date: today(), preset, category: last ? catOf(last) : "training", location: last ? last.location || "" : "", weapon: last ? last.weapon || "" : "", conditions: "", notes: "",
+    max: preset === "custom" && last ? last.max : p.max, x: preset === "custom" && last ? last.x : p.x,
+    series: [newSeries()], photos: [], addedPhotos: [], removedPhotos: [] };
+}
+function applyPreset(key) {
+  const d = S.draft, p = PRESETS[key];
+  const empty = d.series.every((s) => !s.shots.length && (s.total === null || s.total === ""));
+  d.preset = key;
+  if (key !== "custom") { d.max = p.max; d.x = p.x; d.series.forEach((s) => (s.shots = s.shots.filter((v) => v !== "X" || p.x).map((v) => (v === "X" ? v : Math.min(Number(v), p.max))))); }
+  if (empty) d.series = [newSeries()];
+  S.active = 0;
+}
+function addShot(v) {
+  const d = S.draft, s = d.series[S.active];
+  const ss = seriesStats(s, d.max);
+  if (fixed(s) && s.shots.length >= ss.planned) { toast(t("seriesFull")); return; }
+  s.shots.push(v); s.total = null;
+  if (!fixed(s) && s.shots.length > s.planned) s.planned = s.shots.length;
+  if (s.shots.length >= ss.planned && S.active < d.series.length - 1) S.active++;
+  if (navigator.vibrate) try { navigator.vibrate(8); } catch {}
+}
+
+async function compress(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const scale = Math.min(1, 2000 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.naturalWidth * scale); c.height = Math.round(img.naturalHeight * scale);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    return await new Promise((res) => c.toBlob((b) => res(b), "image/jpeg", 0.85));
+  } catch { return file; } finally { URL.revokeObjectURL(url); }
+}
+async function addPhotos(files) {
+  for (const f of files) {
+    S.uploads++; render();
+    try {
+      const b = await compress(f);
+      const r = await S.assets.upload(b, { type: b.type && b.type.startsWith("image/") ? b.type : "image/jpeg" });
+      S.draft.photos.push(r.id); S.draft.addedPhotos.push(r.id);
+    } catch (e) {
+      toast(e && e.name === "QuotaExceededError" ? t("storageFull") : t("photoFail"));
+    } finally { S.uploads--; render(); }
+  }
+}
+
+async function save() {
+  const d = S.draft;
+  if (!d.date) return toast(t("addDate"));
+  S.saving = true; render();
+  const body = { date: d.date, preset: d.preset, category: CATS.includes(d.category) ? d.category : "other", location: d.location.trim(), weapon: d.weapon.trim(), conditions: d.conditions.trim(), notes: d.notes.trim(),
+    max: Number(d.max) || 10, x: !!d.x, photos: d.photos.slice(),
+    series: d.series.map((s) => ({ type: s.type || "s10", planned: fixed(s) ? seriesStats(s, 1).planned : Math.max(s.planned, s.shots.length), shots: s.shots.slice(), total: s.total === "" || s.total === null || s.total === undefined ? null : Number(s.total) })),
+    createdAt: d.createdAt || Date.now(), updatedAt: Date.now() };
+  const st = sessionStats(body); body.score = st.total; body.maxScore = st.max; body.pct = Math.round(st.pct * 10) / 10;
+  try {
+    const id = d.id || newId();
+    await dbPut({ id, ...body });
+    for (const pid of d.removedPhotos) { try { await S.assets.delete(pid); } catch {} }
+    S.saving = false; S.draft = null; S.current = { id, ...body }; S.view = "detail"; S.confirmDel = false;
+    await refresh();
+    render(); toast(t("saved")); scrollTo(0, 0);
+  } catch (e) {
+    S.saving = false; render();
+    toast(e && e.name === "QuotaExceededError" ? t("dbFull") : t("saveFail"));
+  }
+}
+async function discard() {
+  const d = S.draft;
+  if (d) for (const id of d.addedPhotos) { try { await S.assets.delete(id); } catch {} }
+  S.draft = null; S.view = S.current ? "detail" : "list"; render(); scrollTo(0, 0);
+}
+async function removeSession() {
+  const x = S.current;
+  try {
+    await dbDel(x.id);
+    for (const id of x.photos || []) { try { await S.assets.delete(id); } catch {} }
+    S.current = null; S.view = "list"; S.confirmDel = false; await refresh(); render(); toast(t("deleted"));
+  } catch { toast(t("delFail")); }
+}
+async function exportCsv() {
+  const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const lines = [t("csvHead").join(",")].concat(S.sessions.map((x) => { const st = sessionStats(x), k = pkey(x);
+    return [x.date, plabel(k), catLabel(x), x.location, x.weapon, x.conditions, st.total, st.max, st.pct.toFixed(1), st.xs, st.shots, x.series.map((s) => seriesStats(s, x.max).total).join(" | "), x.notes].map(q).join(","); }));
+  try { await S.downloads.save({ filename: `${t("csvFile")}-${today()}.csv`, data: "﻿" + lines.join("\n") }); } catch (e) { if (e && e.code !== "declined" && e.code !== "cancelled") toast(t("exportFail")); }
+}
+function openLightbox(i) {
+  const ids = S.current.photos, lb = $("#lightbox");
+  const show = () => { lb.innerHTML = `<div class="lb-bar"><span>${i + 1} / ${ids.length}</span><span style="display:flex;gap:8px">${ids.length > 1 ? `<button data-lb="prev">${t("prev")}</button><button data-lb="next">${t("next")}</button>` : ""}<button data-lb="close">${t("close")}</button></span></div><img data-pid="${ids[i]}" src="${blob(ids[i])}" alt="${t("targetPhoto", i + 1)}">`; };
+  show(); lb.hidden = false;
+  lb.onclick = (e) => { const a = e.target.closest("[data-lb]"); if (!a) return; if (a.dataset.lb === "close") { lb.hidden = true; return; }
+    i = (i + (a.dataset.lb === "next" ? 1 : -1) + ids.length) % ids.length; show(); };
+}
+function setLang(l) {
+  LANG = l; try { localStorage.setItem("scorebook-lang", l); } catch {}
+  if (S.view === "mail" && S.mail && !S.mail.edited) S.mail = buildMail(S.mail.ids, S.mail.to);
+  render();
+}
+
+document.addEventListener("click", (e) => {
+  const key = e.target.closest("[data-key]");
+  if (key && S.view === "edit") {
+    const v = key.dataset.key, s = S.draft.series[S.active];
+    if (v === "back") s.shots.pop(); else addShot(v === "X" ? "X" : Number(v));
+    render(); return;
+  }
+  const a = e.target.closest("[data-act]"); if (!a) return;
+  const act = a.dataset.act, si = Number(a.dataset.s);
+  switch (act) {
+    case "setlang": if (a.dataset.v !== LANG) setLang(a.dataset.v); break;
+    case "new": S.current = null; S.draft = newDraft(); S.active = 0; S.view = "edit"; render(); scrollTo(0, 0); break;
+    case "filter": S.filter = a.dataset.v; render(); break;
+    case "catfilter": { const c = a.dataset.v; if (S.cats.has(c)) { if (S.cats.size > 1) S.cats.delete(c); } else S.cats.add(c);
+      try { localStorage.setItem("scorebook-cats", JSON.stringify([...S.cats])); } catch {} render(); break; }
+    case "cat": if (S.draft) { S.draft.category = a.dataset.v; render(); } break;
+    case "open": S.current = S.sessions.find((x) => x.id === a.dataset.id); S.view = "detail"; S.confirmDel = false; render(); scrollTo(0, 0); break;
+    case "back": S.view = "list"; S.current = null; render(); break;
+    case "edit": { const x = structuredClone(S.current); S.draft = { ...x, addedPhotos: [], removedPhotos: [], conditions: x.conditions || "", notes: x.notes || "", category: catOf(x), location: x.location || "", weapon: x.weapon || "" }; S.active = 0; S.view = "edit"; render(); scrollTo(0, 0); break; }
+    case "cancel": discard(); break;
+    case "save": save(); break;
+    case "del": S.confirmDel = true; render(); break;
+    case "nodel": S.confirmDel = false; render(); break;
+    case "yesdel": removeSession(); break;
+    case "csv": exportCsv(); break;
+    case "backup": makeBackup(false); break;
+    case "mailbackup": makeBackup(true); break;
+    case "bulkdel": if (S.picked.size) { S.bulkAsk = true; render(); } break;
+    case "bulkno": S.bulkAsk = false; render(); break;
+    case "bulkyes": bulkDelete(); break;
+    case "shareall": shareMail(); break;
+    case "select": S.selecting = true; S.bulkAsk = false; S.picked.clear(); render(); break;
+    case "selcancel": S.selecting = false; S.bulkAsk = false; S.picked.clear(); render(); break;
+    case "selall": if (S.picked.size === S.sessions.length) S.picked.clear(); else S.sessions.forEach((x) => S.picked.add(x.id)); render(); break;
+    case "pick": { S.bulkAsk = false; const id = a.dataset.id; S.picked.has(id) ? S.picked.delete(id) : S.picked.add(id); render(); break; }
+    case "mailpicked": S.current = null; startMail([...S.picked]); break;
+    case "mailone": startMail([S.current.id]); break;
+    case "mailback": S.mail = null; S.selecting = false; S.picked.clear(); S.view = S.current ? "detail" : "list"; render(); scrollTo(0, 0); break;
+    case "mailcopy": {
+      const text = (S.mail.to ? `${t("copyTo")}: ${S.mail.to}\n` : "") + `${t("copySubject")}: ${S.mail.subject}\n\n${S.mail.body}`;
+      const fallback = () => { const el = $("#m-body"); el.focus(); el.select(); toast(t("selectedText")); };
+      try { navigator.clipboard.writeText(text).then(() => toast(t("copied")), fallback); } catch { fallback(); }
+      break; }
+    case "mailreport": saveReport(); break;
+    case "zoom": openLightbox(Number(a.dataset.i)); break;
+    case "activate": if (e.target.closest("input,label,select")) break; if (S.active !== si) { S.active = si; render(); } break;
+    case "rmshot": e.stopPropagation(); S.draft.series[si].shots.splice(Number(a.dataset.j), 1); S.active = si; render(); break;
+    case "planned": { e.stopPropagation(); const s = S.draft.series[si]; s.planned = Math.max(1, Math.max(s.planned, s.shots.length) + Number(a.dataset.d)); if (s.planned < s.shots.length) s.shots.length = s.planned; S.active = si; render(); break; }
+    case "addseries": { const d = S.draft; d.series.push(newSeries()); S.active = d.series.length - 1; render(); break; }
+    case "rmseries": e.stopPropagation(); S.draft.series.splice(si, 1); S.active = Math.min(S.active, S.draft.series.length - 1); render(); break;
+    case "rmphoto": { const d = S.draft, id = d.photos.splice(Number(a.dataset.i), 1)[0];
+      if (d.addedPhotos.includes(id)) { d.addedPhotos = d.addedPhotos.filter((p) => p !== id); S.assets.delete(id).catch(() => {}); } else d.removedPhotos.push(id);
+      render(); break; }
+  }
+});
+document.addEventListener("change", (e) => {
+  const el = e.target;
+  if (el.id === "restore-file") { const f = el.files && el.files[0]; el.value = ""; if (f) restoreBackup(f); return; }
+  if (el.id === "cam" || el.id === "pick") { const files = Array.from(el.files || []); el.value = ""; if (files.length) addPhotos(files); return; }
+  if (S.view !== "edit") return;
+  const f = el.dataset.f;
+  if (f === "preset") { applyPreset(el.value); render(); }
+  else if (f === "max") { S.draft.max = Math.max(1, Math.min(100, Number(el.value) || 10)); render(); }
+  else if (f === "x") { S.draft.x = el.value === "1"; if (!S.draft.x) S.draft.series.forEach((s) => (s.shots = s.shots.map((v) => (v === "X" ? 10 : v)))); render(); }
+  else if (el.dataset.stype !== undefined) {
+    const i = Number(el.dataset.stype), s = S.draft.series[i];
+    s.type = el.value;
+    if (fixed(s)) { const n = seriesStats(s, 1).planned; s.planned = n; if (s.shots.length > n) s.shots.length = n; } else s.planned = 10;
+    S.active = i; render();
+  }
+  else if (el.dataset.tot !== undefined) { const s = S.draft.series[Number(el.dataset.tot)]; s.total = el.value === "" ? null : Number(el.value); render(); }
+});
+document.addEventListener("input", (e) => {
+  const m = e.target.dataset && e.target.dataset.m;
+  if (m && S.view === "mail") {
+    S.mail[m] = e.target.value;
+    if (m !== "to") S.mail.edited = true;
+    if (m === "to") { try { localStorage.setItem("scorebook-mailto", e.target.value.trim()); } catch {} }
+    const a = $("#m-open"); if (a) a.href = mailHref();
+    return;
+  }
+  const f = e.target.dataset && e.target.dataset.f;
+  if (S.view === "edit" && f && ["date", "location", "weapon", "conditions", "notes"].includes(f)) S.draft[f] = e.target.value;
+});
+document.addEventListener("submit", (e) => {
+  if (e.target.id !== "kp-form") return;
+  e.preventDefault();
+  const inp = $("#kp-num"), v = Number(inp.value), max = S.draft.max;
+  if (inp.value === "" || !Number.isInteger(v) || v < 0 || v > max) { toast(t("wholeNumber", max)); inp.focus(); return; }
+  addShot(v); render();
+  const next = $("#kp-num"); if (next) next.focus();
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#lightbox").hidden) $("#lightbox").hidden = true; });
+
+boot();
+</script>
+</body>
+</html>
