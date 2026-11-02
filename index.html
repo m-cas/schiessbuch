@@ -157,6 +157,8 @@ button { cursor: pointer; }
 .keypad { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--surface); border-top: 1px solid var(--line);
   padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); padding-top: 8px; box-shadow: 0 -6px 20px rgba(0,0,0,.08); }
 .keypad-in { max-width: 640px; margin: 0 auto; display: grid; gap: 8px; }
+.keypad-top span:first-child { white-space: nowrap; }
+.keypad-top span:last-child { text-align: right; }
 .keypad-top { display: flex; justify-content: space-between; gap: 12px; align-items: center; font-size: 13px; color: var(--muted); }
 .keys { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
 .key { min-height: 48px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); font-family: var(--display); font-size: 24px; font-weight: 600; padding: 0; }
@@ -197,6 +199,7 @@ table { border-collapse: collapse; width: 100%; font-size: 14px; }
 th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
 td.r, th.r { text-align: right; }
+.sdesc { font-family: var(--body); font-size: 14px; font-weight: 600; letter-spacing: 0; color: var(--ink); }
 .shots-line { font-family: var(--display); font-size: 17px; letter-spacing: .04em; color: var(--muted); }
 
 .lightbox { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.92); display: grid; grid-template-rows: auto 1fr; padding: calc(8px + env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
@@ -264,6 +267,8 @@ const STR = {
     "ps.r50": "50 m rifle", "ps.p25": "25 m pistol", "ps.p50": "50 m pistol", "ps.custom": "Custom",
     "f.All": "All", "f.Rifle": "Rifle", "f.Pistol": "Pistol", "f.Custom": "Custom",
     "st.s10": "10 shots", "st.p2s6r4": "12 shots · 2 practice, 6 single, 4 in series", "st.p2s5r23": "12 shots · 2 practice, 5 single, series of 2 and 3",
+    "st.op300": "OP · 20 shots A5/B4", "st.fs300": "Feldschiessen rifle · 18 shots B4",
+    "st.custom": "Custom · choose number of shots",
     "seg.practice": "Practice · not counted", "seg.single": "Single shots", seriesOf: (n) => `Series of ${n}`,
     // bar & list
     none: "None", all: "All", selected: (n) => `${n} selected`, cancel: "Cancel", email: "Email", export: "Export", newBtn: "+ New", back: "Back",
@@ -304,7 +309,7 @@ const STR = {
     photoNote: "Photos are resized to about 2000 px so they stay sharp enough to read every hole.",
     ownerOnly: "", notesPh: "Sight adjustments, what went well, what to work on",
     uploadingPhoto: "Uploading photo…", saveSession: "Save session",
-    seriesN: (n) => `Series ${n}`, removeSeries: (n) => `Remove series ${n}`, seriesFormat: "Series format",
+    seriesN: (n) => `Series ${n}`, removeSeries: (n) => `Remove series ${n}`, seriesFormat: "Series format", sessionDesc: "Description", sessionDescPh: "e.g. kneeling, club match, new sight",
     practiceShot: "Practice shot", shot: "Shot", tapRemove: "Tap to remove", practiceSum: (n) => `Practice: ${n} (not in total)`,
     countedShots: (n) => `${n} counted shots`, shotsLbl: "Shots", fewer: "Fewer shots", more: "More shots", orTotal: "or total",
     // keypad
@@ -331,7 +336,7 @@ const STR = {
     preparing: "Preparing report…", saveReport: "Save report with photos",
     reportNote: (n) => `Saves one file with the results and all ${n} target photos, to attach to an email or keep.`,
     copyTo: "To", copySubject: "Subject", reportFile: "shooting-results", csvFile: "scorebook",
-    csvHead: ["date", "discipline", "category", "range", "weapon", "conditions", "score", "max", "percent", "inner_tens", "shots", "series_scores", "notes"],
+    csvHead: ["date", "discipline", "category", "description", "range", "weapon", "conditions", "score", "max", "percent", "inner_tens", "shots", "series_scores", "notes"],
     language: "Language",
   },
   de: {
@@ -341,6 +346,8 @@ const STR = {
     "ps.r50": "Gewehr 50 m", "ps.p25": "Pistole 25 m", "ps.p50": "Pistole 50 m", "ps.custom": "Eigene",
     "f.All": "Alle", "f.Rifle": "Gewehr", "f.Pistol": "Pistole", "f.Custom": "Eigene",
     "st.s10": "10 Schüsse", "st.p2s6r4": "12 Schüsse · 2 Probe, 6 Einzel, 4 Serie", "st.p2s5r23": "12 Schüsse · 2 Probe, 5 Einzel, Serien zu 2 und 3",
+    "st.op300": "OP · 20 Schüsse A5/B4", "st.fs300": "Feldschiessen Gewehr · 18 Schüsse B4",
+    "st.custom": "Eigene · Anzahl Schüsse wählen",
     "seg.practice": "Probe · zählt nicht", "seg.single": "Einzelschüsse", seriesOf: (n) => `Serie zu ${n}`,
     none: "Keine", all: "Alle", selected: (n) => `${n} ausgewählt`, cancel: "Abbrechen", email: "E-Mail", export: "Export", newBtn: "+ Neu", back: "Zurück",
     loading: "Schiessbuch wird geladen…", signInH: "Speicher nicht verfügbar", signInP: "Dieser Browser erlaubt keine Datenspeicherung auf dem Gerät. Schalte das private Surfen aus und öffne die App erneut.",
@@ -378,7 +385,7 @@ const STR = {
     photoNote: "Fotos werden auf etwa 2000 px verkleinert und bleiben scharf genug, um jedes Loch zu erkennen.",
     ownerOnly: "", notesPh: "Visierkorrekturen, was gut lief, woran arbeiten",
     uploadingPhoto: "Foto wird hochgeladen…", saveSession: "Übung speichern",
-    seriesN: (n) => `Serie ${n}`, removeSeries: (n) => `Serie ${n} entfernen`, seriesFormat: "Serienformat",
+    seriesN: (n) => `Serie ${n}`, removeSeries: (n) => `Serie ${n} entfernen`, seriesFormat: "Serienformat", sessionDesc: "Beschreibung", sessionDescPh: "z. B. kniend, Vereinsstich, neues Visier",
     practiceShot: "Probeschuss", shot: "Schuss", tapRemove: "Tippen zum Entfernen", practiceSum: (n) => `Probe: ${n} (nicht im Total)`,
     countedShots: (n) => `${n} gezählte Schüsse`, shotsLbl: "Schüsse", fewer: "Weniger Schüsse", more: "Mehr Schüsse", orTotal: "oder Total",
     removeLast: "Letzten Schuss entfernen", shotValue: (m) => `Schusswert, 0 bis ${m}`, add: "Hinzufügen", complete: "vollständig",
@@ -402,7 +409,7 @@ const STR = {
     preparing: "Bericht wird erstellt…", saveReport: "Bericht mit Fotos speichern",
     reportNote: (n) => `Speichert eine Datei mit den Resultaten und allen ${n} Scheibenfotos, zum Anhängen an eine E-Mail oder zum Aufbewahren.`,
     copyTo: "An", copySubject: "Betreff", reportFile: "schiessresultate", csvFile: "schiessbuch",
-    csvHead: ["datum", "disziplin", "kategorie", "schiessstand", "waffe", "bedingungen", "resultat", "maximum", "prozent", "innenzehner", "schuesse", "serien", "notizen"],
+    csvHead: ["datum", "disziplin", "kategorie", "beschreibung", "schiessstand", "waffe", "bedingungen", "resultat", "maximum", "prozent", "innenzehner", "schuesse", "serien", "notizen"],
     language: "Sprache",
   },
 };
@@ -428,20 +435,33 @@ const FILTERS = ["All", "Rifle", "Pistol", "Custom"];
 const CATS = ["training", "championship", "other"];
 const catOf = (x) => (CATS.includes(x.category) ? x.category : /training/i.test(x.program || "") ? "training" : "other");
 const catLabel = (x) => t("cat." + catOf(x));
+const descOf = (x) => (x.desc != null ? x.desc : (x.series || []).map((s) => s.desc).filter(Boolean).join(" · "));
 function loadCats() { try { const v = JSON.parse(localStorage.getItem("scorebook-cats")); if (Array.isArray(v) && v.length && v.every((c) => CATS.includes(c))) return new Set(v); } catch {} return new Set(CATS); }
 const fmtScore = (v) => (Math.round(v * 10) / 10).toLocaleString(t("locale"), { maximumFractionDigits: 1 });
+const A5 = { max: 5, tgt: "A5" }, B4 = { max: 4, tgt: "B4" };
 const SERIES_TYPES = {
   s10:     { segs: [{ k: "single", n: 10 }] },
   p2s6r4:  { segs: [{ k: "practice", n: 2 }, { k: "single", n: 6 }, { k: "series", n: 4 }] },
   p2s5r23: { segs: [{ k: "practice", n: 2 }, { k: "single", n: 5 }, { k: "series", n: 2 }, { k: "series", n: 3 }] },
+  op300:   { segs: [{ k: "single", n: 5, ...A5 }, { k: "single", n: 5, ...B4 }, { k: "series", n: 2, ...B4 }, { k: "series", n: 3, ...B4 }, { k: "series", n: 5, ...B4 }] },
+  fs300:   { segs: [{ k: "single", n: 6, ...B4 }, { k: "series", n: 3, ...B4 }, { k: "series", n: 3, ...B4 }, { k: "series", n: 6, ...B4 }] },
+  custom:  { free: true },
 };
 const stlabel = (k) => t("st." + k);
 const newSeries = () => ({ type: "s10", planned: 10, shots: [], total: null });
-const fixed = (s) => s.type && s.type !== "s10" && SERIES_TYPES[s.type];
+// Older sessions stored a "10 shots" series with a different count; treat those as custom.
+function stype(s) {
+  const ty = SERIES_TYPES[s.type] ? s.type : "s10";
+  if (ty === "s10" && Math.max(s.planned || 10, s.shots.length) !== 10) return "custom";
+  return ty;
+}
+const fixed = (s) => !SERIES_TYPES[stype(s)].free;
 function segments(s) {
-  if (fixed(s)) { let start = 0; return SERIES_TYPES[s.type].segs.map((g) => { const r = { ...g, start }; start += g.n; return r; }); }
+  if (fixed(s)) { let start = 0; return SERIES_TYPES[stype(s)].segs.map((g) => { const r = { ...g, start }; start += g.n; return r; }); }
   return [{ k: "single", n: Math.max(s.planned || 0, s.shots.length), start: 0 }];
 }
+const segAt = (s, j) => segments(s).find((g) => j >= g.start && j < g.start + g.n);
+const segMax = (s, j, max) => { const g = segAt(s, j); return g && g.max ? g.max : max; };
 const isPractice = (s, j) => segments(s).some((g) => g.k === "practice" && j >= g.start && j < g.start + g.n);
 
 const S = { db: null, assets: null, downloads: null, uid: null, sessions: [], loaded: false, slow: false, error: null,
@@ -505,7 +525,8 @@ function seriesStats(s, max) {
   let sum = 0, x = 0, practice = 0;
   s.shots.forEach((v, j) => { if (isPractice(s, j)) practice += shotVal(v); else { sum += shotVal(v); if (v === "X") x++; } });
   const counted = planned - practiceN;
-  return { total: manual ? Number(s.total) : sum, max: counted * max, x, planned, counted, practice, practiceN, manual };
+  const maxSum = segs.filter((g) => g.k !== "practice").reduce((a, g) => a + g.n * (g.max || max), 0);
+  return { total: manual ? Number(s.total) : sum, max: maxSum, x, planned, counted, practice, practiceN, manual };
 }
 function sessionStats(x) {
   let total = 0, max = 0, xs = 0, shots = 0;
@@ -681,7 +702,7 @@ function cardView(x) {
   return `<button class="card" data-act="${S.selecting ? "pick" : "open"}" data-id="${esc(x.id)}"${S.selecting ? ` aria-pressed="${on}"` : ""}>
     ${S.selecting ? `<span class="tick" aria-hidden="true">${on ? `<svg width="14" height="14" viewBox="0 0 14 14"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2"/></svg>` : ""}</span>` : ""}
     <span class="thumb">${th}</span>
-    <span class="meta"><span class="t">${esc(catLabel(x))}</span>
+    <span class="meta"><span class="t">${esc(catLabel(x))}${descOf(x) ? ` · ${esc(descOf(x))}` : ""}</span>
       <span class="s">${esc(fmtDate(x.date))} · ${esc(pshort(k))}${x.location ? " · " + esc(x.location) : ""}</span>
       <span class="s">${t("shotsN", st.shots)}${x.photos && x.photos.length ? ` · ${t("photosN", x.photos.length)}` : ""}</span></span>
     <span class="score"><span class="big num">${st.total}</span><br><span class="of num">/ ${st.max}${st.xs ? ` · ${st.xs}X` : ""}</span></span>
@@ -691,7 +712,7 @@ function cardView(x) {
 function detailView() {
   const x = S.current; if (!x) return "";
   const st = sessionStats(x), k = pkey(x), np = (x.photos || []).length;
-  return `<div style="display:grid;gap:4px"><span class="eyebrow">${esc(fmtDate(x.date))}</span><h2 style="margin:0;font-size:22px">${esc(catLabel(x))} · ${esc(pshort(k))}</h2></div>
+  return `<div style="display:grid;gap:4px"><span class="eyebrow">${esc(fmtDate(x.date))}</span><h2 style="margin:0;font-size:22px">${esc(catLabel(x))} · ${esc(pshort(k))}</h2>${descOf(x) ? `<p style="margin:0;font-size:16px">${esc(descOf(x))}</p>` : ""}</div>
     <div class="hero-score"><span class="big num">${st.total}<small> / ${st.max}</small></span>
       <span style="text-align:right"><span class="pct-pill" style="font-size:14px">${st.pct.toFixed(1)}%</span>${st.xs ? `<br><span class="note">${t("innerTens", st.xs)}</span>` : ""}</span></div>
     <dl class="kv"><dt>${t("discipline")}</dt><dd>${esc(plabel(k))}</dd><dt>${t("scoring")}</dt><dd>${t("scoringV", x.max, x.x)}</dd>
@@ -699,7 +720,7 @@ function detailView() {
       ${x.conditions ? `<dt>${t("conditions")}</dt><dd>${esc(x.conditions)}</dd>` : ""}</dl>
     <div class="section-h"><h2>${t("series")}</h2><span class="note">${t("shotsN", st.shots)}</span></div>
     <div class="tbl-wrap"><table><thead><tr><th>#</th><th>${t("shotsH")}</th><th class="r">${t("score")}</th></tr></thead><tbody>
-      ${x.series.map((s, i) => { const ss = seriesStats(s, x.max); return `<tr><td class="num">${i + 1}</td><td class="shots-line">${s.shots.length ? segments(s).map((g) => { const v = s.shots.slice(g.start, g.start + g.n); if (!v.length) return ""; return g.k === "practice" ? `<span title="${t("practiceTitle")}">(${esc(v.join(" "))})</span>` : esc(v.join(" ")); }).filter(Boolean).join(" · ") : (ss.manual ? t("totalEntered") : "—")}${fixed(s) ? `<br><span class="note" style="font-family:var(--body);letter-spacing:0">${esc(stlabel(s.type))}</span>` : ""}</td><td class="r num" style="font-size:18px;font-weight:600">${ss.total}<span class="note"> / ${ss.max}</span></td></tr>`; }).join("")}
+      ${x.series.map((s, i) => { const ss = seriesStats(s, x.max); return `<tr><td class="num">${i + 1}</td><td class="shots-line">${s.shots.length ? segments(s).map((g) => { const v = s.shots.slice(g.start, g.start + g.n); if (!v.length) return ""; return g.k === "practice" ? `<span title="${t("practiceTitle")}">(${esc(v.join(" "))})</span>` : esc(v.join(" ")); }).filter(Boolean).join(" · ") : (ss.manual ? t("totalEntered") : "—")}${stype(s) !== "s10" ? `<br><span class="note" style="font-family:var(--body);letter-spacing:0">${esc(stlabel(stype(s)))}</span>` : ""}</td><td class="r num" style="font-size:18px;font-weight:600">${ss.total}<span class="note"> / ${ss.max}</span></td></tr>`; }).join("")}
     </tbody></table></div>
     ${x.notes ? `<div class="section-h"><h2>${t("notes")}</h2></div><p style="margin:0;white-space:pre-wrap">${esc(x.notes)}</p>` : ""}
     <div class="section-h"><h2>${t("targets")}</h2><span class="note">${t("photosN", np)}</span></div>
@@ -718,6 +739,7 @@ function editView() {
     ${d.preset === "custom" ? `<div class="row2"><div class="field"><label for="f-max">${t("maxPerShot")}</label><input id="f-max" type="number" inputmode="numeric" min="1" max="100" value="${d.max}" data-f="max"></div>
       <div class="field"><label for="f-x">${t("innerTen")}</label><select id="f-x" data-f="x"><option value="0"${d.x ? "" : " selected"}>${t("notUsed")}</option><option value="1"${d.x ? " selected" : ""}>${t("countX")}</option></select></div></div>` : ""}
     <div class="field"><span class="flabel" id="cat-l">${t("category")}</span><div class="seg3" role="group" aria-labelledby="cat-l">${CATS.map((c) => `<button type="button" data-act="cat" data-v="${c}" aria-pressed="${d.category === c}">${t("cat." + c)}</button>`).join("")}</div></div>
+    <div class="field"><label for="f-desc">${t("sessionDesc")}</label><input id="f-desc" type="text" maxlength="120" placeholder="${t("sessionDescPh")}" value="${esc(d.desc || "")}" data-f="desc"></div>
     <div class="row2">
       <div class="field"><label for="f-loc">${t("range")}</label><input id="f-loc" type="text" placeholder="${t("rangePh")}" value="${esc(d.location)}" data-f="location"></div>
       <div class="field"><label for="f-weapon">${t("weapon")}</label><input id="f-weapon" type="text" placeholder="${t("weaponPh")}" value="${esc(d.weapon)}" data-f="weapon"></div>
@@ -752,12 +774,13 @@ function shotsText(s) {
 function sessionText(x) {
   const st = sessionStats(x), k = pkey(x);
   const L = [`${fmtDate(x.date)} — ${catLabel(x)}`, `${t("mDiscipline")}: ${plabel(k)}`];
+  if (descOf(x)) L.push(`${t("sessionDesc")}: ${descOf(x)}`);
   if (x.location) L.push(`${t("range")}: ${x.location}`);
   if (x.weapon) L.push(`${t("weapon")}: ${x.weapon}`);
   if (x.conditions) L.push(`${t("conditions")}: ${x.conditions}`);
   L.push(`${t("mScore")}: ${st.total} / ${st.max} (${st.pct.toFixed(1)}%)${st.xs ? ` · ${st.xs} X` : ""}`);
   x.series.forEach((s, i) => { const ss = seriesStats(s, x.max);
-    L.push(`  ${t("seriesN", i + 1)}${fixed(s) ? ` [${stlabel(s.type)}]` : ""}: ${s.shots.length ? shotsText(s) : ss.manual ? t("totalOnly") : "—"} = ${ss.total}/${ss.max}${ss.practiceN && s.shots.length ? ` (${t("mPractice", ss.practice)})` : ""}`); });
+    L.push(`  ${t("seriesN", i + 1)}${stype(s) !== "s10" ? ` [${stlabel(stype(s))}]` : ""}: ${s.shots.length ? shotsText(s) : ss.manual ? t("totalOnly") : "—"} = ${ss.total}/${ss.max}${ss.practiceN && s.shots.length ? ` (${t("mPractice", ss.practice)})` : ""}`); });
   if (x.notes) L.push(`${t("notes")}: ${x.notes}`);
   if ((x.photos || []).length) L.push(`${t("mPhotos")}: ${x.photos.length}`);
   return L.join("\n");
@@ -820,10 +843,10 @@ async function saveReport() {
       const st = sessionStats(x), k = pkey(x);
       const imgs = [];
       for (const id of x.photos || []) { try { imgs.push(await toDataUrl(id)); } catch { missing++; } }
-      parts.push(`<section><h2>${esc(fmtDate(x.date))} · ${esc(catLabel(x))}</h2>
+      parts.push(`<section><h2>${esc(fmtDate(x.date))} · ${esc(catLabel(x))}${descOf(x) ? ` · ${esc(descOf(x))}` : ""}</h2>
         <p class="score">${st.total} <small>/ ${st.max} · ${st.pct.toFixed(1)}%${st.xs ? ` · ${st.xs} X` : ""}</small></p>
         <p class="meta">${esc([plabel(k), x.location, x.weapon, x.conditions].filter(Boolean).join(" · "))}</p>
-        <table><tr><th>${t("series")}</th><th>${t("shotsH")}</th><th>${t("score")}</th></tr>${x.series.map((s, i) => { const ss = seriesStats(s, x.max); return `<tr><td>${i + 1}${fixed(s) ? `<br><small>${esc(stlabel(s.type))}</small>` : ""}</td><td>${esc(s.shots.length ? shotsText(s) : ss.manual ? t("totalOnly") : "—")}</td><td>${ss.total} / ${ss.max}</td></tr>`; }).join("")}</table>
+        <table><tr><th>${t("series")}</th><th>${t("shotsH")}</th><th>${t("score")}</th></tr>${x.series.map((s, i) => { const ss = seriesStats(s, x.max); return `<tr><td>${i + 1}${stype(s) !== "s10" ? `<br><small>${esc(stlabel(stype(s)))}</small>` : ""}</td><td>${esc(s.shots.length ? shotsText(s) : ss.manual ? t("totalOnly") : "—")}</td><td>${ss.total} / ${ss.max}</td></tr>`; }).join("")}</table>
         ${x.notes ? `<p><b>${t("notes")}:</b> ${esc(x.notes)}</p>` : ""}
         ${imgs.map((u, i) => `<img src="${u}" alt="${t("targetPhoto", i + 1)}">`).join("")}</section>`);
     }
@@ -842,16 +865,16 @@ function seriesView(s, i) {
   const chip = (j) => {
     const v = s.shots[j], p = isPractice(s, j);
     if (v === undefined) return `<span class="shot slot${p ? " prac" : ""}${active && j === s.shots.length ? " next" : ""}" aria-hidden="true">${p ? "P" : j + 1 - ss.practiceN}</span>`;
-    return `<button class="shot${p ? " prac" : ""}${!p && v === "X" ? " x" : ""}${!p && v !== "X" && Number(v) === d.max ? " top" : ""}" data-act="rmshot" data-s="${i}" data-j="${j}" aria-label="${p ? t("practiceShot") : t("shot")} ${v}. ${t("tapRemove")}">${v}</button>`;
+    return `<button class="shot${p ? " prac" : ""}${!p && v === "X" ? " x" : ""}${!p && v !== "X" && Number(v) === segMax(s, j, d.max) ? " top" : ""}" data-act="rmshot" data-s="${i}" data-j="${j}" aria-label="${p ? t("practiceShot") : t("shot")} ${v}. ${t("tapRemove")}">${v}</button>`;
   };
   const groups = segs.map((g) => {
     const chips = []; for (let j = g.start; j < g.start + g.n; j++) chips.push(chip(j));
-    return `<div class="seg"><span class="seg-l">${segs.length > 1 ? (g.k === "series" ? t("seriesOf", g.n) : t("seg." + g.k)) : ""}</span><div class="shots">${chips.join("")}</div></div>`;
+    return `<div class="seg"><span class="seg-l">${segs.length > 1 ? (g.k === "series" ? t("seriesOf", g.n) : t("seg." + g.k)) + (g.tgt ? " · " + g.tgt : "") : ""}</span><div class="shots">${chips.join("")}</div></div>`;
   }).join("");
   return `<div class="series${active ? " active" : ""}" data-act="activate" data-s="${i}">
     <div class="series-head"><span class="name">${t("seriesN", i + 1)}</span><span class="tot num">${ss.total}<small> / ${ss.max}</small></span>
       ${d.series.length > 1 ? `<button class="btn ghost iconbtn" data-act="rmseries" data-s="${i}" aria-label="${t("removeSeries", i + 1)}">×</button>` : ""}</div>
-    <div class="field"><label for="st-${i}" class="visually-hidden">${t("seriesFormat")}</label><select id="st-${i}" data-stype="${i}">${Object.keys(SERIES_TYPES).map((k) => `<option value="${k}"${(s.type || "s10") === k ? " selected" : ""}>${esc(stlabel(k))}</option>`).join("")}</select></div>
+    <div class="field"><label for="st-${i}" class="visually-hidden">${t("seriesFormat")}</label><select id="st-${i}" data-stype="${i}">${Object.keys(SERIES_TYPES).map((k) => `<option value="${k}"${stype(s) === k ? " selected" : ""}>${esc(stlabel(k))}</option>`).join("")}</select></div>
     ${groups}
     ${ss.practiceN && s.shots.some((v, j) => isPractice(s, j)) ? `<p class="note" style="margin:0">${t("practiceSum", ss.practice)}</p>` : ""}
     <div class="series-tools">
@@ -864,16 +887,17 @@ function renderKeypad() {
   const k = $("#keypad");
   if (S.view !== "edit") { k.hidden = true; return; }
   const d = S.draft, keys = [];
-  const big = d.max > 20;
-  if (!big) { if (d.x) keys.push(`<button class="key x" data-key="X">X</button>`); for (let v = d.max; v >= 0; v--) keys.push(`<button class="key" data-key="${v}">${v}</button>`); }
-  keys.push(`<button class="key back" data-key="back" aria-label="${t("removeLast")}">⌫</button>`);
   const s = d.series[S.active], ss = seriesStats(s, d.max);
-  const entry = big ? `<form class="numentry" id="kp-form"><label class="visually-hidden" for="kp-num">${t("shotValue", d.max)}</label>
-      <input id="kp-num" type="number" inputmode="numeric" min="0" max="${d.max}" step="1" placeholder="0–${d.max}" autocomplete="off">
+  const nj0 = s.shots.length, seg0 = segAt(s, nj0), m = seg0 && seg0.max ? seg0.max : d.max;
+  const big = m > 20, allowX = d.x && !(seg0 && seg0.max);
+  if (!big) { if (allowX) keys.push(`<button class="key x" data-key="X">X</button>`); for (let v = m; v >= 0; v--) keys.push(`<button class="key" data-key="${v}">${v}</button>`); }
+  keys.push(`<button class="key back" data-key="back" aria-label="${t("removeLast")}">⌫</button>`);
+  const entry = big ? `<form class="numentry" id="kp-form"><label class="visually-hidden" for="kp-num">${t("shotValue", m)}</label>
+      <input id="kp-num" type="number" inputmode="numeric" min="0" max="${m}" step="1" placeholder="0–${m}" autocomplete="off">
       <button class="key add" type="submit">${t("add")}</button><button class="key back" type="button" data-key="back" aria-label="${t("removeLast")}">⌫</button></form>` : `<div class="keys">${keys.join("")}</div>`;
   const nj = s.shots.length, full = fixed(s) && nj >= ss.planned;
-  const where = full ? t("complete") : isPractice(s, nj) ? t("practiceShotN", nj + 1) : t("shotN", nj + 1 - Math.min(ss.practiceN, nj));
-  k.innerHTML = `<div class="keypad-in"><div class="keypad-top"><span>${t("seriesN", S.active + 1)} · ${where}</span><span>${big ? t("typeThenAdd", d.max) : t("tapToRemove")}</span></div>
+  const where = (full ? t("complete") : isPractice(s, nj) ? t("practiceShotN", nj + 1) : t("shotN", nj + 1 - Math.min(ss.practiceN, nj))) + (!full && seg0 && seg0.tgt ? " · " + seg0.tgt : "");
+  k.innerHTML = `<div class="keypad-in"><div class="keypad-top"><span>${t("seriesN", S.active + 1)} · ${where}</span><span>${big ? t("typeThenAdd", m) : t("tapToRemove")}</span></div>
     ${entry}</div>`;
   k.hidden = false;
 }
@@ -884,7 +908,7 @@ function newDraft() {
   let preset = last ? pkey(last) : "r300a10";
   if (PRESETS[preset].hidden) preset = "r300a10";
   const p = PRESETS[preset];
-  return { id: null, date: today(), preset, category: last ? catOf(last) : "training", location: last ? last.location || "" : "", weapon: last ? last.weapon || "" : "", conditions: "", notes: "",
+  return { id: null, date: today(), preset, category: last ? catOf(last) : "training", desc: "", location: last ? last.location || "" : "", weapon: last ? last.weapon || "" : "", conditions: "", notes: "",
     max: preset === "custom" && last ? last.max : p.max, x: preset === "custom" && last ? last.x : p.x,
     series: [newSeries()], photos: [], addedPhotos: [], removedPhotos: [] };
 }
@@ -892,7 +916,7 @@ function applyPreset(key) {
   const d = S.draft, p = PRESETS[key];
   const empty = d.series.every((s) => !s.shots.length && (s.total === null || s.total === ""));
   d.preset = key;
-  if (key !== "custom") { d.max = p.max; d.x = p.x; d.series.forEach((s) => (s.shots = s.shots.filter((v) => v !== "X" || p.x).map((v) => (v === "X" ? v : Math.min(Number(v), p.max))))); }
+  if (key !== "custom") { d.max = p.max; d.x = p.x; d.series.forEach((s) => (s.shots = s.shots.filter((v) => v !== "X" || p.x).map((v, j) => (v === "X" ? v : Math.min(Number(v), segMax(s, j, p.max)))))); }
   if (empty) d.series = [newSeries()];
   S.active = 0;
 }
@@ -936,7 +960,7 @@ async function save() {
   S.saving = true; render();
   const body = { date: d.date, preset: d.preset, category: CATS.includes(d.category) ? d.category : "other", location: d.location.trim(), weapon: d.weapon.trim(), conditions: d.conditions.trim(), notes: d.notes.trim(),
     max: Number(d.max) || 10, x: !!d.x, photos: d.photos.slice(),
-    series: d.series.map((s) => ({ type: s.type || "s10", planned: fixed(s) ? seriesStats(s, 1).planned : Math.max(s.planned, s.shots.length), shots: s.shots.slice(), total: s.total === "" || s.total === null || s.total === undefined ? null : Number(s.total) })),
+    desc: (d.desc || "").trim(), series: d.series.map((s) => ({ type: stype(s), planned: fixed(s) ? seriesStats(s, 1).planned : Math.max(s.planned, s.shots.length), shots: s.shots.slice(), total: s.total === "" || s.total === null || s.total === undefined ? null : Number(s.total) })),
     createdAt: d.createdAt || Date.now(), updatedAt: Date.now() };
   const st = sessionStats(body); body.score = st.total; body.maxScore = st.max; body.pct = Math.round(st.pct * 10) / 10;
   try {
@@ -967,7 +991,7 @@ async function removeSession() {
 async function exportCsv() {
   const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = [t("csvHead").join(",")].concat(S.sessions.map((x) => { const st = sessionStats(x), k = pkey(x);
-    return [x.date, plabel(k), catLabel(x), x.location, x.weapon, x.conditions, st.total, st.max, st.pct.toFixed(1), st.xs, st.shots, x.series.map((s) => seriesStats(s, x.max).total).join(" | "), x.notes].map(q).join(","); }));
+    return [x.date, plabel(k), catLabel(x), descOf(x), x.location, x.weapon, x.conditions, st.total, st.max, st.pct.toFixed(1), st.xs, st.shots, x.series.map((s) => seriesStats(s, x.max).total).join(" | "), x.notes].map(q).join(","); }));
   try { await S.downloads.save({ filename: `${t("csvFile")}-${today()}.csv`, data: "﻿" + lines.join("\n") }); } catch (e) { if (e && e.code !== "declined" && e.code !== "cancelled") toast(t("exportFail")); }
 }
 function openLightbox(i) {
@@ -987,7 +1011,7 @@ document.addEventListener("click", (e) => {
   const key = e.target.closest("[data-key]");
   if (key && S.view === "edit") {
     const v = key.dataset.key, s = S.draft.series[S.active];
-    if (v === "back") s.shots.pop(); else addShot(v === "X" ? "X" : Number(v));
+    if (v === "back") s.shots.pop(); else { const g = segAt(s, s.shots.length); addShot(v === "X" ? (g && g.max ? g.max : "X") : Number(v)); }
     render(); return;
   }
   const a = e.target.closest("[data-act]"); if (!a) return;
@@ -1001,7 +1025,7 @@ document.addEventListener("click", (e) => {
     case "cat": if (S.draft) { S.draft.category = a.dataset.v; render(); } break;
     case "open": S.current = S.sessions.find((x) => x.id === a.dataset.id); S.view = "detail"; S.confirmDel = false; render(); scrollTo(0, 0); break;
     case "back": S.view = "list"; S.current = null; render(); break;
-    case "edit": { const x = structuredClone(S.current); S.draft = { ...x, addedPhotos: [], removedPhotos: [], conditions: x.conditions || "", notes: x.notes || "", category: catOf(x), location: x.location || "", weapon: x.weapon || "" }; S.active = 0; S.view = "edit"; render(); scrollTo(0, 0); break; }
+    case "edit": { const x = structuredClone(S.current); S.draft = { ...x, addedPhotos: [], removedPhotos: [], conditions: x.conditions || "", notes: x.notes || "", category: catOf(x), desc: descOf(x), location: x.location || "", weapon: x.weapon || "" }; S.active = 0; S.view = "edit"; render(); scrollTo(0, 0); break; }
     case "cancel": discard(); break;
     case "save": save(); break;
     case "del": S.confirmDel = true; render(); break;
@@ -1050,7 +1074,8 @@ document.addEventListener("change", (e) => {
   else if (el.dataset.stype !== undefined) {
     const i = Number(el.dataset.stype), s = S.draft.series[i];
     s.type = el.value;
-    if (fixed(s)) { const n = seriesStats(s, 1).planned; s.planned = n; if (s.shots.length > n) s.shots.length = n; } else s.planned = 10;
+    if (fixed(s)) { const n = seriesStats(s, 1).planned; s.planned = n; if (s.shots.length > n) s.shots.length = n; s.shots = s.shots.map((v, j) => (v === "X" ? v : Math.min(Number(v), segMax(s, j, S.draft.max)))); }
+    else s.planned = Math.max(s.shots.length, s.planned || 10);
     S.active = i; render();
   }
   else if (el.dataset.tot !== undefined) { const s = S.draft.series[Number(el.dataset.tot)]; s.total = el.value === "" ? null : Number(el.value); render(); }
@@ -1065,12 +1090,12 @@ document.addEventListener("input", (e) => {
     return;
   }
   const f = e.target.dataset && e.target.dataset.f;
-  if (S.view === "edit" && f && ["date", "location", "weapon", "conditions", "notes"].includes(f)) S.draft[f] = e.target.value;
+  if (S.view === "edit" && f && ["date", "desc", "location", "weapon", "conditions", "notes"].includes(f)) S.draft[f] = e.target.value;
 });
 document.addEventListener("submit", (e) => {
   if (e.target.id !== "kp-form") return;
   e.preventDefault();
-  const inp = $("#kp-num"), v = Number(inp.value), max = S.draft.max;
+  const cs = S.draft.series[S.active], inp = $("#kp-num"), v = Number(inp.value), max = segMax(cs, cs.shots.length, S.draft.max);
   if (inp.value === "" || !Number.isInteger(v) || v < 0 || v > max) { toast(t("wholeNumber", max)); inp.focus(); return; }
   addShot(v); render();
   const next = $("#kp-num"); if (next) next.focus();
