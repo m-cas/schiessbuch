@@ -30,6 +30,7 @@
   --danger: #a3261d;
   --danger-soft: #f6dedb;
   --gold: #a87a12;
+  --y0: #2c5a38; --y1: #b0362c; --y2: #2f6db3; --y3: #a87a12; --y4: #6b4fa3; --y5: #3d8a8f;
   --display: "Avenir Next Condensed", "Roboto Condensed", "Arial Narrow", sans-serif-condensed, sans-serif;
   --body: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 }
@@ -37,13 +38,13 @@
   :root:not([data-theme="light"]) {
     --bg: #111512; --surface: #1a201b; --sunken: #232a24; --ink: #e8ece6; --muted: #9aa49a;
     --line: #2f3830; --accent: #7fbf8c; --accent-ink: #0f1a12; --accent-soft: #24382a;
-    --ring: #e8ece6; --danger: #f08a80; --danger-soft: #3a2220; --gold: #e2b54a; color-scheme: dark;
+    --ring: #e8ece6; --danger: #f08a80; --danger-soft: #3a2220; --gold: #e2b54a; --y0: #7fbf8c; --y1: #f08a80; --y2: #7fb0ea; --y3: #e2b54a; --y4: #b9a1e6; --y5: #7cc8cc; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #111512; --surface: #1a201b; --sunken: #232a24; --ink: #e8ece6; --muted: #9aa49a;
   --line: #2f3830; --accent: #7fbf8c; --accent-ink: #0f1a12; --accent-soft: #24382a;
-  --ring: #e8ece6; --danger: #f08a80; --danger-soft: #3a2220; --gold: #e2b54a; color-scheme: dark;
+  --ring: #e8ece6; --danger: #f08a80; --danger-soft: #3a2220; --gold: #e2b54a; --y0: #7fbf8c; --y1: #f08a80; --y2: #7fb0ea; --y3: #e2b54a; --y4: #b9a1e6; --y5: #7cc8cc; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -85,7 +86,15 @@ button { cursor: pointer; }
 .stat .v small { font-size: 18px; color: var(--muted); }
 
 .trend { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 12px 6px; }
-.trend svg { display: block; width: 100%; height: 130px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 4px 2px 6px; font-size: 13px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.legend i { width: 14px; height: 4px; border-radius: 2px; display: inline-block; }
+.legend b { font-variant-numeric: tabular-nums; }
+.tiefrow { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.tiefrow label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.tiefrow input { width: 96px; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; min-height: 44px; font-size: 18px; font-family: var(--display); font-weight: 600; text-align: center; }
+.ts { font-size: 12px; color: var(--muted); }
+.trend svg { display: block; width: 100%; height: auto; }
 .trend-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 
 .list { display: grid; gap: 10px; }
@@ -293,7 +302,9 @@ const STR = {
     slow: "Still connecting. What you see may be out of date.", emptyH: "No sessions yet",
     emptyP: "Record your first range session: pick the discipline, tap in each shot, and photograph the paper target.", newSession: "+ New session",
     category: "Category", "cat.training": "Training", "cat.championship": "Championship", "cat.other": "Other", catFilterLabel: "Filter by category",
-    avg: "Average", trendScore: (n) => `Score · last ${n} sessions`, trendScoreAria: "Score trend",
+    avg: "Average", trendYears: "Score by year", trendNorm: "All results converted to 10 shots on A10 <span style=\"white-space:nowrap\">(0–100)</span>.", yearAvg: (a, n) => `Ø ${a} · ${n} ${n === 1 ? "session" : "sessions"}`,
+    tief: "Tiefschuss", tiefShort: "TS", tiefErr: "Tiefschuss must be a whole number from 0 to 100.",
+    trendScore: (n) => `Score · last ${n} sessions`, trendScoreAria: "Score trend",
     mixNote: "These sessions use different targets, so the average mixes scales. Pick a discipline above for a fair comparison.",
     sessions: "Sessions", avg10: "Avg · last 10", best: "Best", noneInFilter: (f) => `No ${f.toLowerCase()} sessions yet.`,
     trend: (n) => `Score % · last ${n} sessions`, trendAria: "Score percentage trend",
@@ -340,7 +351,7 @@ const STR = {
     preparing: "Preparing report…", saveReport: "Save report with photos",
     reportNote: (n) => `Saves one file with the results and all ${n} target photos, to attach to an email or keep.`,
     copyTo: "To", copySubject: "Subject", reportFile: "shooting-results", csvFile: "scorebook",
-    csvHead: ["date", "discipline", "category", "description", "range", "weapon", "conditions", "score", "max", "percent", "inner_tens", "shots", "series_scores", "notes"],
+    csvHead: ["date", "discipline", "category", "description", "range", "weapon", "conditions", "score", "max", "percent", "inner_tens", "tiefschuss", "shots", "series_scores", "notes"],
     language: "Language",
     chromeH: "Installing on Android? Use Chrome",
     chromeP: "Other browsers can show a warning that the app was \"built for an older version of Android\". Open this page in Chrome and tap ⋮ → Install app.",
@@ -373,7 +384,9 @@ const STR = {
     slow: "Verbindung wird noch aufgebaut. Die Anzeige ist evtl. nicht aktuell.", emptyH: "Noch keine Übungen",
     emptyP: "Erfasse deine erste Übung: Disziplin wählen, jeden Schuss eintippen und die Scheibe fotografieren.", newSession: "+ Neue Übung",
     category: "Kategorie", "cat.training": "Training", "cat.championship": "Meisterschaft", "cat.other": "Andere", catFilterLabel: "Nach Kategorie filtern",
-    avg: "Durchschnitt", trendScore: (n) => `Resultat · letzte ${n} Übungen`, trendScoreAria: "Verlauf der Resultate",
+    avg: "Durchschnitt", trendYears: "Resultat nach Jahr", trendNorm: "Alle Resultate umgerechnet auf 10 Schüsse A10 <span style=\"white-space:nowrap\">(0–100)</span>.", yearAvg: (a, n) => `Ø ${a} · ${n} ${n === 1 ? "Übung" : "Übungen"}`,
+    tief: "Tiefschuss", tiefShort: "TS", tiefErr: "Der Tiefschuss muss eine ganze Zahl von 0 bis 100 sein.",
+    trendScore: (n) => `Resultat · letzte ${n} Übungen`, trendScoreAria: "Verlauf der Resultate",
     mixNote: "Diese Übungen haben unterschiedliche Scheiben, der Durchschnitt mischt also Wertungen. Wähle oben eine Disziplin für einen fairen Vergleich.",
     sessions: "Übungen", avg10: "Ø · letzte 10", best: "Bestes", noneInFilter: (f) => `Noch keine Übungen in «${f}».`,
     trend: (n) => `Resultat % · letzte ${n} Übungen`, trendAria: "Verlauf der Resultate in Prozent",
@@ -415,7 +428,7 @@ const STR = {
     preparing: "Bericht wird erstellt…", saveReport: "Bericht mit Fotos speichern",
     reportNote: (n) => `Speichert eine Datei mit den Resultaten und allen ${n} Scheibenfotos, zum Anhängen an eine E-Mail oder zum Aufbewahren.`,
     copyTo: "An", copySubject: "Betreff", reportFile: "schiessresultate", csvFile: "schiessbuch",
-    csvHead: ["datum", "disziplin", "kategorie", "beschreibung", "schiessstand", "waffe", "bedingungen", "resultat", "maximum", "prozent", "innenzehner", "schuesse", "serien", "notizen"],
+    csvHead: ["datum", "disziplin", "kategorie", "beschreibung", "schiessstand", "waffe", "bedingungen", "resultat", "maximum", "prozent", "innenzehner", "tiefschuss", "schuesse", "serien", "notizen"],
     language: "Sprache",
     chromeH: "Auf Android installieren? Nimm Chrome",
     chromeP: "Andere Browser zeigen evtl. die Warnung, die App sei «für eine ältere Android-Version entwickelt». Öffne diese Seite in Chrome und tippe auf ⋮ → App installieren.",
@@ -453,7 +466,8 @@ const SERIES_TYPES = {
   custom:  { free: true },
 };
 const stlabel = (k) => t("st." + k);
-const newSeries = () => ({ type: "s10", planned: 10, shots: [], total: null, target: "A10" });
+const newSeries = (preset) => (preset && preset !== "r300" ? { type: "custom", planned: 10, shots: [], total: null, target: "A10" } : { type: "s10", planned: 10, shots: [], total: null, target: "A10" });
+const formatsFor = (preset) => (preset === "r300" ? Object.keys(SERIES_TYPES) : ["custom"]);
 // Older sessions stored a "10 shots" series with a different count; treat those as custom.
 function stype(s) {
   const ty = SERIES_TYPES[s.type] ? s.type : "s10";
@@ -633,7 +647,7 @@ function listView() {
       <div class="stat"><span class="eyebrow">${t("best")}</span><span class="v num">${rows.length ? fmtScore(best) : "–"}</span></div>
     </div>
     ${mixed ? `<p class="note" style="margin:0">${t("mixNote")}</p>` : ""}
-    ${rows.length >= 2 ? trendView(rows) : ""}
+    ${rows.length ? trendView(rows) : ""}
     <div class="list">${rows.length ? rows.map(cardView).join("") : `<p class="note">${esc(t("noneInFilter", [S.filter === "All" ? "" : t("f." + S.filter), ...CATS.filter((c) => S.cats.has(c)).map((c) => t("cat." + c))].filter(Boolean).join(" · ")))}</p>`}</div>${S.selecting ? "" : local}`;
 }
 
@@ -707,24 +721,35 @@ async function restoreBackup(file) {
 }
 
 function trendView(rows) {
-  const pts = rows.slice(0, 20).reverse().map((x) => ({ x, p: sessionStats(x).total }));
-  const W = 600, H = 130, pl = 34, pr = 10, pt = 10, pb = 22;
-  const mn = Math.min(...pts.map((d) => d.p)), mx = Math.max(...pts.map((d) => d.p));
-  const pad = Math.max((mx - mn) * 0.15, mx * 0.02, 1);
-  const lo = Math.max(0, Math.floor(mn - pad)), hi = Math.ceil(mx + pad);
-  const sx = (i) => pl + (pts.length === 1 ? 0 : (i * (W - pl - pr)) / (pts.length - 1));
-  const sy = (v) => pt + ((hi - v) * (H - pt - pb)) / (hi - lo || 1);
-  const ticks = [lo, (lo + hi) / 2, hi];
-  const line = pts.map((d, i) => `${i ? "L" : "M"}${sx(i).toFixed(1)},${sy(d.p).toFixed(1)}`).join("");
-  const area = `${line}L${sx(pts.length - 1)},${H - pb}L${sx(0)},${H - pb}Z`;
-  const last = pts[pts.length - 1];
-  return `<div class="trend"><div class="trend-head"><span class="eyebrow">${t("trendScore", pts.length)}</span><span class="note">${esc(fmtDate(pts[0].x.date))} – ${esc(fmtDate(last.x.date))}</span></div>
-    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${t("trendScoreAria")}">
-      ${ticks.map((v) => `<line x1="${pl}" x2="${W - pr}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)" stroke-width="1" vector-effect="non-scaling-stroke"/><text x="${pl - 6}" y="${sy(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="Public Sans, sans-serif">${Math.round(v)}</text>`).join("")}
-      <path d="${area}" fill="var(--accent-soft)"/>
-      <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke"/>
-      <circle cx="${sx(pts.length - 1)}" cy="${sy(last.p)}" r="4" fill="var(--accent)"/>
-    </svg></div>`;
+  const by = new Map();
+  for (const x of rows) { const y = (x.date || "").slice(0, 4); if (!/^\d{4}$/.test(y)) continue; if (!by.has(y)) by.set(y, []); by.get(y).push(x); }
+  const years = [...by.keys()].sort().reverse().slice(0, 6);
+  if (!years.length) return "";
+  const doy = (d) => { const dt = new Date(d + "T12:00:00"), y0 = new Date(dt.getFullYear(), 0, 1), y1 = new Date(dt.getFullYear() + 1, 0, 1); return (dt - y0) / (y1 - y0); };
+  const series = years.map((y, ci) => ({ y, ci, pts: by.get(y).slice().sort((a, b) => (a.date || "").localeCompare(b.date || "") || (a.createdAt || 0) - (b.createdAt || 0)).map((x) => { const st = sessionStats(x); return { f: doy(x.date), v: st.max ? Math.round((st.total / st.max) * 1000) / 10 : 0 }; }) }));
+  const all = series.flatMap((s) => s.pts.map((p) => p.v));
+  const mn = Math.min(...all), mx = Math.max(...all);
+  const pad = Math.max((mx - mn) * 0.12, mx * 0.02, 1);
+  const lo = Math.max(0, Math.floor(mn - pad)), hi = Math.min(100, Math.ceil(mx + pad));
+  const W = 600, H = 250, pl = 46, pr = 14, pt = 14, pb = 34;
+  const sx = (f) => pl + f * (W - pl - pr), sy = (v) => pt + ((hi - v) * (H - pt - pb)) / (hi - lo || 1);
+  const ticks = [lo, Math.round((lo + hi) / 2), hi];
+  const months = Array.from({ length: 12 }, (_, m) => new Date(2001, m, 15).toLocaleDateString(t("locale"), { month: "narrow" }));
+  const grid = months.map((_, m) => `<line x1="${sx(m / 12).toFixed(1)}" x2="${sx(m / 12).toFixed(1)}" y1="${pt}" y2="${H - pb}" stroke="var(--line)" stroke-width="1" opacity=".6"/>`).join("")
+    + months.map((lab, m) => `<text x="${sx((m + 0.5) / 12).toFixed(1)}" y="${H - 10}" text-anchor="middle" font-size="15" fill="var(--muted)" font-family="-apple-system, system-ui, sans-serif">${esc(lab)}</text>`).join("")
+    + ticks.map((v) => `<line x1="${pl}" x2="${W - pr}" y1="${sy(v).toFixed(1)}" y2="${sy(v).toFixed(1)}" stroke="var(--line)" stroke-width="1"/><text x="${pl - 8}" y="${(sy(v) + 5).toFixed(1)}" text-anchor="end" font-size="15" fill="var(--muted)" font-family="-apple-system, system-ui, sans-serif">${v}</text>`).join("");
+  const lines = series.slice().reverse().map((s) => {
+    const c = `var(--y${s.ci})`, w = s.ci === 0 ? 3.5 : 2.5;
+    const d = s.pts.map((p, i) => `${i ? "L" : "M"}${sx(p.f).toFixed(1)},${sy(p.v).toFixed(1)}`).join("");
+    return (s.pts.length > 1 ? `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"/>` : "")
+      + s.pts.map((p) => `<circle cx="${sx(p.f).toFixed(1)}" cy="${sy(p.v).toFixed(1)}" r="${s.ci === 0 ? 5 : 4}" fill="${c}" stroke="var(--surface)" stroke-width="1.5"/>`).join("");
+  }).join("");
+  const legend = series.map((s) => { const a = s.pts.reduce((x, p) => x + p.v, 0) / s.pts.length;
+    return `<span><i style="background:var(--y${s.ci})"></i><b>${s.y}</b> <span class="note">${t("yearAvg", fmtScore(a), s.pts.length)}</span></span>`; }).join("");
+  return `<div class="trend"><div class="trend-head"><span class="eyebrow">${t("trendYears")}</span></div>
+    <p class="note" style="margin:0">${t("trendNorm")}</p>
+    <div class="legend">${legend}</div>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${t("trendScoreAria")}">${grid}${lines}</svg></div>`;
 }
 
 function cardView(x) {
@@ -737,7 +762,7 @@ function cardView(x) {
     <span class="meta"><span class="t">${esc(catLabel(x))}${descOf(x) ? ` · ${esc(descOf(x))}` : ""}</span>
       <span class="s">${esc(fmtDate(x.date))} · ${esc(pshort(k))}${x.location ? " · " + esc(x.location) : ""}</span>
       <span class="s">${t("shotsN", st.shots)}${x.photos && x.photos.length ? ` · ${t("photosN", x.photos.length)}` : ""}</span></span>
-    <span class="score"><span class="big num">${st.total}</span><br><span class="of num">/ ${st.max}${st.xs ? ` · ${st.xs}X` : ""}</span></span>
+    <span class="score"><span class="big num">${st.total}</span><br><span class="of num">/ ${st.max}${st.xs ? ` · ${st.xs}X` : ""}</span>${x.tief != null ? `<br><span class="ts">${t("tiefShort")} ${x.tief}</span>` : ""}</span>
   </button>`;
 }
 
@@ -746,7 +771,7 @@ function detailView() {
   const st = sessionStats(x), k = pkey(x), np = (x.photos || []).length;
   return `<div style="display:grid;gap:4px"><span class="eyebrow">${esc(fmtDate(x.date))}</span><h2 style="margin:0;font-size:22px">${esc(catLabel(x))} · ${esc(pshort(k))}</h2>${descOf(x) ? `<p style="margin:0;font-size:16px">${esc(descOf(x))}</p>` : ""}</div>
     <div class="hero-score"><span class="big num">${st.total}<small> / ${st.max}</small></span>
-      <span style="text-align:right"><span class="pct-pill" style="font-size:14px">${st.pct.toFixed(1)}%</span>${st.xs ? `<br><span class="note">${t("innerTens", st.xs)}</span>` : ""}</span></div>
+      <span style="text-align:right"><span class="pct-pill" style="font-size:14px">${st.pct.toFixed(1)}%</span>${st.xs ? `<br><span class="note">${t("innerTens", st.xs)}</span>` : ""}${x.tief != null ? `<br><span class="note">${t("tief")} <b class="num" style="font-size:20px;color:var(--ink)">${x.tief}</b></span>` : ""}</span></div>
     <dl class="kv"><dt>${t("discipline")}</dt><dd>${esc(plabel(k))}</dd>
       ${x.location ? `<dt>${t("range")}</dt><dd>${esc(x.location)}</dd>` : ""}${x.weapon ? `<dt>${t("weapon")}</dt><dd>${esc(x.weapon)}</dd>` : ""}
       ${x.conditions ? `<dt>${t("conditions")}</dt><dd>${esc(x.conditions)}</dd>` : ""}</dl>
@@ -777,6 +802,7 @@ function editView() {
     <div class="field"><label for="f-cond">${t("conditions")}</label><input id="f-cond" type="text" placeholder="${t("condPh")}" value="${esc(d.conditions)}" data-f="conditions"></div>
 
     <div class="section-h"><h2>${t("series")}</h2><span class="num" style="font-size:22px;font-weight:700">${st.total}<span class="note" style="font-family:var(--body)"> / ${st.max} · ${st.pct.toFixed(1)}%</span></span></div>
+    <div class="tiefrow"><label for="f-tief">${t("tief")}</label><input id="f-tief" type="number" inputmode="numeric" min="0" max="100" step="1" placeholder="0–100" value="${esc(d.tief ?? "")}" data-f="tief"></div>
     ${d.series.map((s, i) => seriesView(s, i)).join("")}
     <button class="btn" data-act="addseries">${t("addSeries")}</button>
 
@@ -808,6 +834,7 @@ function sessionText(x) {
   if (x.weapon) L.push(`${t("weapon")}: ${x.weapon}`);
   if (x.conditions) L.push(`${t("conditions")}: ${x.conditions}`);
   L.push(`${t("mScore")}: ${st.total} / ${st.max} (${st.pct.toFixed(1)}%)${st.xs ? ` · ${st.xs} X` : ""}`);
+  if (x.tief != null) L.push(`${t("tief")}: ${x.tief}`);
   x.series.forEach((s, i) => { const ss = seriesStats(s, x.max);
     L.push(`  ${t("seriesN", i + 1)} [${seriesLabel(s)}]: ${s.shots.length ? shotsText(s) : ss.manual ? t("totalOnly") : "—"} = ${ss.total}/${ss.max}${ss.practiceN && s.shots.length ? ` (${t("mPractice", ss.practice)})` : ""}`); });
   if (x.notes) L.push(`${t("notes")}: ${x.notes}`);
@@ -873,7 +900,7 @@ async function saveReport() {
       const imgs = [];
       for (const id of x.photos || []) { try { imgs.push(await toDataUrl(id)); } catch { missing++; } }
       parts.push(`<section><h2>${esc(fmtDate(x.date))} · ${esc(catLabel(x))}${descOf(x) ? ` · ${esc(descOf(x))}` : ""}</h2>
-        <p class="score">${st.total} <small>/ ${st.max} · ${st.pct.toFixed(1)}%${st.xs ? ` · ${st.xs} X` : ""}</small></p>
+        <p class="score">${st.total} <small>/ ${st.max} · ${st.pct.toFixed(1)}%${st.xs ? ` · ${st.xs} X` : ""}${x.tief != null ? ` · ${t("tief")} ${x.tief}` : ""}</small></p>
         <p class="meta">${esc([plabel(k), x.location, x.weapon, x.conditions].filter(Boolean).join(" · "))}</p>
         <table><tr><th>${t("series")}</th><th>${t("shotsH")}</th><th>${t("score")}</th></tr>${x.series.map((s, i) => { const ss = seriesStats(s, x.max); return `<tr><td>${i + 1}<br><small>${esc(seriesLabel(s))}</small></td><td>${esc(s.shots.length ? shotsText(s) : ss.manual ? t("totalOnly") : "—")}</td><td>${ss.total} / ${ss.max}</td></tr>`; }).join("")}</table>
         ${x.notes ? `<p><b>${t("notes")}:</b> ${esc(x.notes)}</p>` : ""}
@@ -903,7 +930,7 @@ function seriesView(s, i) {
   return `<div class="series${active ? " active" : ""}" data-act="activate" data-s="${i}">
     <div class="series-head"><span class="name">${t("seriesN", i + 1)}</span><span class="tot num">${ss.total}<small> / ${ss.max}</small></span>
       ${d.series.length > 1 ? `<button class="btn ghost iconbtn" data-act="rmseries" data-s="${i}" aria-label="${t("removeSeries", i + 1)}">×</button>` : ""}</div>
-    <div class="field"><label for="st-${i}" class="visually-hidden">${t("seriesFormat")}</label><select id="st-${i}" data-stype="${i}">${Object.keys(SERIES_TYPES).map((k) => `<option value="${k}"${stype(s) === k ? " selected" : ""}>${esc(stlabel(k))}</option>`).join("")}</select></div>
+    <div class="field"${formatsFor(d.preset).length < 2 ? " hidden" : ""}><label for="st-${i}" class="visually-hidden">${t("seriesFormat")}</label><select id="st-${i}" data-stype="${i}">${formatsFor(d.preset).map((k) => `<option value="${k}"${stype(s) === k ? " selected" : ""}>${esc(stlabel(k))}</option>`).join("")}</select></div>
     ${stype(s) === "custom" ? `<div class="field"><label for="tg-${i}">${t("target")}</label><select id="tg-${i}" data-target="${i}">${Object.keys(TARGETS).map((k) => `<option value="${k}"${(s.target || "A10") === k ? " selected" : ""}>${k} · 0–${TARGETS[k]}</option>`).join("")}</select></div>` : ""}
     ${groups}
     ${ss.practiceN && s.shots.some((v, j) => isPractice(s, j)) ? `<p class="note" style="margin:0">${t("practiceSum", ss.practice)}</p>` : ""}
@@ -937,12 +964,18 @@ function newDraft() {
   const last = S.sessions[0];
   const preset = last ? pkey(last) : "r300";
   return { id: null, date: today(), preset, category: last ? catOf(last) : "training", desc: "", location: last ? last.location || "" : "", weapon: last ? last.weapon || "" : "", conditions: "", notes: "",
-    series: [newSeries()], photos: [], addedPhotos: [], removedPhotos: [] };
+    tief: "", series: [newSeries(preset)], photos: [], addedPhotos: [], removedPhotos: [] };
 }
 function applyPreset(key) {
   const d = S.draft;
   d.preset = PRESETS[key] ? key : "other";
   if (!PRESETS[d.preset].x) d.series.forEach((s) => (s.shots = s.shots.map((v) => (v === "X" ? 10 : v))));
+  // Only rifle 300 m has the preset formats; other disciplines use custom series.
+  if (!formatsFor(d.preset).includes("s10")) d.series.forEach((s) => {
+    if (stype(s) === "custom") return;
+    const n = Math.max(seriesStats(s).planned, s.shots.length);
+    s.type = "custom"; s.target = s.target || "A10"; s.planned = n; clampShots(s);
+  });
 }
 function clampShots(s) {
   s.shots = s.shots.map((v, j) => { const m = segMax(s, j); if (v === "X") return m === 10 && (s.target || "A10") === "A10" && !(segAt(s, j) || {}).max ? "X" : m; return Math.min(Number(v), m); });
@@ -984,9 +1017,11 @@ async function addPhotos(files) {
 async function save() {
   const d = S.draft;
   if (!d.date) return toast(t("addDate"));
+  const ts = String(d.tief ?? "").trim(), tn = Number(ts);
+  if (ts !== "" && !(Number.isInteger(tn) && tn >= 0 && tn <= 100)) { toast(t("tiefErr")); const el = $("#f-tief"); if (el) el.focus(); return; }
   S.saving = true; render();
   const body = { date: d.date, preset: d.preset, category: CATS.includes(d.category) ? d.category : "other", location: d.location.trim(), weapon: d.weapon.trim(), conditions: d.conditions.trim(), notes: d.notes.trim(),
-    photos: d.photos.slice(),
+    photos: d.photos.slice(), tief: ts === "" ? null : tn,
     desc: (d.desc || "").trim(), series: d.series.map((s) => ({ type: stype(s), target: stype(s) === "custom" ? s.target || "A10" : "A10", planned: fixed(s) ? seriesStats(s, 1).planned : Math.max(s.planned, s.shots.length), shots: s.shots.slice(), total: s.total === "" || s.total === null || s.total === undefined ? null : Number(s.total) })),
     createdAt: d.createdAt || Date.now(), updatedAt: Date.now() };
   const st = sessionStats(body); body.score = st.total; body.maxScore = st.max; body.pct = Math.round(st.pct * 10) / 10;
@@ -1018,7 +1053,7 @@ async function removeSession() {
 async function exportCsv() {
   const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = [t("csvHead").join(",")].concat(S.sessions.map((x) => { const st = sessionStats(x), k = pkey(x);
-    return [x.date, plabel(k), catLabel(x), descOf(x), x.location, x.weapon, x.conditions, st.total, st.max, st.pct.toFixed(1), st.xs, st.shots, x.series.map((s) => seriesStats(s, x.max).total).join(" | "), x.notes].map(q).join(","); }));
+    return [x.date, plabel(k), catLabel(x), descOf(x), x.location, x.weapon, x.conditions, st.total, st.max, st.pct.toFixed(1), st.xs, x.tief ?? "", st.shots, x.series.map((s) => seriesStats(s, x.max).total).join(" | "), x.notes].map(q).join(","); }));
   try { await S.downloads.save({ filename: `${t("csvFile")}-${today()}.csv`, data: "﻿" + lines.join("\n") }); } catch (e) { if (e && e.code !== "declined" && e.code !== "cancelled") toast(t("exportFail")); }
 }
 function openLightbox(i) {
@@ -1052,7 +1087,7 @@ document.addEventListener("click", (e) => {
     case "cat": if (S.draft) { S.draft.category = a.dataset.v; render(); } break;
     case "open": S.current = S.sessions.find((x) => x.id === a.dataset.id); S.view = "detail"; S.confirmDel = false; render(); scrollTo(0, 0); break;
     case "back": S.view = "list"; S.current = null; render(); break;
-    case "edit": { const x = normSession(structuredClone(S.current)); S.draft = { ...x, addedPhotos: [], removedPhotos: [], conditions: x.conditions || "", notes: x.notes || "", category: catOf(x), desc: descOf(x), location: x.location || "", weapon: x.weapon || "" }; S.active = 0; S.view = "edit"; render(); scrollTo(0, 0); break; }
+    case "edit": { const x = normSession(structuredClone(S.current)); S.draft = { ...x, addedPhotos: [], removedPhotos: [], conditions: x.conditions || "", notes: x.notes || "", category: catOf(x), desc: descOf(x), tief: x.tief == null ? "" : String(x.tief), location: x.location || "", weapon: x.weapon || "" }; applyPreset(S.draft.preset); S.active = 0; S.view = "edit"; render(); scrollTo(0, 0); break; }
     case "cancel": discard(); break;
     case "save": save(); break;
     case "del": S.confirmDel = true; render(); break;
@@ -1084,7 +1119,7 @@ document.addEventListener("click", (e) => {
     case "activate": if (e.target.closest("input,label,select")) break; if (S.active !== si) { S.active = si; render(); } break;
     case "rmshot": e.stopPropagation(); S.draft.series[si].shots.splice(Number(a.dataset.j), 1); S.active = si; render(); break;
     case "planned": { e.stopPropagation(); const s = S.draft.series[si]; s.planned = Math.max(1, Math.max(s.planned, s.shots.length) + Number(a.dataset.d)); if (s.planned < s.shots.length) s.shots.length = s.planned; S.active = si; render(); break; }
-    case "addseries": { const d = S.draft; d.series.push(newSeries()); S.active = d.series.length - 1; render(); break; }
+    case "addseries": { const d = S.draft; d.series.push(newSeries(d.preset)); S.active = d.series.length - 1; render(); break; }
     case "rmseries": e.stopPropagation(); S.draft.series.splice(si, 1); S.active = Math.min(S.active, S.draft.series.length - 1); render(); break;
     case "rmphoto": { const d = S.draft, id = d.photos.splice(Number(a.dataset.i), 1)[0];
       if (d.addedPhotos.includes(id)) { d.addedPhotos = d.addedPhotos.filter((p) => p !== id); S.assets.delete(id).catch(() => {}); } else d.removedPhotos.push(id);
@@ -1123,7 +1158,7 @@ document.addEventListener("input", (e) => {
     return;
   }
   const f = e.target.dataset && e.target.dataset.f;
-  if (S.view === "edit" && f && ["date", "desc", "location", "weapon", "conditions", "notes"].includes(f)) S.draft[f] = e.target.value;
+  if (S.view === "edit" && f && ["date", "desc", "tief", "location", "weapon", "conditions", "notes"].includes(f)) S.draft[f] = e.target.value;
 });
 document.addEventListener("submit", (e) => {
   if (e.target.id !== "kp-form") return;
