@@ -180,6 +180,7 @@ button { cursor: pointer; }
 .numentry { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; }
 .numentry input { min-width: 0; min-height: 48px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 0 12px; font-family: var(--display); font-size: 26px; font-weight: 600; }
 .numentry .key { padding: 0 16px; }
+.key:disabled, .numentry input:disabled { opacity: .45; }
 .key.add { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-family: var(--body); font-size: 16px; }
 .shot { font-variant-numeric: tabular-nums; }
 .has-keypad .wrap { padding-bottom: calc(260px + env(safe-area-inset-bottom, 0px)); }
@@ -335,7 +336,7 @@ const STR = {
     removeLast: "Remove last shot", shotValue: (m) => `Shot value, 0 to ${m}`, add: "Add", complete: "complete",
     practiceShotN: (n) => `practice shot ${n}`, shotN: (n) => `shot ${n}`, typeThenAdd: (m) => `Type 0–${m}, then Add`, tapToRemove: "Tap a scored shot to remove it",
     // toasts
-    seriesFull: "This series is complete. Add a series for more shots.", tooLarge: "That photo is too large. Try a smaller one.",
+    seriesFull: "This series is complete. Add a series for more shots.", seriesFullCustom: "All shots of this series are entered. Increase Shots to add more.", tooLarge: "That photo is too large. Try a smaller one.",
     storageFull: "Photo storage is full. Delete old sessions to make room.", photoFail: "The photo couldn't be saved. Try again.",
     addDate: "Add a date first.", saved: "Session saved", dbFull: "The scorebook is full. Delete old sessions to save new ones.",
     saveFail: "The session couldn't be saved. Check your connection and try again.", deleted: "Session deleted", delFail: "The session couldn't be deleted. Try again.",
@@ -413,7 +414,7 @@ const STR = {
     countedShots: (n) => `${n} gezählte Schüsse`, shotsLbl: "Schüsse", fewer: "Weniger Schüsse", more: "Mehr Schüsse", orTotal: "oder Total",
     removeLast: "Letzten Schuss entfernen", shotValue: (m) => `Schusswert, 0 bis ${m}`, add: "Hinzufügen", complete: "vollständig",
     practiceShotN: (n) => `Probeschuss ${n}`, shotN: (n) => `Schuss ${n}`, typeThenAdd: (m) => `0–${m} eingeben, dann Hinzufügen`, tapToRemove: "Erfassten Schuss antippen zum Entfernen",
-    seriesFull: "Diese Serie ist vollständig. Füge eine Serie für weitere Schüsse hinzu.", tooLarge: "Dieses Foto ist zu gross. Versuche ein kleineres.",
+    seriesFull: "Diese Serie ist vollständig. Füge eine Serie für weitere Schüsse hinzu.", seriesFullCustom: "Alle Schüsse dieser Serie sind erfasst. Erhöhe «Schüsse», um weitere einzugeben.", tooLarge: "Dieses Foto ist zu gross. Versuche ein kleineres.",
     storageFull: "Der Fotospeicher ist voll. Lösche alte Übungen, um Platz zu schaffen.", photoFail: "Das Foto konnte nicht gespeichert werden. Versuche es nochmals.",
     addDate: "Bitte zuerst ein Datum eingeben.", saved: "Übung gespeichert", dbFull: "Das Schiessbuch ist voll. Lösche alte Übungen, um neue zu speichern.",
     saveFail: "Die Übung konnte nicht gespeichert werden. Prüfe die Verbindung und versuche es nochmals.", deleted: "Übung gelöscht", delFail: "Die Übung konnte nicht gelöscht werden. Versuche es nochmals.",
@@ -985,9 +986,9 @@ function renderKeypad() {
   if (!big) { if (allowX) keys.push(`<button class="key x" data-key="X">X</button>`); for (let v = m; v >= 0; v--) keys.push(`<button class="key" data-key="${v}">${v}</button>`); }
   keys.push(`<button class="key back" data-key="back" aria-label="${t("removeLast")}">⌫</button>`);
   const entry = big ? `<form class="numentry" id="kp-form"><label class="visually-hidden" for="kp-num">${t("shotValue", m)}</label>
-      <input id="kp-num" type="number" inputmode="numeric" min="0" max="${m}" step="1" placeholder="0–${m}" autocomplete="off">
-      <button class="key add" type="submit">${t("add")}</button><button class="key back" type="button" data-key="back" aria-label="${t("removeLast")}">⌫</button></form>` : `<div class="keys">${keys.join("")}</div>`;
-  const nj = s.shots.length, full = fixed(s) && nj >= ss.planned;
+      <input id="kp-num" type="number" inputmode="numeric" min="0" max="${m}" step="1" placeholder="0–${m}" autocomplete="off"${s.shots.length >= ss.planned ? " disabled" : ""}>
+      <button class="key add" type="submit"${s.shots.length >= ss.planned ? " disabled" : ""}>${t("add")}</button><button class="key back" type="button" data-key="back" aria-label="${t("removeLast")}">⌫</button></form>` : `<div class="keys">${keys.join("")}</div>`;
+  const nj = s.shots.length, full = nj >= ss.planned;
   const where = (full ? t("complete") : isPractice(s, nj) ? t("practiceShotN", nj + 1) : t("shotN", nj + 1 - Math.min(ss.practiceN, nj))) + (!full && seg0 && seg0.tgt ? " · " + seg0.tgt : "");
   k.innerHTML = `<div class="keypad-in"><div class="keypad-top"><span>${t("seriesN", S.active + 1)} · ${where}</span><span>${big ? t("typeThenAdd", m) : t("tapToRemove")}</span></div>
     ${entry}</div>`;
@@ -1018,9 +1019,9 @@ function clampShots(s) {
 function addShot(v) {
   const d = S.draft, s = d.series[S.active];
   const ss = seriesStats(s, d.max);
-  if (fixed(s) && s.shots.length >= ss.planned) { toast(t("seriesFull")); return; }
+  if (s.shots.length >= ss.planned) { toast(fixed(s) ? t("seriesFull") : t("seriesFullCustom")); return; }
   s.shots.push(v); s.total = null;
-  if (!fixed(s)) { const p = ss.practiceN; if (s.shots.length - p > (s.planned || 0)) s.planned = s.shots.length - p; }
+
   if (s.shots.length >= ss.planned && S.active < d.series.length - 1) S.active++;
   if (navigator.vibrate) try { navigator.vibrate(8); } catch {}
 }

@@ -1,6 +1,6 @@
 // Offline cache for the app files. Your sessions and photos are not here:
 // they live in the browser's IndexedDB on this device and never leave it.
-const CACHE = "scorebook-v13";
+const CACHE = "scorebook-v14";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png", "./logo.png"];
 
 self.addEventListener("install", (e) => {
