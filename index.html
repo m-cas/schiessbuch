@@ -30,6 +30,7 @@
   --danger: #a3261d;
   --danger-soft: #f6dedb;
   --gold: #a87a12;
+  --ser: #8f9a91;
   --y0: #2c5a38; --y1: #b0362c; --y2: #2f6db3; --y3: #a87a12; --y4: #6b4fa3; --y5: #3d8a8f;
   --display: "Avenir Next Condensed", "Roboto Condensed", "Arial Narrow", sans-serif-condensed, sans-serif;
   --body: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
@@ -38,13 +39,13 @@
   :root:not([data-theme="light"]) {
     --bg: #111512; --surface: #1a201b; --sunken: #232a24; --ink: #e8ece6; --muted: #9aa49a;
     --line: #2f3830; --accent: #7fbf8c; --accent-ink: #0f1a12; --accent-soft: #24382a;
-    --ring: #e8ece6; --danger: #f08a80; --danger-soft: #3a2220; --gold: #e2b54a; --y0: #7fbf8c; --y1: #f08a80; --y2: #7fb0ea; --y3: #e2b54a; --y4: #b9a1e6; --y5: #7cc8cc; color-scheme: dark;
+    --ring: #e8ece6; --danger: #f08a80; --danger-soft: #3a2220; --gold: #e2b54a; --ser: #7b867c; --y0: #7fbf8c; --y1: #f08a80; --y2: #7fb0ea; --y3: #e2b54a; --y4: #b9a1e6; --y5: #7cc8cc; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #111512; --surface: #1a201b; --sunken: #232a24; --ink: #e8ece6; --muted: #9aa49a;
   --line: #2f3830; --accent: #7fbf8c; --accent-ink: #0f1a12; --accent-soft: #24382a;
-  --ring: #e8ece6; --danger: #f08a80; --danger-soft: #3a2220; --gold: #e2b54a; --y0: #7fbf8c; --y1: #f08a80; --y2: #7fb0ea; --y3: #e2b54a; --y4: #b9a1e6; --y5: #7cc8cc; color-scheme: dark;
+  --ring: #e8ece6; --danger: #f08a80; --danger-soft: #3a2220; --gold: #e2b54a; --ser: #7b867c; --y0: #7fbf8c; --y1: #f08a80; --y2: #7fb0ea; --y3: #e2b54a; --y4: #b9a1e6; --y5: #7cc8cc; color-scheme: dark;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -90,6 +91,7 @@ button { cursor: pointer; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .legend i { width: 14px; height: 4px; border-radius: 2px; display: inline-block; }
 .legend b { font-variant-numeric: tabular-nums; }
+.legend.chartkey { color: var(--muted); font-size: 12px; padding-top: 2px; }
 .tiefrow { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
 .tiefrow label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
 .tiefrow input { width: 96px; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; min-height: 44px; font-size: 18px; font-family: var(--display); font-weight: 600; text-align: center; }
@@ -281,7 +283,7 @@ const STR = {
     "p.r300": "Rifle 300 m", "p.p25": "Pistol 25 m", "p.p50": "Pistol 50 m", "p.other": "Other",
     "f.All": "All", "f.r300": "Rifle 300 m", "f.p25": "Pistol 25 m", "f.p50": "Pistol 50 m", "f.other": "Other",
     "st.s10": "10 shots · A10", "st.p2s6r4": "12 shots · 2 practice, 6 single, 4 in series · A10", "st.p2s5r23": "12 shots · 2 practice, 5 single, series of 2 and 3 · A10",
-    customN: (n, tg) => `Custom · ${n} ${n === 1 ? "shot" : "shots"} · ${tg}`, target: "Target",
+    customN: (n, tg, p) => `Custom · ${p ? p + " practice + " : ""}${n} ${n === 1 ? "shot" : "shots"} · ${tg}`, target: "Target", practiceLbl: "Practice", fewerP: "Fewer practice shots", moreP: "More practice shots",
     "st.op300": "OP · 20 shots A5/B4", "st.fs300": "Feldschiessen rifle · 18 shots B4",
     "st.custom": "Custom · choose shots and target",
     "seg.practice": "Practice · not counted", "seg.single": "Single shots", seriesOf: (n) => `Series of ${n}`,
@@ -304,7 +306,7 @@ const STR = {
     slow: "Still connecting. What you see may be out of date.", emptyH: "No sessions yet",
     emptyP: "Record your first range session: pick the discipline, tap in each shot, and photograph the paper target.", newSession: "+ New session",
     category: "Category", "cat.training": "Training", "cat.championship": "Championship", "cat.other": "Other", catFilterLabel: "Filter by category",
-    avg: "Avg series", trendYears: "Score by year", trendNorm: "Each series converted to 10 shots on A10 <span style=\"white-space:nowrap\">(0–100)</span>.", yearAvg: (a, n) => `Ø ${a} · ${n} series`,
+    avg: "Avg series", trendYears: "Score by year", trendNorm: "Each series converted to 10 shots on A10 <span style=\"white-space:nowrap\">(0–100)</span>.", yearAvg: (a, n) => `Ø ${a} · ${n} ${n === 1 ? "session" : "sessions"}`, keySession: "Session average", keySeries: "Single series",
     tief: "Tiefschuss", tiefShort: "TS", tiefErr: (n) => `Tiefschuss in series ${n} must be a whole number from 0 to 100.`, normCaption: "Series scores converted to 10 shots on A10 (0–100).",
     trendScore: (n) => `Score · last ${n} sessions`, trendScoreAria: "Score trend",
     mixNote: "These sessions use different targets, so the average mixes scales. Pick a discipline above for a fair comparison.",
@@ -364,7 +366,7 @@ const STR = {
     "p.r300": "Gewehr 300 m", "p.p25": "Pistole 25 m", "p.p50": "Pistole 50 m", "p.other": "Andere",
     "f.All": "Alle", "f.r300": "Gewehr 300 m", "f.p25": "Pistole 25 m", "f.p50": "Pistole 50 m", "f.other": "Andere",
     "st.s10": "10 Schüsse · A10", "st.p2s6r4": "12 Schüsse · 2 Probe, 6 Einzel, 4 Serie · A10", "st.p2s5r23": "12 Schüsse · 2 Probe, 5 Einzel, Serien zu 2 und 3 · A10",
-    customN: (n, tg) => `Eigene · ${n} ${n === 1 ? "Schuss" : "Schüsse"} · ${tg}`, target: "Scheibe",
+    customN: (n, tg, p) => `Eigene · ${p ? p + " Probe + " : ""}${n} ${n === 1 ? "Schuss" : "Schüsse"} · ${tg}`, target: "Scheibe", practiceLbl: "Probe", fewerP: "Weniger Probeschüsse", moreP: "Mehr Probeschüsse",
     "st.op300": "OP · 20 Schüsse A5/B4", "st.fs300": "Feldschiessen Gewehr · 18 Schüsse B4",
     "st.custom": "Eigene · Schüsse und Scheibe wählen",
     "seg.practice": "Probe · zählt nicht", "seg.single": "Einzelschüsse", seriesOf: (n) => `Serie zu ${n}`,
@@ -386,7 +388,7 @@ const STR = {
     slow: "Verbindung wird noch aufgebaut. Die Anzeige ist evtl. nicht aktuell.", emptyH: "Noch keine Übungen",
     emptyP: "Erfasse deine erste Übung: Disziplin wählen, jeden Schuss eintippen und die Scheibe fotografieren.", newSession: "+ Neue Übung",
     category: "Kategorie", "cat.training": "Training", "cat.championship": "Meisterschaft", "cat.other": "Andere", catFilterLabel: "Nach Kategorie filtern",
-    avg: "Ø Serie", trendYears: "Resultat nach Jahr", trendNorm: "Jede Serie umgerechnet auf 10 Schüsse A10 <span style=\"white-space:nowrap\">(0–100)</span>.", yearAvg: (a, n) => `Ø ${a} · ${n} ${n === 1 ? "Serie" : "Serien"}`,
+    avg: "Ø Serie", trendYears: "Resultat nach Jahr", trendNorm: "Jede Serie umgerechnet auf 10 Schüsse A10 <span style=\"white-space:nowrap\">(0–100)</span>.", yearAvg: (a, n) => `Ø ${a} · ${n} ${n === 1 ? "Übung" : "Übungen"}`, keySession: "Ø der Übung", keySeries: "Einzelne Serien",
     tief: "Tiefschuss", tiefShort: "TS", tiefErr: (n) => `Der Tiefschuss in Serie ${n} muss eine ganze Zahl von 0 bis 100 sein.`, normCaption: "Serienresultate umgerechnet auf 10 Schüsse A10 (0–100).",
     trendScore: (n) => `Resultat · letzte ${n} Übungen`, trendScoreAria: "Verlauf der Resultate",
     mixNote: "Diese Übungen haben unterschiedliche Scheiben, der Durchschnitt mischt also Wertungen. Wähle oben eine Disziplin für einen fairen Vergleich.",
@@ -479,11 +481,13 @@ function stype(s) {
 const fixed = (s) => !SERIES_TYPES[stype(s)].free;
 function segments(s) {
   if (fixed(s)) { let start = 0; return SERIES_TYPES[stype(s)].segs.map((g) => { const r = { ...g, start }; start += g.n; return r; }); }
-  return [{ k: "single", n: Math.max(s.planned || 0, s.shots.length), start: 0 }];
+  const p = Math.max(0, Math.min(20, Number(s.practice) || 0));
+  if (!p) return [{ k: "single", n: Math.max(s.planned || 0, s.shots.length), start: 0 }];
+  return [{ k: "practice", n: p, start: 0 }, { k: "single", n: Math.max(s.planned || 0, s.shots.length - p), start: p }];
 }
 const segAt = (s, j) => segments(s).find((g) => j >= g.start && j < g.start + g.n);
 const segMax = (s, j) => { const g = segAt(s, j); return g && g.max ? g.max : tmax(s); };
-const seriesLabel = (s) => (stype(s) === "custom" ? t("customN", Math.max(s.planned || 0, s.shots.length), s.target || "A10") : stlabel(stype(s)));
+const seriesLabel = (s) => { if (stype(s) !== "custom") return stlabel(stype(s)); const st = seriesStats(s); return t("customN", st.counted, s.target || "A10", st.practiceN); };
 // Older sessions kept the target on the session; move it onto each series.
 function normSeries(s, legacyMax) {
   const n = { ...s, shots: (s.shots || []).slice() };
@@ -747,9 +751,9 @@ function trendView(rows) {
   const years = [...by.keys()].sort().reverse().slice(0, 6);
   if (!years.length) return "";
   const doy = (d) => { const dt = new Date(d + "T12:00:00"), y0 = new Date(dt.getFullYear(), 0, 1), y1 = new Date(dt.getFullYear() + 1, 0, 1); return (dt - y0) / (y1 - y0); };
-  const series = years.map((y, ci) => ({ y, ci, pts: by.get(y).slice().sort((a, b) => (a.date || "").localeCompare(b.date || "") || (a.createdAt || 0) - (b.createdAt || 0)).flatMap((x) => x.series.map(seriesNorm).filter((v) => v !== null).map((v) => ({ f: doy(x.date), v }))) })).filter((s) => s.pts.length);
+  const series = years.map((y, ci) => ({ y, ci, pts: by.get(y).slice().sort((a, b) => (a.date || "").localeCompare(b.date || "") || (a.createdAt || 0) - (b.createdAt || 0)).map((x) => { const vals = x.series.map(seriesNorm).filter((v) => v !== null); if (!vals.length) return null; return { f: doy(x.date), v: Math.round((vals.reduce((a, v) => a + v, 0) / vals.length) * 10) / 10, vals }; }).filter(Boolean) })).filter((s) => s.pts.length);
   if (!series.length) return "";
-  const all = series.flatMap((s) => s.pts.map((p) => p.v));
+  const all = series.flatMap((s) => s.pts.flatMap((p) => p.vals));
   const mn = Math.min(...all), mx = Math.max(...all);
   const pad = Math.max((mx - mn) * 0.12, mx * 0.02, 1);
   const lo = Math.max(0, Math.floor(mn - pad)), hi = Math.min(100, Math.ceil(mx + pad));
@@ -760,6 +764,12 @@ function trendView(rows) {
   const grid = months.map((_, m) => `<line x1="${sx(m / 12).toFixed(1)}" x2="${sx(m / 12).toFixed(1)}" y1="${pt}" y2="${H - pb}" stroke="var(--line)" stroke-width="1" opacity=".6"/>`).join("")
     + months.map((lab, m) => `<text x="${sx((m + 0.5) / 12).toFixed(1)}" y="${H - 10}" text-anchor="middle" font-size="15" fill="var(--muted)" font-family="-apple-system, system-ui, sans-serif">${esc(lab)}</text>`).join("")
     + ticks.map((v) => `<line x1="${pl}" x2="${W - pr}" y1="${sy(v).toFixed(1)}" y2="${sy(v).toFixed(1)}" stroke="var(--line)" stroke-width="1"/><text x="${pl - 8}" y="${(sy(v) + 5).toFixed(1)}" text-anchor="end" font-size="15" fill="var(--muted)" font-family="-apple-system, system-ui, sans-serif">${v}</text>`).join("");
+  const bars = series.map((s) => s.pts.filter((p) => p.vals.length > 1).map((p) => {
+    const x = sx(p.f).toFixed(1), lo2 = Math.min(...p.vals), hi2 = Math.max(...p.vals);
+    return `<line x1="${x}" x2="${x}" y1="${sy(hi2).toFixed(1)}" y2="${sy(lo2).toFixed(1)}" stroke="var(--ser)" stroke-width="3" stroke-linecap="round"/>`
+      + p.vals.map((v) => `<circle cx="${x}" cy="${sy(v).toFixed(1)}" r="3.5" fill="var(--surface)" stroke="var(--ser)" stroke-width="2"/>`).join("");
+  }).join("")).join("");
+  const anyBars = series.some((s) => s.pts.some((p) => p.vals.length > 1));
   const lines = series.slice().reverse().map((s) => {
     const c = `var(--y${s.ci})`, w = s.ci === 0 ? 3.5 : 2.5;
     const d = s.pts.map((p, i) => `${i ? "L" : "M"}${sx(p.f).toFixed(1)},${sy(p.v).toFixed(1)}`).join("");
@@ -770,7 +780,8 @@ function trendView(rows) {
     return `<span><i style="background:var(--y${s.ci})"></i><b>${s.y}</b> <span class="note">${t("yearAvg", fmtScore(a), s.pts.length)}</span></span>`; }).join("");
   return `<div class="trend"><div class="trend-head"><span class="eyebrow">${t("trendYears")}</span></div>
     <div class="legend">${legend}</div>
-    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${t("trendScoreAria")}">${grid}${lines}</svg></div>`;
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${t("trendScoreAria")}">${grid}${bars}${lines}</svg>
+    ${anyBars ? `<div class="legend chartkey"><span><i style="background:var(--ink);height:4px"></i>${t("keySession")}</span><span><svg width="14" height="16" viewBox="0 0 14 16" aria-hidden="true"><line x1="7" x2="7" y1="3" y2="13" stroke="var(--ser)" stroke-width="3" stroke-linecap="round"/><circle cx="7" cy="3" r="2.5" fill="var(--surface)" stroke="var(--ser)" stroke-width="1.6"/><circle cx="7" cy="13" r="2.5" fill="var(--surface)" stroke="var(--ser)" stroke-width="1.6"/></svg>${t("keySeries")}</span></div>` : ""}</div>`;
 }
 
 function cardScores(x) {
@@ -957,9 +968,10 @@ function seriesView(s, i) {
     ${groups}
     ${ss.practiceN && s.shots.some((v, j) => isPractice(s, j)) ? `<p class="note" style="margin:0">${t("practiceSum", ss.practice)}</p>` : ""}
     <div class="series-tools">
-      ${fixed(s) ? `<span class="note">${t("countedShots", ss.counted)}</span>` : `<span class="stepper">${t("shotsLbl")} <button data-act="planned" data-s="${i}" data-d="-1" aria-label="${t("fewer")}">−</button><span class="num" style="font-size:18px;color:var(--ink);min-width:22px;text-align:center">${ss.planned}</span><button data-act="planned" data-s="${i}" data-d="1" aria-label="${t("more")}">+</button></span>`}
+      ${fixed(s) ? `<span class="note">${t("countedShots", ss.counted)}</span>` : `<span class="stepper">${t("practiceLbl")} <button data-act="practice" data-s="${i}" data-d="-1" aria-label="${t("fewerP")}">−</button><span class="num" style="font-size:18px;color:var(--ink);min-width:22px;text-align:center">${ss.practiceN}</span><button data-act="practice" data-s="${i}" data-d="1" aria-label="${t("moreP")}">+</button></span>
+      <span class="stepper">${t("shotsLbl")} <button data-act="planned" data-s="${i}" data-d="-1" aria-label="${t("fewer")}">−</button><span class="num" style="font-size:18px;color:var(--ink);min-width:22px;text-align:center">${ss.counted}</span><button data-act="planned" data-s="${i}" data-d="1" aria-label="${t("more")}">+</button></span>`}
       <label class="manual" for="tot-${i}">${t("orTotal")} <input id="tot-${i}" type="number" inputmode="decimal" step="0.1" min="0" value="${s.total ?? ""}" data-tot="${i}" placeholder="—"></label>
-      <label class="manual" for="ts-${i}">${t("tief")} <input id="ts-${i}" type="number" inputmode="numeric" step="1" min="0" max="100" value="${esc(s.tief ?? "")}" data-tief="${i}" placeholder="0–100"></label>
+      <label class="manual" for="ts-${i}">${t("tief")} <input id="ts-${i}" type="number" inputmode="numeric" step="1" min="0" max="100" value="${esc(s.tief ?? "")}" data-tief="${i}" placeholder="—"></label>
     </div></div>`;
 }
 
@@ -996,8 +1008,8 @@ function applyPreset(key) {
   // Only rifle 300 m has the preset formats; other disciplines use custom series.
   if (!formatsFor(d.preset).includes("s10")) d.series.forEach((s) => {
     if (stype(s) === "custom") return;
-    const n = Math.max(seriesStats(s).planned, s.shots.length);
-    s.type = "custom"; s.target = s.target || "A10"; s.planned = n; clampShots(s);
+    const st = seriesStats(s);
+    s.type = "custom"; s.target = s.target || "A10"; s.practice = st.practiceN; s.planned = Math.max(st.counted, s.shots.length - st.practiceN); clampShots(s);
   });
 }
 function clampShots(s) {
@@ -1008,7 +1020,7 @@ function addShot(v) {
   const ss = seriesStats(s, d.max);
   if (fixed(s) && s.shots.length >= ss.planned) { toast(t("seriesFull")); return; }
   s.shots.push(v); s.total = null;
-  if (!fixed(s) && s.shots.length > s.planned) s.planned = s.shots.length;
+  if (!fixed(s)) { const p = ss.practiceN; if (s.shots.length - p > (s.planned || 0)) s.planned = s.shots.length - p; }
   if (s.shots.length >= ss.planned && S.active < d.series.length - 1) S.active++;
   if (navigator.vibrate) try { navigator.vibrate(8); } catch {}
 }
@@ -1046,7 +1058,7 @@ async function save() {
   S.saving = true; render();
   const body = { date: d.date, preset: d.preset, category: CATS.includes(d.category) ? d.category : "other", location: d.location.trim(), weapon: d.weapon.trim(), conditions: d.conditions.trim(), notes: d.notes.trim(),
     photos: d.photos.slice(),
-    desc: (d.desc || "").trim(), series: d.series.map((s) => ({ type: stype(s), target: stype(s) === "custom" ? s.target || "A10" : "A10", planned: fixed(s) ? seriesStats(s, 1).planned : Math.max(s.planned, s.shots.length), shots: s.shots.slice(), total: s.total === "" || s.total === null || s.total === undefined ? null : Number(s.total), tief: tiefs[d.series.indexOf(s)] === "" ? null : Number(tiefs[d.series.indexOf(s)]) })),
+    desc: (d.desc || "").trim(), series: d.series.map((s) => ({ type: stype(s), target: stype(s) === "custom" ? s.target || "A10" : "A10", planned: fixed(s) ? seriesStats(s, 1).planned : seriesStats(s).counted, practice: stype(s) === "custom" ? seriesStats(s).practiceN : 0, shots: s.shots.slice(), total: s.total === "" || s.total === null || s.total === undefined ? null : Number(s.total), tief: tiefs[d.series.indexOf(s)] === "" ? null : Number(tiefs[d.series.indexOf(s)]) })),
     createdAt: d.createdAt || Date.now(), updatedAt: Date.now() };
   try {
     const id = d.id || newId();
@@ -1142,7 +1154,12 @@ document.addEventListener("click", (e) => {
     case "zoom": openLightbox(Number(a.dataset.i)); break;
     case "activate": if (e.target.closest("input,label,select")) break; if (S.active !== si) { S.active = si; render(); } break;
     case "rmshot": e.stopPropagation(); S.draft.series[si].shots.splice(Number(a.dataset.j), 1); S.active = si; render(); break;
-    case "planned": { e.stopPropagation(); const s = S.draft.series[si]; s.planned = Math.max(1, Math.max(s.planned, s.shots.length) + Number(a.dataset.d)); if (s.planned < s.shots.length) s.shots.length = s.planned; S.active = si; render(); break; }
+    case "planned": { e.stopPropagation(); const s = S.draft.series[si], p = seriesStats(s).practiceN, entered = Math.max(0, s.shots.length - p);
+      s.planned = Math.max(1, Math.max(s.planned || 0, entered) + Number(a.dataset.d)); if (s.planned < entered) s.shots.length = p + s.planned; S.active = si; render(); break; }
+    case "practice": { e.stopPropagation(); const s = S.draft.series[si], old = seriesStats(s).practiceN, p = Math.max(0, Math.min(20, old + Number(a.dataset.d)));
+      // shots are kept in firing order: the first p shots are the practice shots
+      s.practice = p;
+      S.active = si; render(); break; }
     case "addseries": { const d = S.draft; d.series.push(newSeries(d.preset)); S.active = d.series.length - 1; render(); break; }
     case "rmseries": e.stopPropagation(); S.draft.series.splice(si, 1); S.active = Math.min(S.active, S.draft.series.length - 1); render(); break;
     case "rmphoto": { const d = S.draft, id = d.photos.splice(Number(a.dataset.i), 1)[0];
@@ -1159,10 +1176,10 @@ document.addEventListener("change", (e) => {
   if (f === "preset") { applyPreset(el.value); render(); }
   else if (f === "x") { S.draft.x = el.value === "1"; if (!S.draft.x) S.draft.series.forEach((s) => (s.shots = s.shots.map((v) => (v === "X" ? 10 : v)))); render(); }
   else if (el.dataset.stype !== undefined) {
-    const i = Number(el.dataset.stype), s = S.draft.series[i];
+    const i = Number(el.dataset.stype), s = S.draft.series[i], prev = seriesStats(s);
     s.type = el.value;
-    if (fixed(s)) { s.target = "A10"; const n = seriesStats(s, 1).planned; s.planned = n; if (s.shots.length > n) s.shots.length = n; }
-    else { s.target = s.target || "A10"; s.planned = Math.max(s.shots.length, s.planned || 10); }
+    if (fixed(s)) { s.target = "A10"; s.practice = 0; const n = seriesStats(s, 1).planned; s.planned = n; if (s.shots.length > n) s.shots.length = n; }
+    else { s.target = s.target || "A10"; s.practice = prev.practiceN; s.planned = Math.max(prev.counted || 10, s.shots.length - prev.practiceN); }
     clampShots(s);
     S.active = i; render();
   }
