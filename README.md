@@ -1,4 +1,4 @@
-# schiessbuch
+# Schiessbuch
 
 A standalone app for recording shooting results and photos of paper targets.
 All sessions and photos are stored only on the phone (in the browser's local
