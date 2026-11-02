@@ -116,10 +116,16 @@ button { cursor: pointer; }
 /* Editor */
 .form { display: grid; gap: 14px; }
 .field { display: grid; gap: 6px; min-width: 0; }
+.logo { width: 44px; height: auto; border-radius: 8px; flex: none; display: block; }
+.field input[type="date"] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; height: 44px; line-height: 22px; text-align: left; }
+.field input[type="date"]::-webkit-date-and-time-value { text-align: left; margin: 0; }
+.field input[type="date"]::-webkit-calendar-picker-indicator { margin: 0; }
+.field select { min-width: 0; max-width: 100%; text-overflow: ellipsis; }
 .field label, .field .flabel { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
 .field input, .field select, .field textarea { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 12px; min-height: 44px; font-size: 16px; }
 .field textarea { min-height: 72px; resize: vertical; }
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.row2.date-row { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); }
 @media (max-width: 380px) { .row2 { grid-template-columns: 1fr; } }
 .section-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 2px solid var(--ink); padding-bottom: 6px; }
 .section-h h2 { font-family: var(--display); font-size: 22px; text-transform: uppercase; letter-spacing: .03em; margin: 0; }
@@ -234,7 +240,7 @@ td.r, th.r { text-align: right; }
 
 <header class="bar"><div class="bar-in">
   <div class="brand">
-    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="13" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="14" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="14" r="5" fill="currentColor"/></svg>
+    <img class="logo" src="logo.png" width="44" height="45" alt="Schützengesellschaft Muttenz">
     <h1 id="title">Range Scorebook</h1>
   </div>
   <div class="langsw" role="group" aria-label="Language / Sprache"><button data-act="setlang" data-v="en" aria-pressed="true">EN</button><button data-act="setlang" data-v="de" aria-pressed="false">DE</button></div>
@@ -705,7 +711,7 @@ function detailView() {
 function editView() {
   const d = S.draft, st = sessionStats(d);
   return `<div class="form">
-    <div class="row2">
+    <div class="row2 date-row">
       <div class="field"><label for="f-date">${t("date")}</label><input id="f-date" type="date" lang="${t("locale")}" value="${esc(d.date)}" data-f="date"></div>
       <div class="field"><label for="f-preset">${t("discipline")}</label><select id="f-preset" data-f="preset">${Object.entries(PRESETS).filter(([k, p]) => !p.hidden || k === d.preset).map(([k]) => `<option value="${k}"${k === d.preset ? " selected" : ""}>${esc(plabel(k))}</option>`).join("")}</select></div>
     </div>
