@@ -573,7 +573,7 @@ async function shareOrSave(filename, data, type) {
   const b = data instanceof Blob ? data : new Blob([data], { type });
   const file = new File([b], filename, { type: b.type || type });
   try {
-    if (navigator.canShare && navigator.canShare({ files: [file] }) && /iPhone|iPad|Android/i.test(navigator.userAgent)) { await navigator.share({ files: [file], title: filename }); return; }
+    if (navigator.canShare && navigator.canShare({ files: [file] }) && /iPhone|iPad|Android/i.test(navigator.userAgent)) { await navigator.share({ files: [file] }); return; }
   } catch (e) { if (e && e.name === "AbortError") return; }
   const url = URL.createObjectURL(b), a = document.createElement("a");
   a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
