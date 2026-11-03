@@ -295,7 +295,8 @@ const STR = {
     "st.s10": "10 shots · A10", "st.p2s6r4": "12 shots · 2 practice, 6 single, 4 in series · A10", "st.p2s5r23": "12 shots · 2 practice, 5 single, series of 2 and 3 · A10",
     customN: (n, tg, p) => `Custom · ${p ? p + " practice + " : ""}${n} ${n === 1 ? "shot" : "shots"} · ${tg}`, target: "Target", practiceLbl: "Practice", fewerP: "Fewer practice shots", moreP: "More practice shots",
     "st.op300": "OP · 20 shots A5/B4", "st.fs300": "Feldschiessen rifle · 18 shots B4",
-    "st.custom": "Custom · choose shots and target",
+    "st.custom": "Custom · choose shots and target", "st.customP": "Custom · choose number of shots",
+    "st.pstd": "Standard · 5/5/5", "st.pop": "OP · 5 single + 5/5/5", "st.pfs": "Feldschiessen · 3 single + 5/5/5",
     "seg.practice": "Practice · not counted", "seg.single": "Single shots", seriesOf: (n) => `Series of ${n}`,
     // bar & list
     none: "None", all: "All", selected: (n) => `${n} selected`, cancel: "Cancel", email: "Email", export: "Export", newBtn: "+ New", back: "Back",
@@ -380,7 +381,8 @@ const STR = {
     "st.s10": "10 Schüsse · A10", "st.p2s6r4": "12 Schüsse · 2 Probe, 6 Einzel, 4 Serie · A10", "st.p2s5r23": "12 Schüsse · 2 Probe, 5 Einzel, Serien zu 2 und 3 · A10",
     customN: (n, tg, p) => `Eigene · ${p ? p + " Probe + " : ""}${n} ${n === 1 ? "Schuss" : "Schüsse"} · ${tg}`, target: "Scheibe", practiceLbl: "Probe", fewerP: "Weniger Probeschüsse", moreP: "Mehr Probeschüsse",
     "st.op300": "OP · 20 Schüsse A5/B4", "st.fs300": "Feldschiessen Gewehr · 18 Schüsse B4",
-    "st.custom": "Eigene · Schüsse und Scheibe wählen",
+    "st.custom": "Eigene · Schüsse und Scheibe wählen", "st.customP": "Eigene · Anzahl Schüsse wählen",
+    "st.pstd": "Standard · 5/5/5", "st.pop": "OP · 5 Einzel + 5/5/5", "st.pfs": "Feldschiessen · 3 Einzel + 5/5/5",
     "seg.practice": "Probe · zählt nicht", "seg.single": "Einzelschüsse", seriesOf: (n) => `Serie zu ${n}`,
     none: "Keine", all: "Alle", selected: (n) => `${n} ausgewählt`, cancel: "Abbrechen", email: "E-Mail", export: "Export", newBtn: "+ Neu", back: "Zurück",
     loading: "Schiessbuch wird geladen…", signInH: "Speicher nicht verfügbar", signInP: "Dieser Browser erlaubt keine Datenspeicherung auf dem Gerät. Schalte das private Surfen aus und öffne die App erneut.",
@@ -481,11 +483,19 @@ const SERIES_TYPES = {
   p2s5r23: { segs: [{ k: "practice", n: 2 }, { k: "single", n: 5 }, { k: "series", n: 2 }, { k: "series", n: 3 }] },
   op300:   { segs: [{ k: "single", n: 5, ...A5 }, { k: "single", n: 5, ...B4 }, { k: "series", n: 2, ...B4 }, { k: "series", n: 3, ...B4 }, { k: "series", n: 5, ...B4 }] },
   fs300:   { segs: [{ k: "single", n: 6, ...B4 }, { k: "series", n: 3, ...B4 }, { k: "series", n: 3, ...B4 }, { k: "series", n: 6, ...B4 }] },
+  pstd:    { segs: [{ k: "series", n: 5 }, { k: "series", n: 5 }, { k: "series", n: 5 }] },
+  pop:     { segs: [{ k: "single", n: 5 }, { k: "series", n: 5 }, { k: "series", n: 5 }, { k: "series", n: 5 }] },
+  pfs:     { segs: [{ k: "single", n: 3 }, { k: "series", n: 5 }, { k: "series", n: 5 }, { k: "series", n: 5 }] },
   custom:  { free: true },
 };
+const RIFLE_FORMATS = ["s10", "p2s6r4", "p2s5r23", "op300", "fs300", "custom"];
+const PISTOL_FORMATS = ["pstd", "pop", "pfs", "custom"];
+const isPistol = (preset) => preset === "p25" || preset === "p50";
 const stlabel = (k) => t("st." + k);
-const newSeries = (preset) => (preset && preset !== "r300" ? { type: "custom", planned: 10, shots: [], total: null, target: "A10" } : { type: "s10", planned: 10, shots: [], total: null, target: "A10" });
-const formatsFor = (preset) => (preset === "r300" ? Object.keys(SERIES_TYPES) : ["custom"]);
+const newSeries = (preset) => ({ type: isPistol(preset) ? "pstd" : preset && preset !== "r300" ? "custom" : "s10", planned: 10, shots: [], total: null, target: "A10" });
+const formatsFor = (preset) => (preset === "r300" ? RIFLE_FORMATS : isPistol(preset) ? PISTOL_FORMATS : ["custom"]);
+// Pistol targets always use the 10-point scale; the target choice is only for "Other".
+const targetChoice = (preset) => !isPistol(preset);
 // Older sessions stored a "10 shots" series with a different count; treat those as custom.
 function stype(s) {
   const ty = SERIES_TYPES[s.type] ? s.type : "s10";
@@ -1008,8 +1018,8 @@ function seriesView(s, i) {
   return `<div class="series${active ? " active" : ""}" data-act="activate" data-s="${i}">
     <div class="series-head"><span class="name">${t("seriesN", i + 1)}</span><span class="tot num">${ss.total}<small> / ${ss.max}</small></span>
       ${d.series.length > 1 ? `<button class="btn ghost iconbtn" data-act="rmseries" data-s="${i}" aria-label="${t("removeSeries", i + 1)}">×</button>` : ""}</div>
-    <div class="field"${formatsFor(d.preset).length < 2 ? " hidden" : ""}><label for="st-${i}" class="visually-hidden">${t("seriesFormat")}</label><select id="st-${i}" data-stype="${i}">${formatsFor(d.preset).map((k) => `<option value="${k}"${stype(s) === k ? " selected" : ""}>${esc(stlabel(k))}</option>`).join("")}</select></div>
-    ${stype(s) === "custom" ? `<div class="field"><label for="tg-${i}">${t("target")}</label><select id="tg-${i}" data-target="${i}">${Object.keys(TARGETS).map((k) => `<option value="${k}"${(s.target || "A10") === k ? " selected" : ""}>${k} · 0–${TARGETS[k]}</option>`).join("")}</select></div>` : ""}
+    <div class="field"${formatsFor(d.preset).length < 2 ? " hidden" : ""}><label for="st-${i}" class="visually-hidden">${t("seriesFormat")}</label><select id="st-${i}" data-stype="${i}">${formatsFor(d.preset).map((k) => `<option value="${k}"${stype(s) === k ? " selected" : ""}>${esc(k === "custom" && isPistol(d.preset) ? stlabel("customP") : stlabel(k))}</option>`).join("")}</select></div>
+    ${stype(s) === "custom" && targetChoice(d.preset) ? `<div class="field"><label for="tg-${i}">${t("target")}</label><select id="tg-${i}" data-target="${i}">${Object.keys(TARGETS).map((k) => `<option value="${k}"${(s.target || "A10") === k ? " selected" : ""}>${k} · 0–${TARGETS[k]}</option>`).join("")}</select></div>` : ""}
     ${groups}
     ${ss.practiceN && s.shots.some((v, j) => isPractice(s, j)) ? `<p class="note" style="margin:0">${t("practiceSum", ss.practice)}</p>` : ""}
     <div class="series-tools">
@@ -1050,11 +1060,16 @@ function applyPreset(key) {
   const d = S.draft;
   d.preset = PRESETS[key] ? key : "other";
   if (!PRESETS[d.preset].x) d.series.forEach((s) => (s.shots = s.shots.map((v) => (v === "X" ? 10 : v))));
-  // Only rifle 300 m has the preset formats; other disciplines use custom series.
-  if (!formatsFor(d.preset).includes("s10")) d.series.forEach((s) => {
-    if (stype(s) === "custom") return;
-    const st = seriesStats(s);
-    s.type = "custom"; s.target = s.target || "A10"; s.practice = st.practiceN; s.planned = Math.max(st.counted, s.shots.length - st.practiceN); clampShots(s);
+  // Each discipline has its own formats; series in a format the new discipline lacks become custom.
+  const allowed = formatsFor(d.preset), empty = d.series.every((s) => !hasResult(s));
+  if (empty) { d.series = d.series.map(() => newSeries(d.preset)); return; }
+  d.series.forEach((s) => {
+    if (!allowed.includes(stype(s))) {
+      const st = seriesStats(s);
+      s.type = "custom"; s.target = s.target || "A10"; s.practice = st.practiceN; s.planned = Math.max(st.counted, s.shots.length - st.practiceN);
+    }
+    if (!targetChoice(d.preset)) s.target = "A10";
+    clampShots(s);
   });
 }
 function clampShots(s) {
