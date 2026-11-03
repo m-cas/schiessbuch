@@ -192,8 +192,17 @@ button { cursor: pointer; }
 .hint .addr { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
 .local { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 10px; }
 .local .actions .btn { flex: 1 1 140px; }
+.space { font-size: 13px; color: var(--muted); }
+.space summary { list-style: none; display: flex; align-items: center; gap: 8px; cursor: pointer; min-height: 44px; }
+.space summary::-webkit-details-marker { display: none; }
+.space summary .chev { margin-left: auto; transition: transform .15s; }
+.space[open] summary .chev { transform: rotate(180deg); }
+.space .tri { flex: none; }
+.space-body { padding: 0 0 10px 24px; }
+.space .warn { margin: 0 0 4px; }
 .lockrow { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--muted); }
 .lockrow svg { flex: none; margin-top: 2px; }
+.storeline { display: block; margin-top: 8px; color: var(--ink); font-variant-numeric: tabular-nums; }
 
 .photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
 .ph { position: relative; aspect-ratio: 3/4; max-width: 100%; border-radius: 10px; overflow: hidden; background: var(--sunken); border: 1px solid var(--line); padding: 0; }
@@ -302,7 +311,9 @@ const STR = {
     badBackup: "This file isn't a Scorebook backup.", restoreFail: "The backup couldn't be restored.", backupFile: "scorebook-backup",
     sharePhotos: "Share with photos", sharePhotosNote: "Opens the share sheet with the text and all target photos attached. Choose Mail and add the recipient.",
     shareTextNote: "Opens the share sheet with this text. Choose Mail and add the recipient.", shareText: "Share",
-    fileSaved: "File ready", storageWarn: "This browser may delete stored data if the app isn't installed. Add it to your home screen to keep your data safe.",
+    fileSaved: "File ready", storageLine: (u, a) => `Storage used: ${u}${a ? ` · ${a} available` : ""}`, photosLine: (n, b) => `${n} ${n === 1 ? "photo" : "photos"} · backup about ${b}`,
+    protectedOk: "Protected from automatic deletion by the browser.", tooBigShort: "Backup too large for email",
+    backupTooBig: (b) => `This backup is about ${b}, too large for most email services (about 20–25 MB). Use Save backup and keep the file in Dropbox or Files instead.`, storageWarn: "This browser may delete stored data if the app isn't installed. Add it to your home screen to keep your data safe.",
     loadErr: (c) => `Your sessions can't be loaded right now (${c}). Reload the page to try again.`, filterLabel: "Filter by discipline",
     slow: "Still connecting. What you see may be out of date.", emptyH: "No sessions yet",
     emptyP: "Record your first range session: pick the discipline, tap in each shot, and photograph the paper target.", newSession: "+ New session",
@@ -384,7 +395,9 @@ const STR = {
     badBackup: "Diese Datei ist kein Schiessbuch-Backup.", restoreFail: "Das Backup konnte nicht wiederhergestellt werden.", backupFile: "schiessbuch-backup",
     sharePhotos: "Mit Fotos teilen", sharePhotosNote: "Öffnet das Teilen-Menü mit dem Text und allen Scheibenfotos im Anhang. Wähle «Mail» und gib den Empfänger ein.",
     shareTextNote: "Öffnet das Teilen-Menü mit diesem Text. Wähle «Mail» und gib den Empfänger ein.", shareText: "Teilen",
-    fileSaved: "Datei bereit", storageWarn: "Dieser Browser löscht gespeicherte Daten evtl., wenn die App nicht installiert ist. Füge sie zum Home-Bildschirm hinzu, damit deine Daten sicher sind.",
+    fileSaved: "Datei bereit", storageLine: (u, a) => `Speicher belegt: ${u}${a ? ` · ${a} verfügbar` : ""}`, photosLine: (n, b) => `${n} ${n === 1 ? "Foto" : "Fotos"} · Backup ca. ${b}`,
+    protectedOk: "Vor automatischem Löschen durch den Browser geschützt.", tooBigShort: "Backup zu gross für E-Mail",
+    backupTooBig: (b) => `Dieses Backup ist ca. ${b} gross, zu gross für die meisten E-Mail-Dienste (ca. 20–25 MB). Speichere es mit «Backup speichern» und lege die Datei in Dropbox oder «Dateien» ab.`, storageWarn: "Dieser Browser löscht gespeicherte Daten evtl., wenn die App nicht installiert ist. Füge sie zum Home-Bildschirm hinzu, damit deine Daten sicher sind.",
     loadErr: (c) => `Deine Übungen können gerade nicht geladen werden (${c}). Lade die Seite neu und versuche es nochmals.`, filterLabel: "Nach Disziplin filtern",
     slow: "Verbindung wird noch aufgebaut. Die Anzeige ist evtl. nicht aktuell.", emptyH: "Noch keine Übungen",
     emptyP: "Erfasse deine erste Übung: Disziplin wählen, jeden Schuss eintippen und die Scheibe fotografieren.", newSession: "+ Neue Übung",
@@ -535,7 +548,7 @@ const dbPut = (x) => idb("sessions", "readwrite", (os) => os.put(x));
 const dbDel = (id) => idb("sessions", "readwrite", (os) => os.delete(id));
 // Photos are stored as raw bytes (not Blob objects) so they survive being overwritten, e.g. by a restore.
 const photoGet = (id) => idb("photos", "readonly", (os) => os.get(id)).then((r) => (!r ? null : r.data ? new Blob([r.data], { type: r.type || "image/jpeg" }) : r.blob || null));
-async function photoPut(b, id) { id = id || newId(); const data = await b.arrayBuffer(); await idb("photos", "readwrite", (os) => os.put({ id, data, type: b.type || "image/jpeg" })); return id; }
+async function photoPut(b, id) { id = id || newId(); const data = await b.arrayBuffer(); await idb("photos", "readwrite", (os) => os.put({ id, data, size: data.byteLength, type: b.type || "image/jpeg" })); return id; }
 function clearPhotoCache() { for (const u of URLS.values()) URL.revokeObjectURL(u); URLS.clear(); LOADING.clear(); }
 function dataUrlToBlob(u) {
   const m = /^data:([^;,]*)(;base64)?,(.*)$/s.exec(u || ""); if (!m) throw new Error("bad photo");
@@ -592,12 +605,36 @@ function seriesNorm(s) { if (!hasResult(s)) return null; const st = seriesStats(
 function toast(msg) { const el = $("#toast"); el.textContent = msg; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (el.hidden = true), 2400); }
 
 /* ---------- data ---------- */
+const MAIL_LIMIT = 20 * 1024 * 1024;
+function fmtBytes(n) {
+  if (!(n >= 0)) return "";
+  const f = (v, d) => v.toLocaleString(t("locale"), { maximumFractionDigits: d });
+  if (n < 1024 * 1024) return f(Math.max(1, Math.round(n / 1024)), 0) + " KB";
+  if (n < 1024 ** 3) return f(n / 1024 ** 2, 1) + " MB";
+  return f(n / 1024 ** 3, 1) + " GB";
+}
+async function updateStorage() {
+  try {
+    let bytes = 0, count = 0;
+    await new Promise((res, rej) => {
+      const tx = IDB.db.transaction("photos", "readonly"), r = tx.objectStore("photos").openCursor();
+      r.onsuccess = () => { const c = r.result; if (c) { const v = c.value; bytes += v.size || (v.data && v.data.byteLength) || (v.blob && v.blob.size) || 0; count++; c.continue(); } };
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+    });
+    const est = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : {};
+    // a backup holds the photos as text (about 4/3 of their size) plus the session data
+    const backup = Math.round(bytes * 4 / 3) + JSON.stringify(S.sessions).length;
+    S.store = { photoBytes: bytes, photoCount: count, usage: est.usage, quota: est.quota, backup };
+  } catch {}
+  if (S.view === "list") render();
+}
 async function refresh() {
   const all = (await dbAll()).map(normSession);
   S.sessions = all.sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.createdAt || 0) - (a.createdAt || 0));
   if (S.current) S.current = S.sessions.find((x) => x.id === S.current.id) || null;
   if (S.view === "detail" && !S.current) S.view = "list";
   for (const id of [...S.picked]) if (!S.sessions.some((x) => x.id === id)) S.picked.delete(id);
+  updateStorage();
 }
 async function boot() {
   render();
@@ -608,6 +645,7 @@ async function boot() {
   try { await refresh(); } catch { S.error = "read"; }
   S.loaded = true; render();
   try { if (navigator.storage && navigator.storage.persist) { const ok = await navigator.storage.persisted() || await navigator.storage.persist(); S.persisted = ok; } } catch {}
+  if (S.view === "list") render();
 }
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
   addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
@@ -692,12 +730,18 @@ function chromeHint() {
 }
 function localPanel() {
   const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
-  return `<section class="local" aria-labelledby="local-h">
-    <div class="lockrow"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
-      <div><strong id="local-h" style="color:var(--ink)">${t("localH")}</strong><br>${t("localP")}${!standalone && !S.persisted ? `<br>${t("storageWarn")}` : ""}</div></div>
+  const tooBig = S.store && S.sessions.length && S.store.backup > MAIL_LIMIT;
+  let open = false; try { open = localStorage.getItem("scorebook-space-open") === "1"; } catch {}
+  return `<section class="local">
     <div class="actions">${S.sessions.length ? `<button class="btn" data-act="backup" ${S.backingUp ? "disabled" : ""}>${S.backingUp ? t("backupBusy") : t("backup")}</button>
       <button class="btn" data-act="mailbackup" ${S.backingUp ? "disabled" : ""}>${t("emailBackup")}</button>` : ""}
       <label class="btn" for="restore-file">${t("restore")}</label><input id="restore-file" class="visually-hidden" type="file" accept=".json,.txt,application/json,text/plain"></div>
+    <details class="space" id="space"${open ? " open" : ""}>
+      <summary><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2" fill="none" stroke="currentColor" stroke-width="1.4"/></svg><strong style="color:var(--ink)">${t("localH")}</strong>${tooBig ? `<svg class="tri" width="18" height="18" viewBox="0 0 24 24" role="img" aria-label="${t("tooBigShort")}"><path d="M12 3 2 21h20L12 3z" fill="var(--danger)"/><path d="M12 10v5" stroke="var(--surface)" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="18" r="1.3" fill="var(--surface)"/></svg>` : ""}<svg class="chev" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="space-body">${t("localP")}${!standalone && !S.persisted ? `<br>${t("storageWarn")}` : ""}
+        ${S.store ? `<span class="storeline">${t("storageLine", fmtBytes(S.store.usage ?? S.store.photoBytes), S.store.quota && S.store.usage != null ? fmtBytes(Math.max(0, S.store.quota - S.store.usage)) : "")}${S.sessions.length ? `<br>${t("photosLine", S.store.photoCount, fmtBytes(S.store.backup))}` : ""}${S.persisted ? `<br>${t("protectedOk")}` : ""}</span>` : ""}</div>
+      ${S.store && S.sessions.length && S.store.backup > MAIL_LIMIT ? `<p class="warn" style="margin:0">${t("backupTooBig", fmtBytes(S.store.backup))}</p>` : ""}
+    </details>
   </section>`;
 }
 async function backupJson() {
@@ -1203,6 +1247,7 @@ document.addEventListener("input", (e) => {
   if (S.view === "edit" && e.target.dataset && e.target.dataset.tief !== undefined) { S.draft.series[Number(e.target.dataset.tief)].tief = e.target.value; return; }
   if (S.view === "edit" && f && ["date", "desc", "location", "weapon", "conditions", "notes"].includes(f)) S.draft[f] = e.target.value;
 });
+document.addEventListener("toggle", (e) => { if (e.target && e.target.id === "space") { try { localStorage.setItem("scorebook-space-open", e.target.open ? "1" : "0"); } catch {} } }, true);
 document.addEventListener("submit", (e) => {
   if (e.target.id !== "kp-form") return;
   e.preventDefault();
