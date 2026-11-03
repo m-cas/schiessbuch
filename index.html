@@ -102,6 +102,17 @@ button { cursor: pointer; }
 .trend-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 
 .list { display: grid; gap: 10px; }
+.list { gap: 8px; }
+.sess { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.sess.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.srow { display: flex; align-items: stretch; }
+.srow-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 0; background: transparent; padding: 12px 4px 12px 14px; min-height: 52px; text-align: left; }
+.sdate { flex: none; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.stitle { min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.srow-chev { flex: none; width: 48px; border: 0; background: transparent; color: var(--muted); display: grid; place-items: center; }
+.srow-chev svg { transition: transform .15s; }
+.sess.open .srow-chev svg { transform: rotate(180deg); }
+.sess .card { border: 0; border-top: 1px solid var(--line); border-radius: 0; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; text-align: left; width: 100%; }
 .thumb { width: 64px; height: 64px; border-radius: 10px; background: var(--sunken); object-fit: cover; display: grid; place-items: center; overflow: hidden; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; }
@@ -532,7 +543,7 @@ const isPractice = (s, j) => segments(s).some((g) => g.k === "practice" && j >= 
 
 const S = { db: null, assets: null, downloads: null, uid: null, sessions: [], loaded: false, slow: false, error: null,
   view: "list", filter: "All", draft: null, active: 0, current: null, confirmDel: false, saving: false, uploads: 0,
-  selecting: false, picked: new Set(), mail: null, building: false, cats: loadCats() };
+  selecting: false, picked: new Set(), expanded: new Set(), mail: null, building: false, cats: loadCats() };
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 /* ---------- local storage (IndexedDB) ---------- */
@@ -591,6 +602,7 @@ async function shareOrSave(filename, data, type) {
 }
 const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
 const fmtDate = (s) => { try { return new Date(s + "T12:00:00").toLocaleDateString(t("locale"), { weekday: "short", day: "numeric", month: "short", year: "numeric" }); } catch { return s; } };
+const fmtDateShort = (d) => { try { return new Date(d + "T12:00:00").toLocaleDateString(t("locale"), { day: "2-digit", month: "2-digit", year: "numeric" }); } catch { return d; } };
 const shotVal = (v) => (v === "X" ? 10 : Number(v) || 0);
 
 function seriesStats(s, max) {
@@ -847,17 +859,23 @@ function cardScores(x) {
   return `<span class="slist">${shown.join("")}${done.length > 4 ? `<span class="ts">+${done.length - 4}</span>` : ""}</span>`;
 }
 function cardView(x) {
-  const st = sessionStats(x), k = pkey(x);
+  const st = sessionStats(x), k = pkey(x), id = esc(x.id), open = S.expanded.has(x.id), on = S.picked.has(x.id);
+  const title = `${catLabel(x)}${descOf(x) ? " · " + descOf(x) : ""}`;
+  const tick = S.selecting ? `<span class="tick" aria-hidden="true">${on ? `<svg width="14" height="14" viewBox="0 0 14 14"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2"/></svg>` : ""}</span>` : "";
   const th = x.photos && x.photos[0] ? `<img data-pid="${x.photos[0]}" src="${blob(x.photos[0])}" alt="" loading="lazy">` : `<svg width="30" height="30" viewBox="0 0 28 28" aria-hidden="true"><g fill="none" stroke="var(--muted)" stroke-width="1.3"><circle cx="14" cy="14" r="12"/><circle cx="14" cy="14" r="7"/></g></svg>`;
-  const on = S.picked.has(x.id);
-  return `<button class="card" data-act="${S.selecting ? "pick" : "open"}" data-id="${esc(x.id)}"${S.selecting ? ` aria-pressed="${on}"` : ""}>
-    ${S.selecting ? `<span class="tick" aria-hidden="true">${on ? `<svg width="14" height="14" viewBox="0 0 14 14"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2"/></svg>` : ""}</span>` : ""}
-    <span class="thumb">${th}</span>
-    <span class="meta"><span class="t">${esc(catLabel(x))}${descOf(x) ? ` · ${esc(descOf(x))}` : ""}</span>
-      <span class="s">${esc(fmtDate(x.date))} · ${esc(pshort(k))}${x.location ? " · " + esc(x.location) : ""}</span>
-      <span class="s">${t("seriesCount", x.series.length)} · ${t("shotsN", st.shots)}${x.photos && x.photos.length ? ` · ${t("photosN", x.photos.length)}` : ""}</span></span>
-    <span class="score">${cardScores(x)}</span>
-  </button>`;
+  return `<div class="sess${open ? " open" : ""}${S.selecting && on ? " on" : ""}">
+    <div class="srow">
+      <button class="srow-main" data-act="${S.selecting ? "pick" : "toggle"}" data-id="${id}"${S.selecting ? ` aria-pressed="${on}"` : ` aria-expanded="${open}"`}>${tick}<span class="sdate">${esc(fmtDateShort(x.date))}</span><span class="stitle">${esc(title)}</span></button>
+      <button class="srow-chev" data-act="toggle" data-id="${id}" aria-expanded="${open}" aria-label="${esc(title)}"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    ${open ? `<button class="card" data-act="open" data-id="${id}">
+      <span class="thumb">${th}</span>
+      <span class="meta"><span class="t">${esc(title)}</span>
+        <span class="s">${esc(fmtDate(x.date))} · ${esc(pshort(k))}${x.location ? " · " + esc(x.location) : ""}</span>
+        <span class="s">${t("seriesCount", x.series.length)} · ${t("shotsN", st.shots)}${x.photos && x.photos.length ? ` · ${t("photosN", x.photos.length)}` : ""}</span></span>
+      <span class="score">${cardScores(x)}</span>
+    </button>` : ""}
+  </div>`;
 }
 
 function detailView() {
@@ -1201,6 +1219,7 @@ document.addEventListener("click", (e) => {
     case "select": S.selecting = true; S.bulkAsk = false; S.picked.clear(); render(); break;
     case "selcancel": S.selecting = false; S.bulkAsk = false; S.picked.clear(); render(); break;
     case "selall": if (S.picked.size === S.sessions.length) S.picked.clear(); else S.sessions.forEach((x) => S.picked.add(x.id)); render(); break;
+    case "toggle": { const id = a.dataset.id; S.expanded.has(id) ? S.expanded.delete(id) : S.expanded.add(id); render(); break; }
     case "pick": { S.bulkAsk = false; const id = a.dataset.id; S.picked.has(id) ? S.picked.delete(id) : S.picked.add(id); render(); break; }
     case "mailpicked": S.current = null; startMail([...S.picked]); break;
     case "mailone": startMail([S.current.id]); break;
