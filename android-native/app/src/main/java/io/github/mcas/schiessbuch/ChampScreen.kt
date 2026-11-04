@@ -190,7 +190,7 @@ fun ChampScreen(store: Store, tx: Tx, nav: Nav) {
                     val open = h.year in openYears
                     val done = h.items.count { cs.sessionFor(it) != null }
                     item(key = "h${h.year}") {
-                        Card(Modifier.fillMaxWidth(), onClick = { openYears = if (open) openYears - h.year else openYears + h.year }) {
+                        Card(modifier = Modifier.fillMaxWidth(), onClick = { openYears = if (open) openYears - h.year else openYears + h.year }) {
                             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
                                     Text("${h.year} · ${h.name}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
