@@ -32,39 +32,13 @@ struct MainView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            List(selection: $selection) {
-                if store.sessions.isEmpty {
-                    ContentUnavailableView {
-                        Label(tx.emptyTitle, systemImage: "target")
-                    } description: {
-                        Text(tx.emptyText)
-                    } actions: {
-                        Button(tx.newSession) { editing = newSession() }.buttonStyle(.borderedProminent)
-                    }
-                    .listRowBackground(Color.clear)
+            // A list with a selection only while selecting: with a selection binding, a tap on a row
+            // selects it instead of opening the session.
+            Group {
+                if isSelecting {
+                    List(selection: $selection) { listContent }
                 } else {
-                    Section { filters }
-                    Section {
-                        stats
-                        if !rows.isEmpty { TrendChart(sessions: rows, tx: tx).padding(.vertical, 6) }
-                    } footer: { Text(tx.normCaption) }
-
-                    if rows.isEmpty {
-                        Text(tx.noMatch).foregroundStyle(.secondary)
-                    }
-                    ForEach(years, id: \.0) { year, list in
-                        let open = (openYears ?? Set(years.prefix(1).map(\.0))).contains(year)
-                        Section {
-                            if open {
-                                ForEach(list) { s in
-                                    NavigationLink(value: s.id) { SessionRow(session: s, tx: tx) }
-                                        .tag(s.id)
-                                }
-                            }
-                        } header: {
-                            yearHeader(year, count: list.count, open: open, picked: list.filter { selection.contains($0.id) }.count)
-                        }
-                    }
+                    List { listContent }
                 }
             }
             .listStyle(.insetGrouped)
@@ -84,6 +58,42 @@ struct MainView: View {
             }
             .task(id: store.sessions.count) { refreshStorage() }
             .onAppear(perform: openScreenForScreenshots)
+        }
+    }
+
+    @ViewBuilder private var listContent: some View {
+        if store.sessions.isEmpty {
+            ContentUnavailableView {
+                Label(tx.emptyTitle, systemImage: "target")
+            } description: {
+                Text(tx.emptyText)
+            } actions: {
+                Button(tx.newSession) { editing = newSession() }.buttonStyle(.borderedProminent)
+            }
+            .listRowBackground(Color.clear)
+        } else {
+            Section { filters }
+            Section {
+                stats
+                if !rows.isEmpty { TrendChart(sessions: rows, tx: tx).padding(.vertical, 6) }
+            } footer: { Text(tx.normCaption) }
+
+            if rows.isEmpty {
+                Text(tx.noMatch).foregroundStyle(.secondary)
+            }
+            ForEach(years, id: \.0) { year, list in
+                let open = (openYears ?? Set(years.prefix(1).map(\.0))).contains(year)
+                Section {
+                    if open {
+                        ForEach(list) { s in
+                            NavigationLink(value: s.id) { SessionRow(session: s, tx: tx) }
+                                .tag(s.id)
+                        }
+                    }
+                } header: {
+                    yearHeader(year, count: list.count, open: open, picked: list.filter { selection.contains($0.id) }.count)
+                }
+            }
         }
     }
 
