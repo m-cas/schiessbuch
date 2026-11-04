@@ -9,6 +9,9 @@ on:
     paths: ["ios-native/**", ".github/workflows/ios-native-check.yml"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: ios-native-check
   cancel-in-progress: true
@@ -65,6 +68,18 @@ jobs:
             xcrun simctl io "$DEV" screenshot "shots/$SCREEN-de.png"
             xcrun simctl terminate "$DEV" io.github.mcas.schiessbuch || true
           done
+
+      - name: Publish screenshots to the native-screenshots branch
+        if: always()
+        working-directory: ios-native
+        run: |
+          [ -d shots ] || exit 0
+          cp build.log shots/ 2>/dev/null || true
+          cd shots
+          git init -q -b native-screenshots
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          git add -A && git commit -q -m "Screenshots for ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" native-screenshots
 
       - uses: actions/upload-artifact@v6
         if: always()
