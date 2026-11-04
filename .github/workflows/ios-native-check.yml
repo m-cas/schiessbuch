@@ -1,0 +1,76 @@
+# Test build of the native iPhone app (ios-native/) on the development branch.
+# Compiles the app, runs it in the iPhone simulator with sample data and saves
+# screenshots as an artifact. Nothing is signed, published or sent to TestFlight.
+name: iOS native check
+
+on:
+  push:
+    branches: [native]
+    paths: ["ios-native/**", ".github/workflows/ios-native-check.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: ios-native-check
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Use the newest Xcode
+        run: |
+          XC=$(ls -d /Applications/Xcode_*.app | grep -v -i beta | sort -V | tail -1)
+          sudo xcode-select -s "$XC/Contents/Developer"
+          xcodebuild -version
+
+      - name: Generate Xcode project
+        working-directory: ios-native
+        run: |
+          brew install xcodegen >/dev/null
+          xcodegen generate
+
+      - name: Build for the simulator
+        working-directory: ios-native
+        run: |
+          set -o pipefail
+          xcodebuild -project MySchiessbuch.xcodeproj -scheme MySchiessbuch -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build.log | grep -E "error:|warning: .*\.swift|BUILD (SUCCEEDED|FAILED)" || true
+          grep -q "BUILD SUCCEEDED" build.log
+
+      - name: Run in the simulator and take screenshots
+        working-directory: ios-native
+        run: |
+          DEV=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];c=[x for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone')];print(sorted(c,key=lambda x:x['name'])[-1]['udid'])")
+          xcrun simctl boot "$DEV"
+          xcrun simctl bootstatus "$DEV" -b
+          APP=$(ls -d build/Build/Products/Debug-iphonesimulator/*.app | head -1)
+          xcrun simctl install "$DEV" "$APP"
+          mkdir -p shots
+          for L in de en; do
+            for MODE in light dark; do
+              xcrun simctl ui "$DEV" appearance $MODE
+              xcrun simctl launch "$DEV" io.github.mcas.schiessbuch -demo YES -lang $L >/dev/null
+              sleep 6
+              xcrun simctl io "$DEV" screenshot "shots/main-$L-$MODE.png"
+              xcrun simctl terminate "$DEV" io.github.mcas.schiessbuch || true
+            done
+          done
+          for SCREEN in editor detail settings; do
+            xcrun simctl ui "$DEV" appearance light
+            xcrun simctl launch "$DEV" io.github.mcas.schiessbuch -demo YES -lang de -screen $SCREEN >/dev/null
+            sleep 6
+            xcrun simctl io "$DEV" screenshot "shots/$SCREEN-de.png"
+            xcrun simctl terminate "$DEV" io.github.mcas.schiessbuch || true
+          done
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: ios-native-screenshots
+          path: |
+            ios-native/shots/*.png
+            ios-native/build.log
+          if-no-files-found: ignore

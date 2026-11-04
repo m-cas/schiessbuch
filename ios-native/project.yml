@@ -1,0 +1,44 @@
+# Xcode project for the native iPhone app (SwiftUI).
+# Generate the .xcodeproj with:  brew install xcodegen && xcodegen generate
+name: MySchiessbuch
+options:
+  bundleIdPrefix: io.github.mcas
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "2.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  MySchiessbuch:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources
+    info:
+      path: Generated/Info.plist
+      properties:
+        CFBundleDisplayName: MySchiessbuch
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        LSRequiresIPhoneOS: true
+        UILaunchScreen:
+          UIColorName: AccentColor
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        CFBundleLocalizations: [de, en]
+        CFBundleDevelopmentRegion: de
+        NSCameraUsageDescription: "MySchiessbuch braucht die Kamera, um deine Scheiben zu fotografieren. / MySchiessbuch uses the camera to photograph your targets."
+        NSPhotoLibraryUsageDescription: "MySchiessbuch braucht Zugriff auf Fotos, um Scheibenbilder hinzuzufügen. / MySchiessbuch uses your photos to add target pictures."
+        NSPhotoLibraryAddUsageDescription: "MySchiessbuch kann Scheibenbilder in deinen Fotos speichern. / MySchiessbuch can save target pictures to your photos."
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.mcas.schiessbuch
+        PRODUCT_NAME: MySchiessbuch
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_PREVIEWS: NO
