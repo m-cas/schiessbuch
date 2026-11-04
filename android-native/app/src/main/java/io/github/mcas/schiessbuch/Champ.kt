@@ -102,7 +102,8 @@ object ChampParser {
         "r300", "g300", "gewehr300m", "gewehr300", "rifle300m", "rifle300", "300m", "gewehr" -> Discipline.R300
         "p25", "pistole25m", "pistol25m", "25m" -> Discipline.P25
         "p50", "pistole50m", "pistol50m", "50m" -> Discipline.P50
-        "ap10", "lp10", "luftpistole10m", "airpistol10m", "luftpistole", "10m" -> Discipline.AP10
+        "ap10", "lp10", "luftpistole10m", "airpistol10m", "luftpistole" -> Discipline.AP10
+        "ag10", "lug10", "lg10", "luftgewehr10m", "airrifle10m", "airgun10m", "luftgewehr" -> Discipline.AG10
         "other", "andere", "anderes" -> Discipline.OTHER
         else -> null
     }

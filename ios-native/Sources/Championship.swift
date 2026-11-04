@@ -84,7 +84,8 @@ enum ChampParser {
         if ["r300", "g300", "gewehr300m", "gewehr300", "rifle300m", "rifle300", "300m", "gewehr"].contains(s) { return .r300 }
         if ["p25", "pistole25m", "pistol25m", "25m"].contains(s) { return .p25 }
         if ["p50", "pistole50m", "pistol50m", "50m"].contains(s) { return .p50 }
-        if ["ap10", "lp10", "luftpistole10m", "airpistol10m", "luftpistole", "10m"].contains(s) { return .ap10 }
+        if ["ap10", "lp10", "luftpistole10m", "airpistol10m", "luftpistole"].contains(s) { return .ap10 }
+        if ["ag10", "lug10", "lg10", "luftgewehr10m", "airrifle10m", "airgun10m", "luftgewehr"].contains(s) { return .ag10 }
         if ["other", "andere", "anderes"].contains(s) { return .other }
         return nil
     }

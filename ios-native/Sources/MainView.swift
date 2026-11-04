@@ -90,12 +90,16 @@ struct MainView: View {
     // MARK: parts
 
     private var filters: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(tx.discipline).font(.caption.weight(.semibold)).foregroundStyle(.secondary).textCase(.uppercase)
             Picker(tx.discipline, selection: $filterRaw) {
                 Text(tx.all).tag("all")
-                ForEach(Discipline.allCases) { d in Text(tx.disciplineName(d)).tag(d.rawValue) }
+                ForEach(Discipline.allCases) { d in Text(tx.disciplineShort(d)).tag(d.rawValue) }
             }
-            .pickerStyle(.menu)
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            Divider().padding(.vertical, 4)
+            Text(tx.category).font(.caption.weight(.semibold)).foregroundStyle(.secondary).textCase(.uppercase)
             HStack(spacing: 8) {
                 ForEach(Category.allCases) { c in
                     Toggle(tx.categoryName(c), isOn: Binding(

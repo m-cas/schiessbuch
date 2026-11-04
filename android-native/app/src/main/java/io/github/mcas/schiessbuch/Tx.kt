@@ -39,10 +39,11 @@ class Tx(lang: String) {
         Discipline.P25 -> p("Pistole 25m", "Pistol 25m")
         Discipline.P50 -> p("Pistole 50m", "Pistol 50m")
         Discipline.AP10 -> p("Luftpistole 10m", "Air Pistol 10m")
+        Discipline.AG10 -> p("Luftgewehr 10m", "Air Rifle 10m")
         Discipline.OTHER -> p("Andere", "Other")
     }
     fun disciplineShort(d: Discipline) = when (d) {
-        Discipline.R300 -> "G300"; Discipline.P25 -> "P25"; Discipline.P50 -> "P50"; Discipline.AP10 -> "LP10"; Discipline.OTHER -> p("Andere", "Other")
+        Discipline.R300 -> "G300"; Discipline.P25 -> "P25"; Discipline.P50 -> "P50"; Discipline.AP10 -> "LP10"; Discipline.AG10 -> "LuG10"; Discipline.OTHER -> p("Andere", "Other")
     }
     fun categoryName(c: Category) = when (c) {
         Category.TRAINING -> "Training"; Category.CHAMPIONSHIP -> p("Meisterschaft", "Championship"); Category.OTHER -> p("Andere", "Other")

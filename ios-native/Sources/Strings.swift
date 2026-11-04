@@ -42,11 +42,12 @@ struct Tx {
         case .p25: return p("Pistole 25m", "Pistol 25m")
         case .p50: return p("Pistole 50m", "Pistol 50m")
         case .ap10: return p("Luftpistole 10m", "Air Pistol 10m")
+        case .ag10: return p("Luftgewehr 10m", "Air Rifle 10m")
         case .other: return p("Andere", "Other")
         }
     }
     func disciplineShort(_ d: Discipline) -> String {
-        switch d { case .r300: "G300"; case .p25: "P25"; case .p50: "P50"; case .ap10: "LP10"; case .other: p("Andere", "Other") }
+        switch d { case .r300: "G300"; case .p25: "P25"; case .p50: "P50"; case .ap10: "LP10"; case .ag10: "LuG10"; case .other: p("Andere", "Other") }
     }
     func categoryName(_ c: Category) -> String {
         switch c { case .training: "Training"; case .championship: p("Meisterschaft", "Championship"); case .other: p("Andere", "Other") }

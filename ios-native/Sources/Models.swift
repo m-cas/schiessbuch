@@ -66,14 +66,14 @@ enum SeriesFormat: String, CaseIterable, Identifiable {
 }
 
 enum Discipline: String, CaseIterable, Identifiable {
-    case r300, p25, p50, ap10, other
+    case r300, p25, p50, ap10, ag10, other
     var id: String { rawValue }
 
     var formats: [SeriesFormat] {
         switch self {
         case .r300: return [.s10, .p2s6r4, .p2s5r23, .op300, .fs300, .custom]
         case .p25, .p50: return [.pstd, .pop, .pfs, .custom]
-        case .ap10: return [.ap10s, .ap20s, .custom]
+        case .ap10, .ag10: return [.ap10s, .ap20s, .custom]   // air pistol and air rifle 10m
         case .other: return [.custom]
         }
     }

@@ -78,8 +78,11 @@ button { cursor: pointer; }
 .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
 .chips::-webkit-scrollbar { display: none; }
 .chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; }
-.chips.disc { display: flex; gap: 5px; justify-content: space-between; overflow: visible; }
-.chips.disc .chip { flex: 1 1 auto; padding: 6px 4px; text-align: center; min-width: 0; }
+.chips.disc { display: flex; gap: 0; overflow: visible; border: 1px solid var(--line); border-radius: 10px; padding: 0; }
+.chips.disc .chip { flex: 1 1 0; padding: 7px 0; text-align: center; min-width: 0; border: 0; border-radius: 0; font-size: 12.5px; letter-spacing: -.01em; }
+.chips.disc .chip + .chip { border-left: 1px solid var(--line); }
+.chips.disc .chip:first-child { border-radius: 9px 0 0 9px; }
+.chips.disc .chip:last-child { border-radius: 0 9px 9px 0; }
 .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 2px solid var(--ink); border-bottom: 1px solid var(--line); }
@@ -140,7 +143,9 @@ button { cursor: pointer; }
 .seg3 button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 .chip.multi[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .chip.multi[aria-pressed="true"]::before { content: "✓ "; }
-.filters { display: grid; gap: 8px; }
+.filters { display: grid; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.frow { display: grid; gap: 6px; min-width: 0; }
+.frow + .frow { border-top: 1px dashed var(--line); padding-top: 10px; }
 .cat-tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .04em; padding: 2px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); margin-top: 4px; }
 .pct-pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); margin-top: 4px; }
 
@@ -358,8 +363,8 @@ const STR = {
     appName: "MySchiessbuch", locale: "en-GB",
     pl: (n, one, many) => (n === 1 ? one : many),
     // presets
-    "p.r300": "Rifle 300m", "p.p25": "Pistol 25m", "p.p50": "Pistol 50m", "p.ap10": "Air Pistol 10m", "p.other": "Other",
-    "f.All": "All", "f.r300": "G300", "f.p25": "P25", "f.p50": "P50", "f.ap10": "LP10", "f.other": "Other",
+    "p.r300": "Rifle 300m", "p.p25": "Pistol 25m", "p.p50": "Pistol 50m", "p.ap10": "Air Pistol 10m", "p.ag10": "Air Rifle 10m", "p.other": "Other",
+    "f.All": "All", "f.r300": "G300", "f.p25": "P25", "f.p50": "P50", "f.ap10": "LP10", "f.ag10": "LuG10", "f.other": "Other",
     "st.s10": "10 shots · A10", "st.p2s6r4": "12 shots · 2 practice, 6 single, 4 in series · A10", "st.p2s5r23": "12 shots · 2 practice, 5 single, series of 2 and 3 · A10",
     customN: (n, tg, p) => `Custom · ${p ? p + " practice + " : ""}${n} ${n === 1 ? "shot" : "shots"} · ${tg}`, target: "Target", practiceLbl: "Practice", fewerP: "Fewer practice shots", moreP: "More practice shots",
     "st.op300": "OP · 20 shots A5/B4", "st.fs300": "Feldschiessen rifle · 18 shots B4",
@@ -457,8 +462,8 @@ const STR = {
   },
   de: {
     appName: "MySchiessbuch", locale: "de-CH",
-    "p.r300": "Gewehr 300m", "p.p25": "Pistole 25m", "p.p50": "Pistole 50m", "p.ap10": "Luftpistole 10m", "p.other": "Andere",
-    "f.All": "Alle", "f.r300": "G300", "f.p25": "P25", "f.p50": "P50", "f.ap10": "LP10", "f.other": "Andere",
+    "p.r300": "Gewehr 300m", "p.p25": "Pistole 25m", "p.p50": "Pistole 50m", "p.ap10": "Luftpistole 10m", "p.ag10": "Luftgewehr 10m", "p.other": "Andere",
+    "f.All": "Alle", "f.r300": "G300", "f.p25": "P25", "f.p50": "P50", "f.ap10": "LP10", "f.ag10": "LuG10", "f.other": "Andere",
     "st.s10": "10 Schüsse · A10", "st.p2s6r4": "12 Schüsse · 2 Probe, 6 Einzel, 4 Serie · A10", "st.p2s5r23": "12 Schüsse · 2 Probe, 5 Einzel, Serien zu 2 und 3 · A10",
     customN: (n, tg, p) => `Eigene · ${p ? p + " Probe + " : ""}${n} ${n === 1 ? "Schuss" : "Schüsse"} · ${tg}`, target: "Scheibe", practiceLbl: "Probe", fewerP: "Weniger Probeschüsse", moreP: "Mehr Probeschüsse",
     "st.op300": "OP · 20 Schüsse A5/B4", "st.fs300": "Feldschiessen Gewehr · 18 Schüsse B4",
@@ -554,13 +559,13 @@ try { LANG = localStorage.getItem("scorebook-lang") || ((navigator.language || "
 if (!STR[LANG]) LANG = "en";
 const t = (k, ...a) => { const v = STR[LANG][k] ?? STR.en[k]; return typeof v === "function" ? v(...a) : v ?? k; };
 
-const PRESETS = { r300: { x: false }, p25: { x: true }, p50: { x: true }, ap10: { x: false }, other: { x: false } };
+const PRESETS = { r300: { x: false }, p25: { x: true }, p50: { x: true }, ap10: { x: false }, ag10: { x: false }, other: { x: false } };
 // Disciplines saved by earlier versions carried a target; map them to the new list.
 const LEGACY_PRESET = { r300a10: "r300", r300a100: "r300", r300a5: "r300", r300b4: "r300", r50: "other", custom: "other" };
 const pkey = (x) => (PRESETS[x.preset] ? x.preset : LEGACY_PRESET[x.preset] || "other");
 const plabel = (k) => t("p." + k);
 const pshort = plabel;
-const FILTERS = ["All", "r300", "p25", "p50", "ap10", "other"];
+const FILTERS = ["All", "r300", "p25", "p50", "ap10", "ag10", "other"];
 const TARGETS = { A10: 10, A100: 100, B4: 4, B5: 5, A5: 5 };
 const targetFromMax = (m) => ({ 10: "A10", 100: "A100", 5: "A5", 4: "B4" }[m] || "A10");
 const tmax = (s) => TARGETS[s.target] || 10;
@@ -589,10 +594,11 @@ const PISTOL_FORMATS = ["pstd", "pop", "pfs", "custom"];
 const isPistol = (preset) => preset === "p25" || preset === "p50";
 const stlabel = (k) => t("st." + k);
 const AIR_PISTOL_FORMATS = ["ap10s", "ap20s", "custom"];
-const newSeries = (preset) => ({ type: isPistol(preset) ? "pstd" : preset === "ap10" ? "ap10s" : preset && preset !== "r300" ? "custom" : "s10", planned: 10, shots: [], total: null, target: "A10" });
-const formatsFor = (preset) => (preset === "r300" ? RIFLE_FORMATS : isPistol(preset) ? PISTOL_FORMATS : preset === "ap10" ? AIR_PISTOL_FORMATS : ["custom"]);
+const isAir = (preset) => preset === "ap10" || preset === "ag10";   // air pistol and air rifle 10m: same formats, always 0–10
+const newSeries = (preset) => ({ type: isPistol(preset) ? "pstd" : isAir(preset) ? "ap10s" : preset && preset !== "r300" ? "custom" : "s10", planned: 10, shots: [], total: null, target: "A10" });
+const formatsFor = (preset) => (preset === "r300" ? RIFLE_FORMATS : isPistol(preset) ? PISTOL_FORMATS : isAir(preset) ? AIR_PISTOL_FORMATS : ["custom"]);
 // Pistol targets always use the 10-point scale; the target choice is only for "Other".
-const targetChoice = (preset) => !isPistol(preset) && preset !== "ap10";
+const targetChoice = (preset) => !isPistol(preset) && !isAir(preset);
 // Older sessions stored a "10 shots" series with a different count; treat those as custom.
 function stype(s) {
   const ty = SERIES_TYPES[s.type] ? s.type : "s10";
@@ -841,8 +847,8 @@ function listView() {
   if (S.error === "nodb") return `<div class="empty"><h2>${t("signInH")}</h2><p>${t("signInP")}</p></div>`;
   if (S.error) return `<div class="warn">${esc(t("loadErr", S.error))}</div>`;
   const rows = S.sessions.filter((x) => (S.filter === "All" || pkey(x) === S.filter) && S.cats.has(catOf(x)));
-  const chips = `<div class="filters"><div class="chips disc" role="group" aria-label="${t("filterLabel")}">${FILTERS.map((f) => `<button class="chip" data-act="filter" data-v="${f}" aria-pressed="${S.filter === f}"${f !== "All" ? ` title="${esc(plabel(f))}" aria-label="${esc(plabel(f))}"` : ""}>${t("f." + f)}</button>`).join("")}</div>
-    <div class="chips" role="group" aria-label="${t("catFilterLabel")}">${CATS.map((c) => `<button class="chip multi" data-act="catfilter" data-v="${c}" aria-pressed="${S.cats.has(c)}">${t("cat." + c)}</button>`).join("")}</div></div>`;
+  const chips = `<div class="filters"><div class="frow"><span class="eyebrow">${t("discipline")}</span><div class="chips disc" role="group" aria-label="${t("filterLabel")}">${FILTERS.map((f) => `<button class="chip" data-act="filter" data-v="${f}" aria-pressed="${S.filter === f}"${f !== "All" ? ` title="${esc(plabel(f))}" aria-label="${esc(plabel(f))}"` : ""}>${t("f." + f)}</button>`).join("")}</div></div>
+    <div class="frow"><span class="eyebrow">${t("category")}</span><div class="chips" role="group" aria-label="${t("catFilterLabel")}">${CATS.map((c) => `<button class="chip multi" data-act="catfilter" data-v="${c}" aria-pressed="${S.cats.has(c)}">${t("cat." + c)}</button>`).join("")}</div></div></div>`;
   const slow = S.slow ? `<p class="note">${t("slow")}</p>` : "";
   if (!S.sessions.length) return slow + `<div class="empty">
       <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="28" cy="28" r="26"/><circle cx="28" cy="28" r="18"/><circle cx="28" cy="28" r="10"/></g><circle cx="28" cy="28" r="4" fill="currentColor"/></svg>
@@ -1265,7 +1271,8 @@ function champDisc(v) {
   if (["r300", "g300", "gewehr300m", "gewehr300", "rifle300m", "rifle300", "300m", "gewehr"].includes(s)) return "r300";
   if (["p25", "pistole25m", "pistol25m", "25m"].includes(s)) return "p25";
   if (["p50", "pistole50m", "pistol50m", "50m"].includes(s)) return "p50";
-  if (["ap10", "lp10", "luftpistole10m", "airpistol10m", "luftpistole", "10m"].includes(s)) return "ap10";
+  if (["ap10", "lp10", "luftpistole10m", "airpistol10m", "luftpistole"].includes(s)) return "ap10";
+  if (["ag10", "lug10", "lg10", "luftgewehr10m", "airrifle10m", "airgun10m", "luftgewehr"].includes(s)) return "ag10";
   if (["other", "andere", "anderes"].includes(s)) return "other";
   return null;
 }
