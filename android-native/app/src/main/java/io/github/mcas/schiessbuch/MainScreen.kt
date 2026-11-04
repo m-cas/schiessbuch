@@ -147,11 +147,19 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                 // all six on one line, no scrolling
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     (listOf("all" to tx.all) + Discipline.entries.map { it.key to tx.disciplineShort(it) }).forEach { (k, l) ->
-                        FilterChip(
-                            selected = filter == k, onClick = { filter = k; prefs.filterDiscipline = k },
-                            label = { Text(l, Modifier.fillMaxWidth(), maxLines = 1, textAlign = androidx.compose.ui.text.style.TextAlign.Center, style = MaterialTheme.typography.labelMedium) },
-                            modifier = Modifier.weight(1f),
-                        )
+                        val on = filter == k
+                        Surface(
+                            selected = on, onClick = { filter = k; prefs.filterDiscipline = k },
+                            modifier = Modifier.weight(1f).height(36.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (on) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
+                            contentColor = if (on) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                            border = if (on) null else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(l, maxLines = 1, style = MaterialTheme.typography.labelLarge, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Medium)
+                            }
+                        }
                     }
                 }
             }
