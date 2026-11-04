@@ -24,6 +24,11 @@ for L in de en; do
   adb shell cmd uimode night yes; shot "main-$L-dark" $L
 done
 adb shell cmd uimode night no
+# landscape
+adb shell settings put system accelerometer_rotation 0
+adb shell settings put system user_rotation 1
+shot "main-de-landscape" de
+adb shell settings put system user_rotation 0
 for S in editor detail settings champ help; do shot "$S-de" de $S; done
 adb logcat -d -s AndroidRuntime:E > shots/crash.log || true
 ls -la shots

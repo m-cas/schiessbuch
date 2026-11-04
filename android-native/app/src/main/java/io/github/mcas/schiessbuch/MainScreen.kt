@@ -32,6 +32,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.TrackChanges
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.EmojiEvents
@@ -85,6 +89,9 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
     var selecting by rememberSaveable { mutableStateOf(false) }
     var selection by remember { mutableStateOf(setOf<String>()) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(setOf<String>()) }
+    // phone turned sideways (or a large screen): more on each row
+    val wide = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600
 
     val rows = store.sessions.filter { s -> (filter == "all" || s.discipline.key == filter) && s.categoryValue.key in cats }
     val years = rows.groupBy { it.year }.toSortedMap(compareByDescending { it }).toList()
@@ -224,12 +231,14 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                         list.forEachIndexed { i, s ->
                             if (i > 0) HorizontalDivider(Modifier.padding(start = 16.dp))
                             SessionRow(
-                                s, tx, selecting, s.id in selection,
+                                s, tx, selecting, s.id in selection, wide, s.id in expanded,
                                 Modifier.combinedClickable(
                                     onClick = { if (selecting) toggle(s.id) else nav.push(Screen.Detail(s.id)) },
                                     onLongClick = { if (!selecting) { selecting = true; selection = setOf(s.id) } },
                                 ),
+                                onChevron = { expanded = if (s.id in expanded) expanded - s.id else expanded + s.id },
                             )
+                            if (!selecting && s.id in expanded) SessionCard(store, s, tx) { nav.push(Screen.Detail(s.id)) }
                         }
                     }
                 }
@@ -296,17 +305,63 @@ private fun YearHeader(year: String, count: Int, open: Boolean, picked: Int, tx:
 }
 
 @Composable
-private fun SessionRow(s: Session, tx: Tx, selecting: Boolean, picked: Boolean, modifier: Modifier) {
+private fun SessionRow(
+    s: Session, tx: Tx, selecting: Boolean, picked: Boolean, wide: Boolean, open: Boolean,
+    modifier: Modifier, onChevron: () -> Unit,
+) {
     val title = if (s.descText.isEmpty()) tx.categoryName(s.categoryValue) else "${tx.categoryName(s.categoryValue)} · ${s.descText}"
+    val angle by animateFloatAsState(if (open) 180f else 0f, label = "row")
     ListItem(
         modifier = modifier,
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         leadingContent = if (selecting) ({ Checkbox(checked = picked, onCheckedChange = null) }) else null,
         headlineContent = {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(tx.shortDate(s.day), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = !wide))
+                if (wide) {
+                    // phone turned sideways: discipline and series results on the same line
+                    Text(tx.disciplineShort(s.discipline), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.weight(1f))
+                    Text(s.series.filter { it.hasResult }.joinToString(" · ") { "${tx.score(it.stats.total)}/${it.stats.max}" }, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                }
             }
         },
+        trailingContent = if (selecting) null else ({
+            IconButton(onClick = onChevron) { Icon(Icons.Filled.ExpandMore, tx.details, Modifier.rotate(angle), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }),
     )
+}
+
+/** The compact card under a row when its chevron is opened: photo, details and results; a tap opens the session. */
+@Composable
+private fun SessionCard(store: Store, s: Session, tx: Tx, onOpen: () -> Unit) {
+    val done = s.series.filter { it.hasResult }
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (s.photos.isNotEmpty()) PhotoThumb(store, s.photos.first(), Modifier.size(64.dp))
+        else Box(Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
+            Icon(Icons.Filled.TrackChanges, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(listOfNotNull(tx.longDate(s.day), tx.disciplineShort(s.discipline), s.location?.takeIf { it.isNotBlank() }).joinToString(" · "),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(listOfNotNull(tx.seriesN(s.series.size), tx.shotsN(s.countedShots), if (s.photos.isEmpty()) null else tx.photosN(s.photos.size)).joinToString(" · "),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            if (done.isEmpty()) Text("–", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            done.take(4).forEach { r ->
+                Text(
+                    buildAnnotatedString {
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = if (done.size == 1) MaterialTheme.typography.titleLarge.fontSize else MaterialTheme.typography.bodyLarge.fontSize)) { append(tx.score(r.stats.total)) }
+                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = MaterialTheme.typography.bodySmall.fontSize)) { append(" / ${r.stats.max}") }
+                    },
+                )
+            }
+        }
+    }
+}
 }

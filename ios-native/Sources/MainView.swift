@@ -8,6 +8,10 @@ struct MainView: View {
     @AppStorage("filterCategories") private var categoriesRaw = "training,championship,other"
 
     @State private var openYears: Set<String>? = nil
+    @State private var expanded = Set<String>()
+    @Environment(\.verticalSizeClass) private var vSize
+    /// iPhone turned sideways: rows show discipline and results too.
+    private var wide: Bool { vSize == .compact }
     @State private var editMode: EditMode = .inactive
     @State private var selection = Set<String>()
     @State private var showSettings = false
@@ -86,8 +90,35 @@ struct MainView: View {
                 Section {
                     if open {
                         ForEach(list) { s in
-                            NavigationLink(value: s.id) { SessionRow(session: s, tx: tx) }
-                                .tag(s.id)
+                            if isSelecting {
+                                NavigationLink(value: s.id) { SessionRow(session: s, tx: tx, wide: wide) }
+                                    .tag(s.id)
+                            } else {
+                                // tap on the row opens the session; the chevron shows a compact card with photo
+                                HStack(spacing: 4) {
+                                    Button { path.append(s.id) } label: {
+                                        SessionRow(session: s, tx: tx, wide: wide)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .contentShape(Rectangle())
+                                    }
+                                    .buttonStyle(.plain)
+                                    Button {
+                                        withAnimation { if expanded.contains(s.id) { expanded.remove(s.id) } else { expanded.insert(s.id) } }
+                                    } label: {
+                                        Image(systemName: "chevron.down")
+                                            .rotationEffect(.degrees(expanded.contains(s.id) ? 180 : 0))
+                                            .foregroundStyle(.secondary)
+                                            .frame(width: 36, height: 32)
+                                            .contentShape(Rectangle())
+                                    }
+                                    .buttonStyle(.borderless)
+                                    .accessibilityLabel(tx.details)
+                                }
+                                if expanded.contains(s.id) {
+                                    Button { path.append(s.id) } label: { SessionCard(session: s, tx: tx) }
+                                        .buttonStyle(.plain)
+                                }
+                            }
                         }
                     }
                 } header: {
@@ -251,12 +282,54 @@ struct MainView: View {
 struct SessionRow: View {
     let session: Session
     let tx: Tx
+    var wide = false
     var body: some View {
         HStack(spacing: 12) {
             Text(tx.shortDate(session.day)).monospacedDigit().foregroundStyle(.secondary)
             Text(session.descText.isEmpty ? tx.categoryName(session.categoryValue) : "\(tx.categoryName(session.categoryValue)) · \(session.descText)")
                 .fontWeight(.semibold).lineLimit(1)
+            if wide {
+                Text(tx.disciplineShort(session.discipline)).foregroundStyle(.secondary)
+                Spacer(minLength: 8)
+                Text(session.series.filter(\.hasResult).map { "\(tx.score($0.stats.total))/\($0.stats.max)" }.joined(separator: " · "))
+                    .fontWeight(.semibold).monospacedDigit().lineLimit(1)
+            }
         }
+    }
+}
+
+/// The compact card shown under a row when its chevron is opened: photo, details and results.
+struct SessionCard: View {
+    let session: Session
+    let tx: Tx
+    var body: some View {
+        let done = session.series.filter(\.hasResult)
+        HStack(alignment: .center, spacing: 12) {
+            Group {
+                if let pid = session.photos.first { PhotoThumb(id: pid) }
+                else {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color(.secondarySystemFill))
+                        .overlay { Image(systemName: "target").foregroundStyle(.secondary) }
+                }
+            }
+            .frame(width: 60, height: 60)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(tx.longDate(session.day) + " · " + tx.disciplineShort(session.discipline) + ((session.location ?? "").isEmpty ? "" : " · " + (session.location ?? "")))
+                    .font(.footnote).foregroundStyle(.secondary).lineLimit(2)
+                Text([tx.seriesN(session.series.count), tx.shotsN(session.countedShots)].joined(separator: " · ") + (session.photos.isEmpty ? "" : " · " + tx.photosN(session.photos.count)))
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 2) {
+                if done.isEmpty { Text("–").foregroundStyle(.secondary) }
+                ForEach(Array(done.prefix(4).enumerated()), id: \.offset) { _, r in
+                    Text(tx.score(r.stats.total)).font(done.count == 1 ? .title2.weight(.bold) : .callout.weight(.semibold)).monospacedDigit()
+                    + Text(" / \(r.stats.max)").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
     }
 }
 

@@ -42,6 +42,8 @@
     "Ø Serie und Beste Serie: Jede Serie wird auf 10 Schüsse auf A10 umgerechnet (0–100). So lassen sich 20 Schüsse, B4 oder A100 vergleichen.",
     "Die Grafik zeigt eine Linie pro Kalenderjahr (Januar bis Dezember) mit dem Durchschnitt jeder Übung. Hat eine Übung mehrere Serien, zeigt ein grauer Balken mit Punkten die einzelnen Serien.",
     "Die Übungen sind nach Jahr gruppiert; tippe auf ein Jahr, um es auf- oder zuzuklappen.",
+    "Tippe auf eine Übung, um sie zu öffnen. Der Pfeil rechts zeigt eine Vorschau mit Foto, Details und Resultaten; ein Tipp darauf öffnet die Übung ebenfalls.",
+    "Quer gehalten zeigt die App mehr: Die Grafik nutzt die ganze Breite, und jede Zeile zeigt zusätzlich Disziplin und Serienresultate.",
     "«Auswählen»: mehrere Übungen markieren, dann löschen oder per E-Mail senden (mit Text und Scheibenfotos)."
    ]
   },
@@ -116,6 +118,8 @@
     "Avg series and Best series: every series is converted to 10 shots on A10 (0–100), so 20 shots, B4 or A100 can be compared.",
     "The chart shows one line per calendar year (January to December) with the average of each session. When a session has several series, a grey bar with dots shows the single series.",
     "Sessions are grouped by year; tap a year to open or close it.",
+    "Tap a session to open it. The arrow on the right shows a preview with photo, details and results; tapping the preview opens the session too.",
+    "Turned sideways, the app shows more: the chart uses the full width, and each row also shows the discipline and series results.",
     "Select: mark several sessions, then delete them or send them by email (with text and target photos)."
    ]
   },
