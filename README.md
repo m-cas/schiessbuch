@@ -28,10 +28,14 @@ Speichere regelmässig ein Backup.
 | `scripts/copy-web.mjs` | Kopiert die Web-App nach `www/` für die nativen Apps |
 | `scripts/prepare-native.mjs` | Erzeugt das Android- bzw. iOS-Projekt und setzt Version, Signatur, Kamera-Berechtigungen |
 | `assets/logo.png` | Vorlage für App-Symbol und Startbild |
+| `android-native/` | Native Android-App (Kotlin, Jetpack Compose) |
 | `.github/workflows/android.yml` | Baut die Android-App und veröffentlicht sie als Release (von Hand starten) |
+| `.github/workflows/android-native-check.yml` | Test-Build der Android-App im Emulator mit Screenshots (Branch `native`) |
 | `ios-native/` | Native iPhone-App (SwiftUI); `project.yml` beschreibt das Xcode-Projekt (XcodeGen) |
 | `.github/workflows/ios.yml` | Baut die native iPhone-App und lädt sie zu TestFlight hoch (von Hand starten) |
 | `.github/workflows/ios-native-check.yml` | Test-Build der iPhone-App im Simulator mit Screenshots (Branch `native`) |
+| `meisterschaft-beispiel.csv` | Beispiel einer Meisterschaftsdatei |
+| `tools/schiessbuch_import.py` | Übernimmt per E-Mail gesendete Übungen in eine Excel-Datei (siehe unten) |
 
 Die Ordner `android/` und `ios/` werden beim Bauen auf GitHub erzeugt und nicht gespeichert.
 
@@ -43,6 +47,37 @@ Die Ordner `android/` und `ios/` werden beim Bauen auf GitHub erzeugt und nicht 
 3. **Android:** von Hand starten: Actions → «Android app» → *Run workflow*. Die neue APK erscheint unter *Releases*.
 4. **iPhone:** Actions → «iOS app» → *Run workflow*. Nach Apples Prüfung (meist 5–30 Minuten)
    erscheint der Build in TestFlight.
+
+## E-Mails nach Excel übernehmen
+
+`tools/schiessbuch_import.py` liest den Text einer E-Mail, die MySchiessbuch mit «E-Mail» verschickt
+(Deutsch oder Englisch, eine oder mehrere Übungen), und hängt **pro Serie eine Zeile** an eine
+Excel-Datei an. So lassen sich die Resultate mehrerer Schützen in einer Tabelle sammeln.
+
+Einmalig installieren: `pip3 install openpyxl`
+
+```sh
+# E-Mail-Text als Datei (.txt) oder gespeicherte E-Mail (.eml)
+python3 tools/schiessbuch_import.py --user "Massimo" --excel resultate.xlsx email.txt
+
+# Text aus der Zwischenablage (macOS)
+pbpaste | python3 tools/schiessbuch_import.py --user "Massimo" --excel resultate.xlsx
+```
+
+| Option | Bedeutung |
+|---|---|
+| `--user`, `-u` (Pflicht) | Name des Schützen; steht in der ersten Spalte |
+| `--excel`, `-x` | Excel-Datei; fehlt sie, wird sie mit Kopfzeile erstellt (Standard `schiessbuch.xlsx`) |
+| `--allow-duplicates` | Zeilen auch eintragen, wenn sie schon vorhanden sind |
+| Dateien | eine oder mehrere `.txt`/`.eml`; ohne Angabe wird von der Eingabe gelesen |
+
+Spalten: Benutzer, Datum, Kategorie, Disziplin, Beschreibung, Schiessstand, Waffe, Bedingungen,
+Serie, Format, Schüsse, Resultat, Maximum, Resultat 10 Schuss A10, Innenzehner (X), Tiefschuss,
+Probe (zählt nicht), Notizen, Fotos, Importiert am.
+
+Eine bereits importierte Serie (gleicher Benutzer, Datum, Beschreibung, Serie, Schüsse und Resultat)
+wird übersprungen; dieselbe E-Mail kann also gefahrlos zweimal importiert werden. Fotos werden nicht
+übernommen, nur ihre Anzahl.
 
 ## Einrichtung (einmalig)
 
