@@ -92,6 +92,7 @@ class Tx(lang: String) {
     val practiceShots get() = p("Probe", "Practice")
     val countedShots get() = p("Schüsse", "Shots")
     val orTotal get() = p("oder Total", "or total")
+    val totalLock get() = p("Total eingegeben. Feld leeren, um Einzelschüsse einzutippen.", "Total entered. Clear it to tap in single shots.")
     val tief = "Tiefschuss"
     val tiefShort = "TS"
     fun practiceSum(n: Int) = p("Probe: $n (nicht im Total)", "Practice: $n (not in total)")

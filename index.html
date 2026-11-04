@@ -223,6 +223,8 @@ button { cursor: pointer; }
 .key:disabled, .numentry input:disabled { opacity: .45; }
 .key.add { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-family: var(--body); font-size: 16px; }
 .shot { font-variant-numeric: tabular-nums; }
+body.typing .keypad { display: none; }
+.series .lock { margin: 0; font-size: 13px; color: var(--muted); }
 .has-keypad .wrap { padding-bottom: calc(260px + env(safe-area-inset-bottom, 0px)); }
 .wrap { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 .hint { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 14px; padding: 12px 14px; display: grid; gap: 10px; font-size: 14px; }
@@ -384,7 +386,7 @@ const STR = {
     uploadingPhoto: "Uploading photo…", saveSession: "Save session",
     seriesN: (n) => `Series ${n}`, removeSeries: (n) => `Remove series ${n}`, seriesFormat: "Series format", sessionDesc: "Description", sessionDescPh: "e.g. kneeling, club match, new sight",
     practiceShot: "Practice shot", shot: "Shot", tapRemove: "Tap to remove", practiceSum: (n) => `Practice: ${n} (not in total)`,
-    countedShots: (n) => `${n} counted shots`, shotsLbl: "Shots", fewer: "Fewer shots", more: "More shots", orTotal: "or total",
+    countedShots: (n) => `${n} counted shots`, shotsLbl: "Shots", fewer: "Fewer shots", more: "More shots", orTotal: "or total", totalLock: "Total entered. Clear it to tap in single shots.",
     // keypad
     removeLast: "Remove last shot", shotValue: (m) => `Shot value, 0 to ${m}`, add: "Add", complete: "complete",
     practiceShotN: (n) => `practice shot ${n}`, shotN: (n) => `shot ${n}`, typeThenAdd: (m) => `Type 0–${m}, then Add`, tapToRemove: "Tap a scored shot to remove it",
@@ -468,7 +470,7 @@ const STR = {
     uploadingPhoto: "Foto wird hochgeladen…", saveSession: "Übung speichern",
     seriesN: (n) => `Serie ${n}`, removeSeries: (n) => `Serie ${n} entfernen`, seriesFormat: "Serienformat", sessionDesc: "Beschreibung", sessionDescPh: "z. B. kniend, Vereinsstich, neues Visier",
     practiceShot: "Probeschuss", shot: "Schuss", tapRemove: "Tippen zum Entfernen", practiceSum: (n) => `Probe: ${n} (nicht im Total)`,
-    countedShots: (n) => `${n} gezählte Schüsse`, shotsLbl: "Schüsse", fewer: "Weniger Schüsse", more: "Mehr Schüsse", orTotal: "oder Total",
+    countedShots: (n) => `${n} gezählte Schüsse`, shotsLbl: "Schüsse", fewer: "Weniger Schüsse", more: "Mehr Schüsse", orTotal: "oder Total", totalLock: "Total eingegeben. Feld leeren, um Einzelschüsse einzutippen.",
     removeLast: "Letzten Schuss entfernen", shotValue: (m) => `Schusswert, 0 bis ${m}`, add: "Hinzufügen", complete: "vollständig",
     practiceShotN: (n) => `Probeschuss ${n}`, shotN: (n) => `Schuss ${n}`, typeThenAdd: (m) => `0–${m} eingeben, dann Hinzufügen`, tapToRemove: "Erfassten Schuss antippen zum Entfernen",
     seriesFull: "Diese Serie ist vollständig. Füge eine Serie für weitere Schüsse hinzu.", seriesFullCustom: "Alle Schüsse dieser Serie sind erfasst. Erhöhe «Schüsse», um weitere einzugeben.", tooLarge: "Dieses Foto ist zu gross. Versuche ein kleineres.",
@@ -743,6 +745,7 @@ if (!NATIVE && "serviceWorker" in navigator && (location.protocol === "https:" |
 /* ---------- views ---------- */
 function render() {
   document.documentElement.lang = LANG;
+  if (!(document.activeElement && document.activeElement.dataset && (document.activeElement.dataset.tot !== undefined || document.activeElement.dataset.tief !== undefined))) document.body.classList.remove("typing");
   $("#title").textContent = t("appName");
   const lg = $("#logo"), want = S.clubLogo ? "logo.png" : "icon-192.png";
   if (lg.getAttribute("src") !== want) lg.setAttribute("src", want);
@@ -1149,12 +1152,12 @@ function seriesView(s, i) {
       ${d.series.length > 1 ? `<button class="btn ghost iconbtn" data-act="rmseries" data-s="${i}" aria-label="${t("removeSeries", i + 1)}">×</button>` : ""}</div>
     <div class="field"${formatsFor(d.preset).length < 2 ? " hidden" : ""}><label for="st-${i}" class="visually-hidden">${t("seriesFormat")}</label><select id="st-${i}" data-stype="${i}">${formatsFor(d.preset).map((k) => `<option value="${k}"${stype(s) === k ? " selected" : ""}>${esc(k === "custom" && !targetChoice(d.preset) ? stlabel("customP") : stlabel(k))}</option>`).join("")}</select></div>
     ${stype(s) === "custom" && targetChoice(d.preset) ? `<div class="field"><label for="tg-${i}">${t("target")}</label><select id="tg-${i}" data-target="${i}">${Object.keys(TARGETS).map((k) => `<option value="${k}"${(s.target || "A10") === k ? " selected" : ""}>${k} · 0–${TARGETS[k]}</option>`).join("")}</select></div>` : ""}
-    ${groups}
+    ${ss.manual ? `<p class="lock">${t("totalLock")}</p>` : groups}
     ${ss.practiceN && s.shots.some((v, j) => isPractice(s, j)) ? `<p class="note" style="margin:0">${t("practiceSum", ss.practice)}</p>` : ""}
     <div class="series-tools">
       ${fixed(s) ? `<span class="note">${t("countedShots", ss.counted)}</span>` : `<span class="stepper">${t("practiceLbl")} <button data-act="practice" data-s="${i}" data-d="-1" aria-label="${t("fewerP")}">−</button><span class="num" style="font-size:18px;color:var(--ink);min-width:22px;text-align:center">${ss.practiceN}</span><button data-act="practice" data-s="${i}" data-d="1" aria-label="${t("moreP")}">+</button></span>
       <span class="stepper">${t("shotsLbl")} <button data-act="planned" data-s="${i}" data-d="-1" aria-label="${t("fewer")}">−</button><span class="num" style="font-size:18px;color:var(--ink);min-width:22px;text-align:center">${ss.counted}</span><button data-act="planned" data-s="${i}" data-d="1" aria-label="${t("more")}">+</button></span>`}
-      <label class="manual" for="tot-${i}">${t("orTotal")} <input id="tot-${i}" type="number" inputmode="decimal" step="0.1" min="0" value="${s.total ?? ""}" data-tot="${i}" placeholder="—"></label>
+      <label class="manual" for="tot-${i}">${t("orTotal")} <input id="tot-${i}" type="number" inputmode="decimal" step="0.1" min="0" value="${s.total ?? ""}" data-tot="${i}" placeholder="—"${s.shots.length ? " disabled" : ""}></label>
       <label class="manual" for="ts-${i}">${t("tief")} <input id="ts-${i}" type="number" inputmode="numeric" step="1" min="0" max="100" value="${esc(s.tief ?? "")}" data-tief="${i}" placeholder="—"></label>
     </div></div>`;
 }
@@ -1164,6 +1167,7 @@ function renderKeypad() {
   if (S.view !== "edit") { k.hidden = true; return; }
   const d = S.draft, keys = [];
   const s = d.series[S.active], ss = seriesStats(s, d.max);
+  if (ss.manual) { k.hidden = true; return; }
   const nj0 = s.shots.length, seg0 = segAt(s, nj0), m = seg0 && seg0.max ? seg0.max : tmax(s);
   const big = m > 20, allowX = PRESETS[d.preset] && PRESETS[d.preset].x && (s.target || "A10") === "A10" && !(seg0 && seg0.max);
   if (!big) { if (allowX) keys.push(`<button class="key x" data-key="X">X</button>`); for (let v = m; v >= 0; v--) keys.push(`<button class="key" data-key="${v}">${v}</button>`); }
@@ -1207,6 +1211,7 @@ function clampShots(s) {
 function addShot(v) {
   const d = S.draft, s = d.series[S.active];
   const ss = seriesStats(s, d.max);
+  if (ss.manual) return;
   if (s.shots.length >= ss.planned) { toast(fixed(s) ? t("seriesFull") : t("seriesFullCustom")); return; }
   s.shots.push(v); s.total = null;
 
@@ -1381,7 +1386,7 @@ document.addEventListener("change", (e) => {
     const i = Number(el.dataset.target), s = S.draft.series[i];
     s.target = TARGETS[el.value] ? el.value : "A10"; clampShots(s); S.active = i; render();
   }
-  else if (el.dataset.tot !== undefined) { const s = S.draft.series[Number(el.dataset.tot)]; s.total = el.value === "" ? null : Number(el.value); render(); }
+  else if (el.dataset.tot !== undefined) { const s = S.draft.series[Number(el.dataset.tot)]; s.total = el.value === "" ? null : Number(el.value); setTimeout(render); }
 });
 document.addEventListener("input", (e) => {
   const m = e.target.dataset && e.target.dataset.m;
@@ -1396,6 +1401,9 @@ document.addEventListener("input", (e) => {
   if (S.view === "edit" && e.target.dataset && e.target.dataset.tief !== undefined) { S.draft.series[Number(e.target.dataset.tief)].tief = e.target.value; return; }
   if (S.view === "edit" && f && ["date", "desc", "location", "weapon", "conditions", "notes"].includes(f)) S.draft[f] = e.target.value;
 });
+// The shot keypad steps aside while the total or the Tiefschuss is being typed.
+document.addEventListener("focusin", (e) => { if (e.target.dataset && (e.target.dataset.tot !== undefined || e.target.dataset.tief !== undefined)) document.body.classList.add("typing"); });
+document.addEventListener("focusout", (e) => { if (e.target.dataset && (e.target.dataset.tot !== undefined || e.target.dataset.tief !== undefined)) document.body.classList.remove("typing"); });
 document.addEventListener("toggle", (e) => { if (e.target && e.target.id === "space") { try { localStorage.setItem("scorebook-space-open", e.target.open ? "1" : "0"); } catch {} } }, true);
 document.addEventListener("submit", (e) => {
   if (e.target.id !== "kp-form") return;

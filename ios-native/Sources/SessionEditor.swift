@@ -18,6 +18,7 @@ struct SessionEditor: View {
     @State private var alert: String? = nil
     @State private var tapCount = 0
     @State private var fullCount = 0
+    @FocusState private var numberField: NumberField?
 
     init(original: Session, isNew: Bool) {
         self.original = original
@@ -33,7 +34,7 @@ struct SessionEditor: View {
             Form {
                 detailsSection
                 ForEach(draft.series.indices, id: \.self) { i in
-                    SeriesEditorSection(series: $draft.series[i], index: i, discipline: draft.discipline, isActive: i == active, canRemove: draft.series.count > 1, tx: tx,
+                    SeriesEditorSection(series: $draft.series[i], index: i, discipline: draft.discipline, isActive: i == active, canRemove: draft.series.count > 1, tx: tx, focus: $numberField,
                                         onActivate: { active = i },
                                         onRemove: { removeSeries(i) })
                 }
@@ -47,7 +48,8 @@ struct SessionEditor: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .safeAreaInset(edge: .bottom) {
-                if draft.series.indices.contains(active) {
+                // The keypad steps aside while a total or Tiefschuss is typed, and for series scored by total only.
+                if draft.series.indices.contains(active), numberField == nil, !draft.series[active].stats.manual {
                     ShotKeypad(series: draft.series[active], index: active, discipline: draft.discipline, tx: tx,
                                onValue: addShot, onBack: removeLast)
                 }
@@ -60,6 +62,12 @@ struct SessionEditor: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(tx.save) { save() }.fontWeight(.semibold)
+                }
+                if numberField != nil {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button(tx.done) { numberField = nil }.fontWeight(.semibold)
+                    }
                 }
             }
             .interactiveDismissDisabled(dirty)
@@ -145,6 +153,7 @@ struct SessionEditor: View {
     private func addShot(_ v: Shot) {
         guard draft.series.indices.contains(active) else { return }
         var s = draft.series[active]
+        guard !s.stats.manual else { return }
         let slots = s.stats.slots
         guard s.shots.count < slots else { fullCount += 1; return }
         s.shots.append(v)
@@ -226,6 +235,7 @@ struct SeriesEditorSection: View {
     let isActive: Bool
     let canRemove: Bool
     let tx: Tx
+    var focus: FocusState<NumberField?>.Binding
     let onActivate: () -> Void
     let onRemove: () -> Void
 
@@ -242,7 +252,11 @@ struct SeriesEditorSection: View {
                     ForEach(Target.allCases) { t in Text("\(t.rawValue) · 0–\(t.max)").tag(t) }
                 }
             }
-            shotsGrid
+            if st.manual {
+                Text(tx.totalLock).font(.footnote).foregroundStyle(.secondary)
+            } else {
+                shotsGrid
+            }
             if st.practiceCount > 0 && series.shots.indices.contains(0) {
                 Text(tx.practiceSum(st.practice)).font(.footnote).foregroundStyle(.secondary)
             }
@@ -256,9 +270,12 @@ struct SeriesEditorSection: View {
             }
             LabeledContent(tx.orTotal) {
                 TextField("—", value: $series.total, format: .number).keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                    .focused(focus, equals: .total(index))
+                    .disabled(!series.shots.isEmpty)
             }
             LabeledContent(tx.tief) {
                 TextField("—", value: $series.tief, format: .number).keyboardType(.numberPad).multilineTextAlignment(.trailing)
+                    .focused(focus, equals: .tief(index))
             }
             if canRemove {
                 Button(role: .destructive) { onRemove() } label: { Label(tx.removeSeries, systemImage: "minus.circle") }
@@ -348,6 +365,8 @@ struct SeriesEditorSection: View {
         }
     }
 }
+
+enum NumberField: Hashable { case total(Int), tief(Int) }
 
 // MARK: - Keypad
 

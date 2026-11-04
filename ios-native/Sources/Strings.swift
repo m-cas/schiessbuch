@@ -100,6 +100,7 @@ struct Tx {
     var practiceShots: String { p("Probe", "Practice") }
     var countedShots: String { p("Schüsse", "Shots") }
     var orTotal: String { p("oder Total", "or total") }
+    var totalLock: String { p("Total eingegeben. Feld leeren, um Einzelschüsse einzutippen.", "Total entered. Clear it to tap in single shots.") }
     var tief: String { "Tiefschuss" }
     var tiefShort: String { "TS" }
     func practiceSum(_ n: Int) -> String { p("Probe: \(n) (nicht im Total)", "Practice: \(n) (not in total)") }

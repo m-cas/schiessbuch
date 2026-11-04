@@ -80,6 +80,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.draw.drawBehind
@@ -110,6 +111,7 @@ fun EditorScreen(store: Store, tx: Tx, nav: Nav, original: Session, isNew: Boole
     var confirmDiscard by remember { mutableStateOf(false) }
     var alert by remember { mutableStateOf<String?>(null) }
     var pickDate by remember { mutableStateOf(false) }
+    var typingNumber by remember { mutableStateOf(false) } // total or Tiefschuss field has focus
     val dirty = draft != original || added.isNotEmpty() || removed.isNotEmpty()
     val d = draft.discipline
 
@@ -132,6 +134,7 @@ fun EditorScreen(store: Store, tx: Tx, nav: Nav, original: Session, isNew: Boole
     }
     fun addShot(v: Shot) {
         val s = draft.series.getOrNull(active) ?: return
+        if (s.stats.manual) return
         val slots = s.stats.slots
         if (s.shots.size >= slots) { haptic.performHapticFeedback(HapticFeedbackType.LongPress); return }
         val next = s.copy(shots = s.shots + v, total = null)
@@ -185,7 +188,8 @@ fun EditorScreen(store: Store, tx: Tx, nav: Nav, original: Session, isNew: Boole
             )
         },
         bottomBar = {
-            if (!WindowInsets.isImeVisible) draft.series.getOrNull(active)?.let { s ->
+            // the keypad steps aside while a total or Tiefschuss is typed, and for series scored by total only
+            if (!typingNumber) draft.series.getOrNull(active)?.takeIf { !it.stats.manual }?.let { s ->
                 ShotKeypad(s, active, d, tx, ::addShot, ::removeLast)
             }
         },
@@ -230,6 +234,7 @@ fun EditorScreen(store: Store, tx: Tx, nav: Nav, original: Session, isNew: Boole
                     s, i, d, i == active, draft.series.size > 1, tx,
                     onChange = { setSeries(i, it) },
                     onActivate = { active = i },
+                    onTyping = { typingNumber = it },
                     onRemove = {
                         draft = draft.copy(series = draft.series.toMutableList().also { it.removeAt(i) })
                         active = minOf(active, draft.series.size - 1)
@@ -327,7 +332,7 @@ private fun <T> Dropdown(label: String, value: String, options: List<T>, name: (
 @Composable
 private fun SeriesEditor(
     series: Series, index: Int, d: Discipline, isActive: Boolean, canRemove: Boolean, tx: Tx,
-    onChange: (Series) -> Unit, onActivate: () -> Unit, onRemove: () -> Unit,
+    onChange: (Series) -> Unit, onActivate: () -> Unit, onTyping: (Boolean) -> Unit, onRemove: () -> Unit,
 ) {
     val st = series.stats
     Card(
@@ -347,7 +352,8 @@ private fun SeriesEditor(
             if (series.format == SeriesFormat.CUSTOM && d.hasTargetChoice) Dropdown(tx.target, "${series.targetValue.key} · 0–${series.targetValue.max}", Target.entries, { "${it.key} · 0–${it.max}" }) { t ->
                 onChange(series.copy(target = t.key).clamped(d))
             }
-            ShotsGrid(series, isActive, tx, onActivate) { j -> onChange(series.copy(shots = series.shots.toMutableList().also { it.removeAt(j) })); onActivate() }
+            if (st.manual) Text(tx.totalLock, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            else ShotsGrid(series, isActive, tx, onActivate) { j -> onChange(series.copy(shots = series.shots.toMutableList().also { it.removeAt(j) })); onActivate() }
             if (st.practiceCount > 0 && series.shots.isNotEmpty()) Text(tx.practiceSum(st.practice), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (series.format == SeriesFormat.CUSTOM) {
                 Stepper(tx.practiceShots, st.practiceCount, 0..20) { n ->
@@ -359,10 +365,10 @@ private fun SeriesEditor(
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                NumberInput(tx.orTotal, series.total?.let(tx::score) ?: "", decimal = true, Modifier.weight(1f)) {
+                NumberInput(tx.orTotal, series.total?.let(tx::score) ?: "", decimal = true, Modifier.weight(1f), enabled = series.shots.isEmpty(), onFocus = { onTyping(it); if (it) onActivate() }) {
                     onChange(series.copy(total = it.replace(',', '.').toDoubleOrNull()))
                 }
-                NumberInput(tx.tief, series.tief?.toString() ?: "", decimal = false, Modifier.weight(1f)) {
+                NumberInput(tx.tief, series.tief?.toString() ?: "", decimal = false, Modifier.weight(1f), onFocus = { onTyping(it); if (it) onActivate() }) {
                     onChange(series.copy(tief = it.toIntOrNull()))
                 }
             }
@@ -385,8 +391,9 @@ private fun changeFormat(series: Series, f: SeriesFormat, d: Discipline): Series
 
 /** Keeps its own text so partial input such as "9." survives; reports every change. */
 @Composable
-private fun NumberInput(label: String, initial: String, decimal: Boolean, modifier: Modifier, onChange: (String) -> Unit) {
+private fun NumberInput(label: String, initial: String, decimal: Boolean, modifier: Modifier, enabled: Boolean = true, onFocus: (Boolean) -> Unit = {}, onChange: (String) -> Unit) {
     var text by remember { mutableStateOf(initial) }
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
     // follow changes made elsewhere (e.g. typing shots clears the total)
     androidx.compose.runtime.LaunchedEffect(initial) {
         if (text.replace(',', '.').toDoubleOrNull() != initial.replace(',', '.').toDoubleOrNull()) text = initial
@@ -398,8 +405,10 @@ private fun NumberInput(label: String, initial: String, decimal: Boolean, modifi
             text = clean; onChange(clean)
         },
         label = { Text(label, maxLines = 1) }, placeholder = { Text("—") }, singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = if (decimal) KeyboardType.Decimal else KeyboardType.Number),
-        modifier = modifier,
+        keyboardOptions = KeyboardOptions(keyboardType = if (decimal) KeyboardType.Decimal else KeyboardType.Number, imeAction = androidx.compose.ui.text.input.ImeAction.Done),
+        keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { focus.clearFocus() }),
+        enabled = enabled,
+        modifier = modifier.onFocusChanged { onFocus(it.isFocused) },
     )
 }
 
