@@ -144,9 +144,14 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                // all six on one line, no scrolling
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     (listOf("all" to tx.all) + Discipline.entries.map { it.key to tx.disciplineShort(it) }).forEach { (k, l) ->
-                        FilterChip(selected = filter == k, onClick = { filter = k; prefs.filterDiscipline = k }, label = { Text(l) })
+                        FilterChip(
+                            selected = filter == k, onClick = { filter = k; prefs.filterDiscipline = k },
+                            label = { Text(l, Modifier.fillMaxWidth(), maxLines = 1, textAlign = androidx.compose.ui.text.style.TextAlign.Center, style = MaterialTheme.typography.labelMedium) },
+                            modifier = Modifier.weight(1f),
+                        )
                     }
                 }
             }

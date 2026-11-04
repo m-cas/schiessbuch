@@ -6,6 +6,10 @@ APK=app/build/outputs/apk/debug/app-debug.apk
 PKG=io.github.mcas.schiessbuch
 mkdir -p shots
 adb install -r "$APK"
+# the emulator's own launcher sometimes reports "isn't responding" right after boot; hide such system dialogs
+adb shell settings put global hide_error_dialogs 1
+sleep 30
+adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS
 adb shell settings put global window_animation_scale 0
 adb shell settings put global transition_animation_scale 0
 adb shell settings put global animator_duration_scale 0
