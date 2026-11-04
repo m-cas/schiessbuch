@@ -1,0 +1,11 @@
+{
+  "appId": "io.github.mcas.schiessbuch",
+  "appName": "Schiessbuch",
+  "webDir": "www",
+  "android": {
+    "adjustMarginsForEdgeToEdge": "force"
+  },
+  "ios": {
+    "contentInset": "never"
+  }
+}

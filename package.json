@@ -1,0 +1,22 @@
+{
+  "name": "schiessbuch",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Schiessbuch – record shooting results and photos of paper targets. Web app, Android and iOS from one code base.",
+  "scripts": {
+    "web": "node scripts/copy-web.mjs",
+    "android": "node scripts/copy-web.mjs && node scripts/prepare-native.mjs android",
+    "ios": "node scripts/copy-web.mjs && node scripts/prepare-native.mjs ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/filesystem": "^7.0.0",
+    "@capacitor/ios": "^7.0.0",
+    "@capacitor/share": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.0.0"
+  }
+}

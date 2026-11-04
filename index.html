@@ -590,7 +590,38 @@ function blob(id) {
   }
   return PLACEHOLDER;
 }
+/* ---------- native app (Capacitor) ----------
+   In the Android/iOS app the page runs inside Capacitor. Files are written to the
+   app's cache folder and handed to the system share sheet; nothing leaves the
+   phone unless the user picks a target there. */
+const CAP = window.Capacitor;
+const NATIVE = !!(CAP && CAP.isNativePlatform && CAP.isNativePlatform());
+const nativePlugin = (name) => (NATIVE && CAP.Plugins ? CAP.Plugins[name] : null);
+const canShare = () => (NATIVE ? !!nativePlugin("Share") : !!navigator.share);
+function blobToBase64(b) {
+  return new Promise((res, rej) => { const f = new FileReader(); f.onload = () => res(String(f.result).split(",")[1] || ""); f.onerror = rej; f.readAsDataURL(b); });
+}
+async function nativeWrite(name, data, type) {
+  const fs = nativePlugin("Filesystem");
+  const safe = String(name).replace(/[^\w.\-]+/g, "_");
+  const opts = { path: "share/" + safe, directory: "CACHE", recursive: true };
+  if (typeof data === "string") Object.assign(opts, { data, encoding: "utf8" });
+  else Object.assign(opts, { data: await blobToBase64(data instanceof Blob ? data : new Blob([data], { type })) });
+  return (await fs.writeFile(opts)).uri;
+}
+async function nativeShare({ title, text, files = [] }) {
+  const sh = nativePlugin("Share");
+  const uris = [];
+  for (const f of files) uris.push(await nativeWrite(f.name, f.data, f.type));
+  const payload = {};
+  if (title) { payload.title = title; payload.dialogTitle = title; }
+  if (text) payload.text = text;
+  if (uris.length) payload.files = uris;
+  try { await sh.share(payload); }
+  catch (e) { if (!/cancel/i.test(String((e && e.message) || e))) throw e; }
+}
 async function shareOrSave(filename, data, type) {
+  if (NATIVE) return nativeShare({ files: [{ name: filename, data, type }] });
   const b = data instanceof Blob ? data : new Blob([data], { type });
   const file = new File([b], filename, { type: b.type || type });
   try {
@@ -669,7 +700,7 @@ async function boot() {
   try { if (navigator.storage && navigator.storage.persist) { const ok = await navigator.storage.persisted() || await navigator.storage.persist(); S.persisted = ok; } } catch {}
   if (S.view === "list") render();
 }
-if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+if (!NATIVE && "serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
   addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
 
@@ -737,7 +768,7 @@ function listView() {
 
 function needsChromeHint() {
   const ua = navigator.userAgent || "";
-  if (!/Android/i.test(ua)) return false;
+  if (NATIVE || !/Android/i.test(ua)) return false;
   if (matchMedia("(display-mode: standalone)").matches) return false;
   try { if (localStorage.getItem("scorebook-chrome-hint") === "hidden") return false; } catch {}
   const realChrome = /Chrome\/\d/.test(ua) && !/SamsungBrowser|EdgA|OPR\/|Opera|YaBrowser|Firefox|DuckDuckGo|Vivaldi|MiuiBrowser|HuaweiBrowser|HeyTapBrowser|UCBrowser|; wv\)/i.test(ua) && !navigator.brave;
@@ -751,7 +782,7 @@ function chromeHint() {
     <span class="addr">${esc(location.href.split("#")[0])}</span></div>`;
 }
 function localPanel() {
-  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  const standalone = NATIVE || matchMedia("(display-mode: standalone)").matches || navigator.standalone;
   const tooBig = S.store && S.sessions.length && S.store.backup > MAIL_LIMIT;
   let open = false; try { open = localStorage.getItem("scorebook-space-open") === "1"; } catch {}
   return `<section class="local">
@@ -775,7 +806,9 @@ async function makeBackup(mail) {
   S.backingUp = true; render();
   try {
     const json = await backupJson(), name = `${t("backupFile")}-${today()}`;
-    if (mail) {
+    if (mail && NATIVE) {
+      await nativeShare({ title: t("backupMailSubject", fmtDate(today())), text: t("backupMailText"), files: [{ name: name + ".json", data: json, type: "application/json" }] });
+    } else if (mail) {
       // Some phones only attach common file types, so fall back to .txt; Restore accepts both.
       const cands = [new File([json], name + ".json", { type: "application/json" }), new File([json], name + ".txt", { type: "text/plain" })];
       const f = navigator.share && navigator.canShare ? cands.find((c) => navigator.canShare({ files: [c] })) : null;
@@ -970,9 +1003,9 @@ function mailView() {
       <div class="field"><label for="m-body">${t("message")}</label><textarea id="m-body" data-m="body">${esc(m.body)}</textarea></div>
     </div>
     <div class="steps">
-      ${navigator.share ? `<div class="step"><span class="n">★</span><div class="b"><button class="btn primary" data-act="shareall">${m.photos ? t("sharePhotos") : t("shareText")}</button>
+      ${canShare() ? `<div class="step"><span class="n">★</span><div class="b"><button class="btn primary" data-act="shareall">${m.photos ? t("sharePhotos") : t("shareText")}</button>
         <span class="note">${m.photos ? t("sharePhotosNote") : t("shareTextNote")}</span></div></div>` : ""}
-      <div class="step"><span class="n">1</span><div class="b"><a class="btn${navigator.share ? "" : " primary"}" id="m-open" href="${esc(mailHref())}" target="_blank" rel="noopener">${t("openMail")}</a>
+      <div class="step"><span class="n">1</span><div class="b"><a class="btn${canShare() ? "" : " primary"}" id="m-open" href="${esc(mailHref())}" target="_blank" rel="noopener">${t("openMail")}</a>
         <span class="note">${t("openMailNote")}${long ? t("longNote") : ""}</span></div></div>
       <div class="step"><span class="n">2</span><div class="b"><button class="btn" data-act="mailcopy">${t("copyText")}</button>
         <span class="note">${t("copyNote")}${m.to ? ` ${t("recipient")}: <span class="addr">${esc(m.to)}</span>` : ""}</span></div></div>
@@ -987,6 +1020,7 @@ async function shareMail() {
       const xs = S.sessions.filter((x) => m.ids.includes(x.id)).sort((a, b) => (a.date || "").localeCompare(b.date || ""));
       for (const x of xs) { let n = 0; for (const id of x.photos || []) { const b = await photoGet(id); if (b) files.push(new File([b], `${x.date}-${++n}.jpg`, { type: b.type || "image/jpeg" })); } }
     }
+    if (NATIVE) { await nativeShare({ title: m.subject, text: m.body, files: files.map((f) => ({ name: f.name, data: f, type: f.type })) }); return; }
     const payload = { title: m.subject, text: m.body };
     if (files.length && navigator.canShare && navigator.canShare({ files })) payload.files = files;
     await navigator.share(payload);
