@@ -225,6 +225,31 @@ button { cursor: pointer; }
 .shot { font-variant-numeric: tabular-nums; }
 body.typing .keypad { display: none; }
 .series .lock { margin: 0; font-size: 13px; color: var(--muted); }
+.champ { display: grid; gap: 14px; }
+a.btn { text-decoration: none; color: inherit; }
+.confirm.info { border-color: var(--accent); background: var(--surface); color: var(--ink); }
+.ch-tabs { justify-self: start; }
+.ch-load { display: grid; gap: 8px; }
+.ch-urlrow { display: flex; gap: 8px; }
+.ch-urlrow input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 12px; min-height: 42px; font-size: 15px; }
+.ch-head { display: flex; justify-content: space-between; align-items: end; gap: 12px; }
+.ch-head h2 { margin: 2px 0 0; font-size: 20px; }
+.ch-bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.ch-bar span { display: block; height: 100%; background: var(--accent); }
+.ch-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ch-item { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 10px; }
+.ch-main { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; }
+.ch-txt { display: grid; gap: 2px; min-width: 0; }
+.ch-check { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font-size: 14px; font-weight: 700; }
+.ch-item.done { background: transparent; }
+.ch-item.done .ch-txt strong, .ch-item.done .ch-txt > .note { opacity: .55; }
+.ch-item.done .ch-check { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.ch-res { justify-self: start; border: 0; background: transparent; padding: 4px 0 0; color: var(--accent); font-weight: 600; font-size: 14px; text-align: left; }
+.ch-tools { display: flex; justify-content: flex-end; }
+.ch-tools .confirm { width: 100%; }
+.ch-year { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; display: grid; gap: 10px; }
+.ch-year summary { cursor: pointer; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.ch-year[open] summary { margin-bottom: 10px; }
 .has-keypad .wrap { padding-bottom: calc(260px + env(safe-area-inset-bottom, 0px)); }
 .wrap { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 .hint { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 14px; padding: 12px 14px; display: grid; gap: 10px; font-size: 14px; }
@@ -412,6 +437,18 @@ const STR = {
     reportNote: (n) => `Saves one file with the results and all ${n} target photos, to attach to an email or keep.`,
     copyTo: "To", copySubject: "Subject", reportFile: "shooting-results", csvFile: "myschiessbuch",
     csvHead: ["date", "discipline", "category", "description", "range", "weapon", "conditions", "series", "format", "score", "max", "score_10_shots_A10", "inner_tens", "tiefschuss", "shots", "notes"],
+    chTitle: "Championship", chCurrent: "Current", chHistory: "History", chUrl: "Address of the CSV file", chLoad: "Load", chReload: "Reload", chLoading: "Loading…",
+    chFromFile: "Choose file", chExample: "Example file", chActivate: "Activate", chReset: "Reset", chResetAsk: "Make this item available again. Keep the session already recorded, or delete it?",
+    chKeep: "Keep session", chDelete: "Delete session", chResetKeep: "Item available again, session kept", chResetDel: "Item available again, session deleted",
+    chProgress: (d, n) => `${d} of ${n} done`, chNoResult: "no result yet", chNotShot: "not shot",
+    chAskSame: (y) => `Reload championship ${y}? Activated items and their sessions stay as they are.`,
+    chAskNew: (y, old) => `Load championship ${y}? It replaces ${old}, which moves to History. All recorded sessions stay.`,
+    chLoaded: (n, y) => `${n} items loaded for ${y}`, chWarnN: (n) => `${n} ${n === 1 ? "line" : "lines"} with problems`,
+    chNoRows: "The file contains no items.", chNeedCols: "The file needs at least the columns titel and disziplin.", chNoYear: "The file needs a year (column jahr).",
+    chBadDisc: (l, v) => `Line ${l}: unknown discipline "${v}", skipped`, chBadSeries: (l, v) => `Line ${l}: unknown series "${v}", ignored`,
+    chNeedUrl: "Enter the address of the CSV file first.", chFetchFail: "The file couldn't be loaded. Check the address, or download the file and use Choose file.", chBadFile: "This file couldn't be read.",
+    chDefaultName: (y) => `Championship ${y}`, chEmptyH: "No championship loaded", chEmptyP: "Load the club's CSV file with the sessions to shoot. One line per session:",
+    chNoHistory: "No earlier championships yet.", chHistDel: "Remove from history", chHistDelSure: "Remove for good",
     language: "Language", settings: "Settings", exitSettings: "Exit settings", openSettings: "Open settings", logoH: "Logo",
     clubLogo: "Show SG Muttenz logo", clubLogoNote: "Replaces the app icon at the top left.", backupH: "Backup and data", exportH: "Export", exportCsv: "Export as CSV", exportNote: "One row per series, for Excel or Numbers.",
     chromeH: "Installing on Android? Use Chrome",
@@ -493,6 +530,18 @@ const STR = {
     reportNote: (n) => `Speichert eine Datei mit den Resultaten und allen ${n} Scheibenfotos, zum Anhängen an eine E-Mail oder zum Aufbewahren.`,
     copyTo: "An", copySubject: "Betreff", reportFile: "schiessresultate", csvFile: "myschiessbuch",
     csvHead: ["datum", "disziplin", "kategorie", "beschreibung", "schiessstand", "waffe", "bedingungen", "serie", "format", "resultat", "maximum", "resultat_10_schuss_a10", "innenzehner", "tiefschuss", "schuesse", "notizen"],
+    chTitle: "Meisterschaft", chCurrent: "Aktuell", chHistory: "Verlauf", chUrl: "Adresse der CSV-Datei", chLoad: "Laden", chReload: "Neu laden", chLoading: "Lädt…",
+    chFromFile: "Datei wählen", chExample: "Beispieldatei", chActivate: "Aktivieren", chReset: "Zurücksetzen", chResetAsk: "Eintrag wieder freigeben. Die bereits erfasste Übung behalten oder löschen?",
+    chKeep: "Übung behalten", chDelete: "Übung löschen", chResetKeep: "Eintrag freigegeben, Übung behalten", chResetDel: "Eintrag freigegeben, Übung gelöscht",
+    chProgress: (d, n) => `${d} von ${n} erledigt`, chNoResult: "noch kein Resultat", chNotShot: "nicht geschossen",
+    chAskSame: (y) => `Meisterschaft ${y} neu laden? Aktivierte Einträge und ihre Übungen bleiben erhalten.`,
+    chAskNew: (y, old) => `Meisterschaft ${y} laden? Sie ersetzt ${old}; diese kommt in den Verlauf. Alle erfassten Übungen bleiben.`,
+    chLoaded: (n, y) => `${n} Einträge für ${y} geladen`, chWarnN: (n) => `${n} ${n === 1 ? "Zeile" : "Zeilen"} mit Problemen`,
+    chNoRows: "Die Datei enthält keine Einträge.", chNeedCols: "Die Datei braucht mindestens die Spalten titel und disziplin.", chNoYear: "Die Datei braucht ein Jahr (Spalte jahr).",
+    chBadDisc: (l, v) => `Zeile ${l}: unbekannte Disziplin «${v}», übersprungen`, chBadSeries: (l, v) => `Zeile ${l}: unbekannte Serie «${v}», ignoriert`,
+    chNeedUrl: "Zuerst die Adresse der CSV-Datei eingeben.", chFetchFail: "Die Datei konnte nicht geladen werden. Adresse prüfen, oder die Datei herunterladen und «Datei wählen» nutzen.", chBadFile: "Diese Datei konnte nicht gelesen werden.",
+    chDefaultName: (y) => `Meisterschaft ${y}`, chEmptyH: "Keine Meisterschaft geladen", chEmptyP: "Lade die CSV-Datei des Vereins mit den zu schiessenden Übungen. Eine Zeile pro Übung:",
+    chNoHistory: "Noch keine früheren Meisterschaften.", chHistDel: "Aus dem Verlauf entfernen", chHistDelSure: "Endgültig entfernen",
     language: "Sprache", settings: "Einstellungen", exitSettings: "Einstellungen verlassen", openSettings: "Einstellungen öffnen", logoH: "Logo",
     clubLogo: "SG-Muttenz-Logo anzeigen", clubLogoNote: "Ersetzt das App-Symbol oben links.", backupH: "Backup und Daten", exportH: "Export", exportCsv: "Als CSV exportieren", exportNote: "Eine Zeile pro Serie, für Excel oder Numbers.",
     chromeH: "Auf Android installieren? Nimm Chrome",
@@ -581,7 +630,8 @@ const isPractice = (s, j) => segments(s).some((g) => g.k === "practice" && j >= 
 function loadLogo() { try { return localStorage.getItem("scorebook-logo") === "club"; } catch { return false; } }
 const S = { db: null, assets: null, downloads: null, uid: null, sessions: [], loaded: false, slow: false, error: null,
   view: "list", filter: "All", draft: null, active: 0, current: null, confirmDel: false, saving: false, uploads: 0,
-  selecting: false, picked: new Set(), expanded: new Set(), openYears: null, clubLogo: loadLogo(), mail: null, building: false, cats: loadCats() };
+  selecting: false, picked: new Set(), expanded: new Set(), openYears: null, clubLogo: loadLogo(), mail: null, building: false, cats: loadCats(),
+  champ: loadChamp(), champTab: "current", champAsk: null, champReset: null, champBusy: false, champWarn: null, returnTo: null };
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 /* ---------- local storage (IndexedDB) ---------- */
@@ -764,6 +814,7 @@ function render() {
       : `<div class="selbar-in"><span class="count">${t("selected", S.picked.size)}</span><button class="btn" data-act="selcancel">${t("cancel")}</button><button class="btn danger" data-act="bulkdel" ${S.picked.size ? "" : "disabled"}>${t("deleteN", 0)}</button><button class="btn primary" data-act="mailpicked" ${S.picked.size ? "" : "disabled"}>${t("email")}</button></div>`;
   } else if (S.view === "list") {
     bar.innerHTML = S.sessions.length ? `<button class="btn" data-act="select">${t("selectBtn")}</button>` : "";
+    bar.innerHTML = `<button class="btn" data-act="champ">🏆 ${t("chTitle")}</button>` + bar.innerHTML;
     if (S.db && S.uid) bar.innerHTML += `<button class="btn primary" data-act="new">${t("newBtn")}</button>`;
     $("#app").innerHTML = chromeHint() + listView();
   } else if (S.view === "detail") {
@@ -772,6 +823,9 @@ function render() {
   } else if (S.view === "mail") {
     bar.innerHTML = `<button class="btn" data-act="mailback">${t("back")}</button>`;
     $("#app").innerHTML = mailView();
+  } else if (S.view === "champ") {
+    bar.innerHTML = `<button class="btn" data-act="champback">${t("back")}</button>`;
+    $("#app").innerHTML = champView();
   } else if (S.view === "settings") {
     bar.innerHTML = `<button class="btn" data-act="closesettings">${t("exitSettings")}</button>`;
     $("#app").innerHTML = settingsView();
@@ -864,7 +918,7 @@ function localPanel() {
 async function backupJson() {
   const photos = [];
   for (const x of S.sessions) for (const id of x.photos || []) { try { photos.push({ id, data: await toDataUrl(id) }); } catch {} }
-  return JSON.stringify({ app: "scorebook", version: 1, exported: new Date().toISOString(), sessions: S.sessions, photos });
+  return JSON.stringify({ app: "scorebook", version: 1, exported: new Date().toISOString(), sessions: S.sessions, photos, championship: S.champ });
 }
 async function makeBackup(mail) {
   S.backingUp = true; render();
@@ -904,6 +958,7 @@ async function restoreBackup(file) {
     let missing = 0;
     for (const p of data.photos || []) { try { await photoPut(dataUrlToBlob(p.data), p.id); } catch { missing++; } }
     for (const x of data.sessions) if (x && x.id && Array.isArray(x.series)) await dbPut(x);
+    if (data.championship && typeof data.championship === "object" && (data.championship.current || (data.championship.history || []).length)) { S.champ = { url: data.championship.url || S.champ.url, current: data.championship.current || null, history: data.championship.history || [] }; saveChamp(); }
     clearPhotoCache();
     await refresh(); render(); toast(t("restored", data.sessions.length) + (missing ? " · " + t("photosMissing", missing) : ""));
   } catch { toast(t("restoreFail")); }
@@ -1182,6 +1237,200 @@ function renderKeypad() {
   k.hidden = false;
 }
 
+/* ---------- championship: a list of sessions to shoot, loaded from a CSV file ---------- */
+// Stored on this device as { url, current: {year, name, loadedAt, items}, history: [...] }.
+// Each item: { id, title, preset, series: [{type, target, planned, practice}], date, location, notes, sessionId }.
+function loadChamp() { try { const v = JSON.parse(localStorage.getItem("scorebook-champ")); if (v && typeof v === "object") return { url: v.url || "", current: v.current || null, history: Array.isArray(v.history) ? v.history : [] }; } catch {} return { url: "", current: null, history: [] }; }
+function saveChamp() { try { localStorage.setItem("scorebook-champ", JSON.stringify(S.champ)); } catch {} }
+const CH_COLS = {
+  id: ["id", "nr", "nummer", "no"], year: ["jahr", "year"], title: ["titel", "title", "name", "beschreibung", "description", "anlass", "event"],
+  disc: ["disziplin", "discipline", "waffe"], series: ["serien", "series", "programm", "program", "format"], date: ["datum", "date", "bis", "deadline", "termin"],
+  location: ["schiessstand", "stand", "range", "location", "ort"], notes: ["notizen", "notes", "bemerkung", "bemerkungen", "info"], champ: ["meisterschaft", "championship"],
+};
+function csvRows(text, sep) {
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === sep) { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += c;
+  }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  return rows.map((r) => r.map((v) => v.trim())).filter((r) => r.some((v) => v !== ""));
+}
+function champDisc(v) {
+  const s = String(v || "").toLowerCase().replace(/\s+/g, "");
+  if (["r300", "g300", "gewehr300m", "gewehr300", "rifle300m", "rifle300", "300m", "gewehr"].includes(s)) return "r300";
+  if (["p25", "pistole25m", "pistol25m", "25m"].includes(s)) return "p25";
+  if (["p50", "pistole50m", "pistol50m", "50m"].includes(s)) return "p50";
+  if (["ap10", "lp10", "luftpistole10m", "airpistol10m", "luftpistole", "10m"].includes(s)) return "ap10";
+  if (["other", "andere", "anderes"].includes(s)) return "other";
+  return null;
+}
+function champDate(v) {
+  const s = String(v || "").trim(); let m;
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+  if ((m = s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/))) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  return null;
+}
+// One token per series: a format code (s10, op300, pstd …) or custom:SHOTS[:TARGET[:PRACTICE]], or just a number of shots.
+function champSeries(text, preset, warn) {
+  const toks = String(text || "").split(/[\s+,|]+/).filter(Boolean);
+  const out = [];
+  for (const raw of toks) {
+    const tk = raw.toLowerCase();
+    if (SERIES_TYPES[tk] && tk !== "custom" && formatsFor(preset).includes(tk)) { out.push({ type: tk, target: "A10", planned: seriesStats({ type: tk, shots: [] }, 1).planned, practice: 0 }); continue; }
+    const m = tk.match(/^(?:custom|eigene|c)?:?(\d{1,3})(?::(a10|a100|b4|b5|a5))?(?::(\d{1,2}))?$/);
+    if (m && Number(m[1]) > 0) {
+      const tgt = m[2] && targetChoice(preset) ? m[2].toUpperCase() : "A10";
+      out.push({ type: "custom", target: tgt, planned: Math.min(200, Number(m[1])), practice: Math.min(20, Number(m[3] || 0)) }); continue;
+    }
+    warn(raw);
+  }
+  if (!out.length) { const s = newSeries(preset); out.push({ type: s.type, target: "A10", planned: s.planned, practice: 0 }); }
+  return out;
+}
+function parseChamp(text) {
+  text = String(text || "").replace(/^﻿/, "");
+  const first = text.split(/\r?\n/).find((l) => l.trim()) || "";
+  const sep = [";", "\t", ","].sort((a, b) => first.split(b).length - first.split(a).length)[0];
+  const rows = csvRows(text, sep);
+  if (rows.length < 2) throw new Error(t("chNoRows"));
+  const head = rows[0].map((h) => h.toLowerCase().replace(/[^a-zäöü]/g, ""));
+  const col = {}; for (const [k, names] of Object.entries(CH_COLS)) { const i = head.findIndex((h) => names.includes(h)); if (i >= 0) col[k] = i; }
+  if (col.title === undefined || col.disc === undefined) throw new Error(t("chNeedCols"));
+  const warnings = [], items = [], ids = new Set();
+  let year = null, name = "";
+  rows.slice(1).forEach((r, n) => {
+    const line = n + 2, get = (k) => (col[k] !== undefined ? r[col[k]] || "" : "");
+    const title = get("title"); if (!title) return;
+    const preset = champDisc(get("disc"));
+    if (!preset) { warnings.push(t("chBadDisc", line, get("disc"))); return; }
+    const y = get("year").match(/\d{4}/); if (y && !year) year = Number(y[0]);
+    if (!name && get("champ")) name = get("champ");
+    let id = get("id") || title; while (ids.has(id)) id += "*"; ids.add(id);
+    const series = champSeries(get("series"), preset, (tok) => warnings.push(t("chBadSeries", line, tok)));
+    items.push({ id, title, preset, series, date: champDate(get("date")), location: get("location"), notes: get("notes"), sessionId: null });
+  });
+  if (!items.length) throw new Error(t("chNoRows"));
+  if (!year) { const d = items.map((x) => x.date).find(Boolean); if (d) year = Number(d.slice(0, 4)); }
+  if (!year) throw new Error(t("chNoYear"));
+  return { year, name: name || t("chDefaultName", year), loadedAt: Date.now(), items, warnings };
+}
+function champUrl(u) {
+  u = String(u || "").trim();
+  try {
+    const x = new URL(u);
+    if (/(^|\.)dropbox\.com$/.test(x.hostname)) { x.hostname = "dl.dropboxusercontent.com"; x.searchParams.delete("dl"); return x.toString(); }
+    const g = x.hostname === "drive.google.com" && x.pathname.match(/\/file\/d\/([^/]+)/); if (g) return `https://drive.google.com/uc?export=download&id=${g[1]}`;
+    if (x.hostname === "github.com" && x.pathname.includes("/blob/")) return `https://raw.githubusercontent.com${x.pathname.replace("/blob/", "/")}`;
+  } catch {}
+  return u;
+}
+async function champFetch() {
+  const url = (S.champ.url || "").trim();
+  if (!/^https?:\/\//i.test(url)) return toast(t("chNeedUrl"));
+  S.champBusy = true; render();
+  try {
+    const r = await fetch(champUrl(url), { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    champLoaded(await r.text());
+  } catch (e) { toast(e && e.message && !/fetch|network|load failed/i.test(e.message) ? e.message : t("chFetchFail")); }
+  finally { S.champBusy = false; render(); }
+}
+function champLoaded(text) {
+  let p; try { p = parseChamp(text); } catch (e) { return toast(e.message || t("chBadFile")); }
+  const cur = S.champ.current;
+  if (!cur) return champApply(p);
+  S.champAsk = { p, same: cur.year === p.year }; render(); scrollTo(0, 0);
+}
+function champApply(p) {
+  const ch = S.champ, cur = ch.current;
+  const keep = (from) => { if (!from) return; const m = new Map(from.items.map((x) => [x.id, x.sessionId])); p.items.forEach((x) => { if (!x.sessionId && m.get(x.id)) x.sessionId = m.get(x.id); }); };
+  if (cur && cur.year === p.year) keep(cur);
+  else {
+    if (cur) ch.history = ch.history.filter((h) => h.year !== cur.year).concat([cur]);
+    keep(ch.history.find((h) => h.year === p.year));            // a year loaded again from the history keeps its sessions
+    ch.history = ch.history.filter((h) => h.year !== p.year).sort((a, b) => b.year - a.year);
+  }
+  const warns = p.warnings; delete p.warnings;
+  ch.current = p; S.champAsk = null; S.champTab = "current"; saveChamp(); render();
+  toast(t("chLoaded", p.items.length, p.year) + (warns.length ? " · " + t("chWarnN", warns.length) : ""));
+  S.champWarn = warns;
+}
+const champSession = (item) => (item && item.sessionId ? S.sessions.find((x) => x.id === item.sessionId) || null : null);
+async function champActivate(id) {
+  const item = S.champ.current && S.champ.current.items.find((x) => x.id === id); if (!item) return;
+  const last = S.sessions[0];
+  const x = { id: newId(), date: today(), preset: item.preset, category: "championship", desc: item.title, location: item.location || (last && last.location) || "",
+    weapon: (last && pkey(last) === item.preset && last.weapon) || "", conditions: "", notes: item.notes || "", photos: [],
+    series: item.series.map((s) => ({ type: s.type, target: s.target || "A10", planned: s.planned, practice: s.practice || 0, shots: [], total: null, tief: null })),
+    createdAt: Date.now(), updatedAt: Date.now() };
+  try { await dbPut(x); } catch { return toast(t("saveFail")); }
+  item.sessionId = x.id; saveChamp(); await refresh();
+  S.current = S.sessions.find((s) => s.id === x.id) || x; S.returnTo = "champ";
+  const d = normSession(structuredClone(S.current));
+  S.draft = { ...d, addedPhotos: [], removedPhotos: [], conditions: "", notes: d.notes || "", category: "championship", desc: d.desc || "", location: d.location || "", weapon: d.weapon || "" };
+  S.active = 0; S.view = "edit"; render(); scrollTo(0, 0);   // no applyPreset: it would replace the empty series with the default format
+}
+async function champReset(id, del) {
+  const item = S.champ.current && S.champ.current.items.find((x) => x.id === id); if (!item) return;
+  const x = champSession(item);
+  if (del && x) { try { await dbDel(x.id); for (const pid of x.photos || []) { try { await photoDel(pid); } catch {} } } catch { return toast(t("delFail")); } }
+  item.sessionId = null; S.champReset = null; saveChamp(); await refresh(); render();
+  toast(del && x ? t("chResetDel") : t("chResetKeep"));
+}
+function champResult(x) {
+  const done = x.series.filter(hasResult);
+  if (!done.length) return t("chNoResult");
+  return done.map((s) => { const st = seriesStats(s); return `${fmtScore(st.total)}/${st.max}`; }).join(" · ");
+}
+function champItemView(item, live) {
+  const x = champSession(item), active = !!x;
+  const what = `${plabel(item.preset)} · ${item.series.map((s) => (s.type === "custom" ? t("customN", s.planned, s.target || "A10", s.practice) : stlabel(s.type))).join(" + ")}`;
+  const meta = [item.date ? fmtDate(item.date) : "", item.location].filter(Boolean).join(" · ");
+  let tools = "";
+  if (live && !active) tools = `<button class="btn primary" data-act="chact" data-id="${esc(item.id)}">${t("chActivate")}</button>`;
+  if (live && active) tools = S.champReset === item.id
+    ? `<div class="confirm" role="alertdialog"><span>${t("chResetAsk")}</span><div class="actions"><button class="btn" data-act="chkeep" data-id="${esc(item.id)}">${t("chKeep")}</button><button class="btn danger solid" data-act="chdel" data-id="${esc(item.id)}">${t("chDelete")}</button><button class="btn ghost" data-act="chresetno">${t("cancel")}</button></div></div>`
+    : `<button class="btn" data-act="chreset" data-id="${esc(item.id)}">${t("chReset")}</button>`;
+  return `<li class="ch-item${active ? " done" : ""}">
+    <div class="ch-main">
+      <span class="ch-check" aria-hidden="true">${active ? "✓" : ""}</span>
+      <div class="ch-txt"><strong>${esc(item.title)}</strong><span class="note">${esc(what)}</span>${meta ? `<span class="note">${esc(meta)}</span>` : ""}${item.notes ? `<span class="note">${esc(item.notes)}</span>` : ""}
+        ${x ? `<button class="ch-res" data-act="chopen" data-id="${esc(x.id)}"><span class="num">${esc(champResult(x))}</span> · ${esc(fmtDateShort(x.date))} ›</button>` : !live ? `<span class="note">${t("chNotShot")}</span>` : ""}</div>
+    </div>${tools ? `<div class="ch-tools">${tools}</div>` : ""}</li>`;
+}
+function champView() {
+  const ch = S.champ, cur = ch.current, tab = S.champTab || "current";
+  const tabs = `<div class="langsw ch-tabs" role="tablist">${["current", "history"].map((k) => `<button role="tab" data-act="chtab" data-v="${k}" aria-pressed="${tab === k}" aria-selected="${tab === k}">${t(k === "current" ? "chCurrent" : "chHistory")}${k === "history" && ch.history.length ? ` (${ch.history.length})` : ""}</button>`).join("")}</div>`;
+  const ask = S.champAsk ? `<div class="confirm info" role="alertdialog"><span>${S.champAsk.same ? t("chAskSame", S.champAsk.p.year) : t("chAskNew", S.champAsk.p.year, cur.year)}</span>
+      <div class="actions"><button class="btn primary" data-act="chapply">${t("chLoad")}</button><button class="btn ghost" data-act="chaskno">${t("cancel")}</button></div></div>` : "";
+  const loader = `<section class="ch-load"><label for="ch-url" class="eyebrow">${t("chUrl")}</label>
+      <div class="ch-urlrow"><input id="ch-url" type="url" inputmode="url" autocomplete="off" placeholder="https://…/meisterschaft.csv" value="${esc(ch.url)}" data-ch="url">
+      <button class="btn primary" data-act="chfetch" ${S.champBusy ? "disabled" : ""}>${S.champBusy ? t("chLoading") : cur ? t("chReload") : t("chLoad")}</button></div>
+      <div class="actions"><label class="btn ghost" for="ch-file">${t("chFromFile")}</label><input id="ch-file" class="visually-hidden" type="file" accept=".csv,.txt,text/csv,text/plain">
+      <a class="btn ghost" href="meisterschaft-beispiel.csv" target="_blank" rel="noopener">${t("chExample")}</a></div>
+      ${S.champWarn && S.champWarn.length ? `<details class="warn"><summary>${t("chWarnN", S.champWarn.length)}</summary>${S.champWarn.map((w) => `<div>${esc(w)}</div>`).join("")}</details>` : ""}</section>`;
+  let body;
+  if (tab === "history") {
+    body = ch.history.length ? ch.history.map((h) => { const done = h.items.filter((x) => champSession(x)).length; return `<details class="ch-year"><summary><strong class="num">${h.year}</strong> ${esc(h.name)} <span class="note">${t("chProgress", done, h.items.length)}</span></summary>
+        <ul class="ch-list">${h.items.map((x) => champItemView(x, false)).join("")}</ul>
+        <div class="actions">${S.champDropHist === h.year ? `<button class="btn danger solid" data-act="chhistdelyes" data-y="${h.year}">${t("chHistDelSure")}</button><button class="btn ghost" data-act="chhistdelno">${t("cancel")}</button>` : `<button class="btn ghost" data-act="chhistdel" data-y="${h.year}">${t("chHistDel")}</button>`}</div></details>`; }).join("")
+      : `<p class="note">${t("chNoHistory")}</p>`;
+  } else if (!cur) {
+    body = `<div class="empty"><h2>${t("chEmptyH")}</h2><p>${t("chEmptyP")}</p><p class="note" style="text-align:left"><code>id;jahr;titel;disziplin;serien;datum;schiessstand;notizen</code></p></div>`;
+  } else {
+    const done = cur.items.filter((x) => champSession(x)).length;
+    body = `<div class="ch-head"><div><span class="eyebrow">${t("chTitle")} ${cur.year}</span><h2>${esc(cur.name)}</h2></div><span class="note num">${t("chProgress", done, cur.items.length)}</span></div>
+      <div class="ch-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${cur.items.length}" aria-valuenow="${done}"><span style="width:${cur.items.length ? (done / cur.items.length) * 100 : 0}%"></span></div>
+      <ul class="ch-list">${cur.items.map((x) => champItemView(x, true)).join("")}</ul>`;
+  }
+  return `<div class="champ">${tabs}${ask}${tab === "current" ? loader : ""}${body}</div>`;
+}
+
 /* ---------- actions ---------- */
 function newDraft() {
   const last = S.sessions[0];
@@ -1189,13 +1438,13 @@ function newDraft() {
   return { id: null, date: today(), preset, category: last ? catOf(last) : "training", desc: "", location: last ? last.location || "" : "", weapon: last ? last.weapon || "" : "", conditions: "", notes: "",
     series: [newSeries(preset)], photos: [], addedPhotos: [], removedPhotos: [] };
 }
-function applyPreset(key) {
+function applyPreset(key, reset = true) {
   const d = S.draft;
   d.preset = PRESETS[key] ? key : "other";
   if (!PRESETS[d.preset].x) d.series.forEach((s) => (s.shots = s.shots.map((v) => (v === "X" ? 10 : v))));
   // Each discipline has its own formats; series in a format the new discipline lacks become custom.
   const allowed = formatsFor(d.preset), empty = d.series.every((s) => !hasResult(s));
-  if (empty) { d.series = d.series.map(() => newSeries(d.preset)); return; }
+  if (empty && reset) { d.series = d.series.map(() => newSeries(d.preset)); return; }
   d.series.forEach((s) => {
     if (!allowed.includes(stype(s))) {
       const st = seriesStats(s);
@@ -1276,7 +1525,7 @@ async function removeSession() {
   try {
     await dbDel(x.id);
     for (const id of x.photos || []) { try { await S.assets.delete(id); } catch {} }
-    S.current = null; S.view = "list"; S.confirmDel = false; await refresh(); render(); toast(t("deleted"));
+    S.current = null; S.view = S.returnTo === "champ" ? "champ" : "list"; S.returnTo = null; S.confirmDel = false; await refresh(); render(); toast(t("deleted"));
   } catch { toast(t("delFail")); }
 }
 async function exportCsv() {
@@ -1318,8 +1567,23 @@ document.addEventListener("click", (e) => {
       try { localStorage.setItem("scorebook-cats", JSON.stringify([...S.cats])); } catch {} render(); break; }
     case "cat": if (S.draft) { S.draft.category = a.dataset.v; render(); } break;
     case "open": S.current = S.sessions.find((x) => x.id === a.dataset.id); S.view = "detail"; S.confirmDel = false; render(); scrollTo(0, 0); break;
-    case "back": S.view = "list"; S.current = null; render(); break;
-    case "edit": { const x = normSession(structuredClone(S.current)); S.draft = { ...x, addedPhotos: [], removedPhotos: [], conditions: x.conditions || "", notes: x.notes || "", category: catOf(x), desc: descOf(x), location: x.location || "", weapon: x.weapon || "" }; applyPreset(S.draft.preset); S.active = 0; S.view = "edit"; render(); scrollTo(0, 0); break; }
+    case "back": S.view = S.returnTo === "champ" ? "champ" : "list"; S.returnTo = null; S.current = null; render(); break;
+    case "champ": S.view = "champ"; S.selecting = false; S.picked.clear(); S.champAsk = null; S.champReset = null; render(); scrollTo(0, 0); break;
+    case "champback": S.view = "list"; S.champAsk = null; S.champReset = null; S.champWarn = null; render(); scrollTo(0, 0); break;
+    case "chtab": S.champTab = a.dataset.v; S.champReset = null; render(); break;
+    case "chfetch": champFetch(); break;
+    case "chapply": if (S.champAsk) champApply(S.champAsk.p); break;
+    case "chaskno": S.champAsk = null; render(); break;
+    case "chact": champActivate(a.dataset.id); break;
+    case "chreset": S.champReset = a.dataset.id; render(); break;
+    case "chresetno": S.champReset = null; render(); break;
+    case "chkeep": champReset(a.dataset.id, false); break;
+    case "chdel": champReset(a.dataset.id, true); break;
+    case "chopen": { const x = S.sessions.find((s) => s.id === a.dataset.id); if (x) { S.current = x; S.returnTo = "champ"; S.view = "detail"; S.confirmDel = false; render(); scrollTo(0, 0); } break; }
+    case "chhistdel": S.champDropHist = Number(a.dataset.y); render(); break;
+    case "chhistdelno": S.champDropHist = null; render(); break;
+    case "chhistdelyes": S.champ.history = S.champ.history.filter((h) => h.year !== Number(a.dataset.y)); S.champDropHist = null; saveChamp(); render(); break;
+    case "edit": { const x = normSession(structuredClone(S.current)); S.draft = { ...x, addedPhotos: [], removedPhotos: [], conditions: x.conditions || "", notes: x.notes || "", category: catOf(x), desc: descOf(x), location: x.location || "", weapon: x.weapon || "" }; applyPreset(S.draft.preset, false); S.active = 0; S.view = "edit"; render(); scrollTo(0, 0); break; }
     case "cancel": discard(); break;
     case "save": save(); break;
     case "del": S.confirmDel = true; render(); break;
@@ -1368,6 +1632,7 @@ document.addEventListener("click", (e) => {
 document.addEventListener("change", (e) => {
   const el = e.target;
   if (el.id === "club-logo") { S.clubLogo = el.checked; try { localStorage.setItem("scorebook-logo", el.checked ? "club" : "app"); } catch {} render(); return; }
+  if (el.id === "ch-file") { const f = el.files && el.files[0]; el.value = ""; if (f) f.text().then(champLoaded, () => toast(t("chBadFile"))); return; }
   if (el.id === "restore-file") { const f = el.files && el.files[0]; el.value = ""; if (f) restoreBackup(f); return; }
   if (el.id === "cam" || el.id === "pick") { const files = Array.from(el.files || []); el.value = ""; if (files.length) addPhotos(files); return; }
   if (S.view !== "edit") return;
@@ -1397,6 +1662,7 @@ document.addEventListener("input", (e) => {
     const a = $("#m-open"); if (a) a.href = mailHref();
     return;
   }
+  if (e.target.dataset && e.target.dataset.ch === "url") { S.champ.url = e.target.value; saveChamp(); return; }
   const f = e.target.dataset && e.target.dataset.f;
   if (S.view === "edit" && e.target.dataset && e.target.dataset.tief !== undefined) { S.draft.series[Number(e.target.dataset.tief)].tief = e.target.value; return; }
   if (S.view === "edit" && f && ["date", "desc", "location", "weapon", "conditions", "notes"].includes(f)) S.draft[f] = e.target.value;
