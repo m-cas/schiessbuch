@@ -78,8 +78,11 @@ struct TrendChart: View {
                 }
             }
             if !bars.isEmpty {
-                Label(tx.keySeries, systemImage: "line.3.horizontal.decrease")
-                    .font(.caption2).foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    Capsule().fill(Color.gray.opacity(0.55)).frame(width: 3, height: 14)
+                    Text(tx.keySeries)
+                }
+                .font(.caption2).foregroundStyle(.secondary)
             }
         }
     }
