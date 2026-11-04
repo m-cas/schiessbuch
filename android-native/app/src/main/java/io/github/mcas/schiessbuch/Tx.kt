@@ -43,7 +43,7 @@ class Tx(lang: String) {
         Discipline.OTHER -> p("Andere", "Other")
     }
     fun disciplineShort(d: Discipline) = when (d) {
-        Discipline.R300 -> "G300"; Discipline.P25 -> "P25"; Discipline.P50 -> "P50"; Discipline.AP10 -> "LP10"; Discipline.AG10 -> "LuG10"; Discipline.OTHER -> p("Andere", "Other")
+        Discipline.R300 -> "G300"; Discipline.P25 -> "P25"; Discipline.P50 -> "P50"; Discipline.AP10 -> "LP10"; Discipline.AG10 -> "LG10"; Discipline.OTHER -> p("Andere", "Other")
     }
     fun categoryName(c: Category) = when (c) {
         Category.TRAINING -> "Training"; Category.CHAMPIONSHIP -> p("Meisterschaft", "Championship"); Category.OTHER -> p("Andere", "Other")

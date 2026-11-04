@@ -47,7 +47,7 @@ struct Tx {
         }
     }
     func disciplineShort(_ d: Discipline) -> String {
-        switch d { case .r300: "G300"; case .p25: "P25"; case .p50: "P50"; case .ap10: "LP10"; case .ag10: "LuG10"; case .other: p("Andere", "Other") }
+        switch d { case .r300: "G300"; case .p25: "P25"; case .p50: "P50"; case .ap10: "LP10"; case .ag10: "LG10"; case .other: p("Andere", "Other") }
     }
     func categoryName(_ c: Category) -> String {
         switch c { case .training: "Training"; case .championship: p("Meisterschaft", "Championship"); case .other: p("Andere", "Other") }
