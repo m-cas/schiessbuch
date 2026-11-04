@@ -148,10 +148,14 @@ struct ChampionshipView: View {
             Image(systemName: active ? "checkmark.circle.fill" : "circle")
                 .font(.title3).foregroundStyle(active ? Color.accentColor : Color.secondary)
             VStack(alignment: .leading, spacing: 3) {
-                Text(item.title).fontWeight(.semibold)
-                Text(what).font(.caption).foregroundStyle(.secondary)
-                if !meta.isEmpty { Text(meta).font(.caption).foregroundStyle(.secondary) }
-                if let n = item.notes, !n.isEmpty { Text(n).font(.caption).foregroundStyle(.secondary) }
+                // only the description fades on a completed item; result and buttons stay fully visible
+                Group {
+                    Text(item.title).fontWeight(.semibold)
+                    Text(what).font(.caption).foregroundStyle(.secondary)
+                    if !meta.isEmpty { Text(meta).font(.caption).foregroundStyle(.secondary) }
+                    if let n = item.notes, !n.isEmpty { Text(n).font(.caption).foregroundStyle(.secondary) }
+                }
+                .opacity(active && live ? 0.55 : 1)
                 if let s {
                     Button { path.append(s.id) } label: {
                         Text("\(result(s)) · \(tx.shortDate(s.day)) ›").font(.subheadline.weight(.semibold)).monospacedDigit()
@@ -172,7 +176,6 @@ struct ChampionshipView: View {
                     .padding(.top, 4)
                 }
             }
-            .opacity(active && live ? 0.6 : 1)
         }
         .padding(.vertical, 4)
     }
