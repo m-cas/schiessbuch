@@ -20,6 +20,9 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section(tx.helpH) {
+                    NavigationLink { HelpView() } label: { Label(tx.helpOpen, systemImage: "questionmark.circle") }
+                }
                 Section(tx.language) {
                     Picker(tx.language, selection: $lang) {
                         Text("Deutsch").tag("de")

@@ -56,6 +56,7 @@ sealed class Screen {
     data class Editor(val session: Session, val isNew: Boolean) : Screen()
     data object Settings : Screen()
     data object Champ : Screen()
+    data object Help : Screen()
 }
 
 class Nav(start: Screen) {
@@ -74,6 +75,7 @@ fun App(store: Store, prefs: Prefs, startScreen: String?) {
         when (startScreen) {
             "settings" -> nav.push(Screen.Settings)
             "champ" -> nav.push(Screen.Champ)
+            "help" -> { nav.push(Screen.Settings); nav.push(Screen.Help) }
             "detail" -> store.sessions.firstOrNull()?.let { nav.push(Screen.Detail(it.id)) }
             "editor" -> {
                 var s = newSession(store)
@@ -89,6 +91,7 @@ fun App(store: Store, prefs: Prefs, startScreen: String?) {
         is Screen.Editor -> EditorScreen(store, tx, nav, s.session, s.isNew)
         Screen.Settings -> SettingsScreen(store, prefs, tx, nav)
         Screen.Champ -> ChampScreen(store, tx, nav)
+        Screen.Help -> HelpScreen(tx, nav)
     }
 }
 

@@ -129,6 +129,8 @@ class Tx(lang: String) {
     fun tiefError(n: Int) = p("Der Tiefschuss in Serie $n muss eine ganze Zahl von 0 bis 100 sein.", "Tiefschuss in series $n must be a whole number from 0 to 100.")
     val seriesFull get() = p("Diese Serie ist vollständig.", "This series is complete.")
 
+    val helpH get() = p("Hilfe", "Help")
+    val helpOpen get() = p("Anleitung zur App", "How to use the app")
     val settings get() = p("Einstellungen", "Settings")
     val exitSettings get() = p("Einstellungen verlassen", "Exit settings")
     val language get() = p("Sprache", "Language")

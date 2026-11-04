@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Email
@@ -122,6 +123,12 @@ fun SettingsScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = pad.calculateTopPadding() + 4.dp, bottom = pad.calculateBottomPadding() + 24.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                item { SectionLabel(tx.helpH) }
+                item {
+                    Card(Modifier.fillMaxWidth()) {
+                        Action(Icons.AutoMirrored.Outlined.HelpOutline, tx.helpOpen, null) { nav.push(Screen.Help) }
+                    }
+                }
                 item { SectionLabel(tx.language) }
                 item {
                     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {

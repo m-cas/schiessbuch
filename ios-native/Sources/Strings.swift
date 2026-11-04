@@ -185,6 +185,8 @@ struct Tx {
     func score(_ v: Double) -> String { v.formatted(.number.precision(.fractionLength(0...1)).locale(locale)) }
 
     // Championship
+    var helpH: String { p("Hilfe", "Help") }
+    var helpOpen: String { p("Anleitung zur App", "How to use the app") }
     func groupN(_ n: Int) -> String { p("Gruppe \(n)", "Group \(n)") }
     var chTitle: String { p("Meisterschaft", "Championship") }
     var chCurrent: String { p("Aktuell", "Current") }
