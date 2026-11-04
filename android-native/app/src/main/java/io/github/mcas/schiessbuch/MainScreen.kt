@@ -364,4 +364,3 @@ private fun SessionCard(store: Store, s: Session, tx: Tx, onOpen: () -> Unit) {
         }
     }
 }
-}
