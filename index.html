@@ -150,7 +150,24 @@ button { cursor: pointer; }
 /* Editor */
 .form { display: grid; gap: 14px; }
 .field { display: grid; gap: 6px; min-width: 0; }
-.logo { width: 44px; height: auto; border-radius: 8px; flex: none; display: block; }
+.logo { width: 44px; height: 44px; object-fit: contain; border-radius: 10px; flex: none; display: block; }
+.logobtn { position: relative; flex: none; border: 0; padding: 0; background: transparent; border-radius: 10px; }
+.logobtn .gear { position: absolute; right: -4px; bottom: -4px; width: 20px; height: 20px; border-radius: 50%; background: var(--surface); color: var(--ink); border: 1px solid var(--line); display: grid; place-items: center; }
+.logobtn .alert-dot { position: absolute; top: -3px; right: -3px; width: 12px; height: 12px; border-radius: 50%; background: var(--danger); border: 2px solid var(--bg); }
+.settings { display: grid; gap: 22px; }
+.settings h2 { font-family: var(--display); font-size: 22px; text-transform: uppercase; letter-spacing: .03em; margin: 0 0 10px; border-bottom: 2px solid var(--ink); padding-bottom: 6px; }
+.settings .langsw button { min-height: 44px; padding: 0 22px; font-size: 15px; }
+.switchrow { display: flex; align-items: center; gap: 12px; justify-content: space-between; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.switchrow .lbl { display: grid; gap: 2px; min-width: 0; }
+.switchrow .lbl strong { font-weight: 600; }
+.switchrow img { width: 40px; height: 40px; object-fit: contain; border-radius: 8px; flex: none; }
+.switch { position: relative; width: 52px; height: 32px; flex: none; }
+.switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.switch span { position: absolute; inset: 0; border-radius: 999px; background: var(--line); transition: background .15s; pointer-events: none; }
+.switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .15s; }
+.switch input:checked + span { background: var(--accent); }
+.switch input:checked + span::after { transform: translateX(20px); }
+.switch input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
 .field input[type="date"] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; height: 44px; line-height: 22px; text-align: left; }
 .field input[type="date"]::-webkit-date-and-time-value { text-align: left; margin: 0; }
 .field input[type="date"]::-webkit-calendar-picker-indicator { margin: 0; }
@@ -211,7 +228,7 @@ button { cursor: pointer; }
 .hint .actions .btn { flex: 1 1 auto; text-decoration: none; }
 .hint .actions a.btn.primary { color: var(--accent-ink); }
 .hint .addr { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
-.local { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 10px; }
+.local { display: grid; gap: 10px; }
 .local .actions .btn { flex: 1 1 140px; }
 .space { font-size: 13px; color: var(--muted); }
 .space summary { list-style: none; display: flex; align-items: center; gap: 8px; cursor: pointer; min-height: 44px; }
@@ -293,10 +310,9 @@ td.r, th.r { text-align: right; }
 
 <header class="bar"><div class="bar-in">
   <div class="brand">
-    <img class="logo" src="logo.png" width="44" height="45" alt="Schützengesellschaft Muttenz">
+    <button class="logobtn" id="logobtn" data-act="settings" aria-label="Settings"><img class="logo" id="logo" src="icon-192.png" width="44" height="44" alt=""><span class="gear" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.3 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L4.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1L9 21h4l.3-2.9a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg></span><span class="alert-dot" id="logodot" hidden></span></button>
     <h1 id="title">MySchiessbuch</h1>
   </div>
-  <div class="langsw" role="group" aria-label="Language / Sprache"><button data-act="setlang" data-v="en" aria-pressed="true">EN</button><button data-act="setlang" data-v="de" aria-pressed="false">DE</button></div>
   <div id="barActions" class="baract"></div>
 </div></header>
 <main class="wrap" id="app" aria-live="polite"></main>
@@ -391,7 +407,8 @@ const STR = {
     reportNote: (n) => `Saves one file with the results and all ${n} target photos, to attach to an email or keep.`,
     copyTo: "To", copySubject: "Subject", reportFile: "shooting-results", csvFile: "myschiessbuch",
     csvHead: ["date", "discipline", "category", "description", "range", "weapon", "conditions", "series", "format", "score", "max", "score_10_shots_A10", "inner_tens", "tiefschuss", "shots", "notes"],
-    language: "Language",
+    language: "Language", settings: "Settings", openSettings: "Open settings", logoH: "Logo",
+    clubLogo: "Show SG Muttenz logo", clubLogoNote: "Replaces the app icon at the top left.", backupH: "Backup and data",
     chromeH: "Installing on Android? Use Chrome",
     chromeP: "Other browsers can show a warning that the app was \"built for an older version of Android\". Open this page in Chrome and tap ⋮ → Install app.",
     openChrome: "Open in Chrome", copyUrl: "Copy address", urlCopied: "Address copied. Paste it into Chrome.", hide: "Hide",
@@ -471,7 +488,8 @@ const STR = {
     reportNote: (n) => `Speichert eine Datei mit den Resultaten und allen ${n} Scheibenfotos, zum Anhängen an eine E-Mail oder zum Aufbewahren.`,
     copyTo: "An", copySubject: "Betreff", reportFile: "schiessresultate", csvFile: "myschiessbuch",
     csvHead: ["datum", "disziplin", "kategorie", "beschreibung", "schiessstand", "waffe", "bedingungen", "serie", "format", "resultat", "maximum", "resultat_10_schuss_a10", "innenzehner", "tiefschuss", "schuesse", "notizen"],
-    language: "Sprache",
+    language: "Sprache", settings: "Einstellungen", openSettings: "Einstellungen öffnen", logoH: "Logo",
+    clubLogo: "SG-Muttenz-Logo anzeigen", clubLogoNote: "Ersetzt das App-Symbol oben links.", backupH: "Backup und Daten",
     chromeH: "Auf Android installieren? Nimm Chrome",
     chromeP: "Andere Browser zeigen evtl. die Warnung, die App sei «für eine ältere Android-Version entwickelt». Öffne diese Seite in Chrome und tippe auf ⋮ → App installieren.",
     openChrome: "In Chrome öffnen", copyUrl: "Adresse kopieren", urlCopied: "Adresse kopiert. Füge sie in Chrome ein.", hide: "Ausblenden",
@@ -552,9 +570,10 @@ function normSession(x) {
 }
 const isPractice = (s, j) => segments(s).some((g) => g.k === "practice" && j >= g.start && j < g.start + g.n);
 
+function loadLogo() { try { return localStorage.getItem("scorebook-logo") === "club"; } catch { return false; } }
 const S = { db: null, assets: null, downloads: null, uid: null, sessions: [], loaded: false, slow: false, error: null,
   view: "list", filter: "All", draft: null, active: 0, current: null, confirmDel: false, saving: false, uploads: 0,
-  selecting: false, picked: new Set(), expanded: new Set(), openYears: null, mail: null, building: false, cats: loadCats() };
+  selecting: false, picked: new Set(), expanded: new Set(), openYears: null, clubLogo: loadLogo(), mail: null, building: false, cats: loadCats() };
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 /* ---------- local storage (IndexedDB) ---------- */
@@ -690,7 +709,7 @@ async function updateStorage() {
     const backup = Math.round(bytes * 4 / 3) + JSON.stringify(S.sessions).length;
     S.store = { photoBytes: bytes, photoCount: count, usage: est.usage, quota: est.quota, backup };
   } catch {}
-  if (S.view === "list") render();
+  if (S.view === "list" || S.view === "settings") render();
 }
 async function refresh() {
   const all = (await dbAll()).map(normSession);
@@ -719,7 +738,10 @@ if (!NATIVE && "serviceWorker" in navigator && (location.protocol === "https:" |
 function render() {
   document.documentElement.lang = LANG;
   $("#title").textContent = t("appName");
-  document.querySelectorAll(".langsw button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === LANG)));
+  const lg = $("#logo"), want = S.clubLogo ? "logo.png" : "icon-192.png";
+  if (lg.getAttribute("src") !== want) lg.setAttribute("src", want);
+  $("#logobtn").setAttribute("aria-label", t("openSettings"));
+  $("#logodot").hidden = !(S.store && S.sessions.length && S.store.backup > MAIL_LIMIT);
   const bar = $("#barActions");
   const sel = $("#selbar");
   sel.hidden = !(S.view === "list" && S.selecting);
@@ -742,6 +764,9 @@ function render() {
   } else if (S.view === "mail") {
     bar.innerHTML = `<button class="btn" data-act="mailback">${t("back")}</button>`;
     $("#app").innerHTML = mailView();
+  } else if (S.view === "settings") {
+    bar.innerHTML = `<button class="btn" data-act="closesettings">${t("back")}</button>`;
+    $("#app").innerHTML = settingsView();
   } else {
     bar.innerHTML = `<button class="btn" data-act="cancel">${t("cancel")}</button>`;
     $("#app").innerHTML = editView();
@@ -753,7 +778,6 @@ function listView() {
   if (!S.loaded) return `<p class="note">${t("loading")}</p>`;
   if (S.error === "nodb") return `<div class="empty"><h2>${t("signInH")}</h2><p>${t("signInP")}</p></div>`;
   if (S.error) return `<div class="warn">${esc(t("loadErr", S.error))}</div>`;
-  const local = localPanel();
   const rows = S.sessions.filter((x) => (S.filter === "All" || pkey(x) === S.filter) && S.cats.has(catOf(x)));
   const chips = `<div class="filters"><div class="chips" role="group" aria-label="${t("filterLabel")}">${FILTERS.map((f) => `<button class="chip" data-act="filter" data-v="${f}" aria-pressed="${S.filter === f}">${t("f." + f)}</button>`).join("")}</div>
     <div class="chips" role="group" aria-label="${t("catFilterLabel")}">${CATS.map((c) => `<button class="chip multi" data-act="catfilter" data-v="${c}" aria-pressed="${S.cats.has(c)}">${t("cat." + c)}</button>`).join("")}</div></div>`;
@@ -762,7 +786,7 @@ function listView() {
       <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="28" cy="28" r="26"/><circle cx="28" cy="28" r="18"/><circle cx="28" cy="28" r="10"/></g><circle cx="28" cy="28" r="4" fill="currentColor"/></svg>
       <h2>${t("emptyH")}</h2>
       <p>${t("emptyP")}</p>
-      <button class="btn primary" data-act="new">${t("newSession")}</button></div>${local}`;
+      <button class="btn primary" data-act="new">${t("newSession")}</button></div>`;
   const sv = rows.flatMap((x) => x.series.map(seriesNorm)).filter((v) => v !== null);
   const avg = sv.length ? sv.reduce((a, v) => a + v, 0) / sv.length : 0;
   const best = sv.length ? Math.max(...sv) : 0;
@@ -775,7 +799,7 @@ function listView() {
     ${sv.length ? `<p class="note" style="margin:0">${t("normCaption")}</p>` : ""}
     ${rows.length ? trendView(rows) : ""}
     <div class="list-h"><h2>${t("sessions")}</h2><span class="note">${rows.length}</span></div>
-    <div class="list">${rows.length ? yearGroups(rows) : `<p class="note">${esc(t("noneInFilter", [S.filter === "All" ? "" : t("f." + S.filter), ...CATS.filter((c) => S.cats.has(c)).map((c) => t("cat." + c))].filter(Boolean).join(" · ")))}</p>`}</div>${S.selecting ? "" : local}`;
+    <div class="list">${rows.length ? yearGroups(rows) : `<p class="note">${esc(t("noneInFilter", [S.filter === "All" ? "" : t("f." + S.filter), ...CATS.filter((c) => S.cats.has(c)).map((c) => t("cat." + c))].filter(Boolean).join(" · ")))}</p>`}</div>`;
 }
 
 function needsChromeHint() {
@@ -793,11 +817,27 @@ function chromeHint() {
     <div class="actions"><a class="btn primary" href="${esc(intent)}">${t("openChrome")}</a><button class="btn" data-act="copyurl">${t("copyUrl")}</button><button class="btn ghost" data-act="hidehint">${t("hide")}</button></div>
     <span class="addr">${esc(location.href.split("#")[0])}</span></div>`;
 }
+function settingsView() {
+  return `<div class="settings">
+    <h1 class="visually-hidden">${t("settings")}</h1>
+    <section><h2>${t("language")}</h2>
+      <div class="langsw" role="group" aria-label="${t("language")}">${["de", "en"].map((l) => `<button data-act="setlang" data-v="${l}" aria-pressed="${LANG === l}">${l === "de" ? "Deutsch" : "English"}</button>`).join("")}</div>
+    </section>
+    <section><h2>${t("logoH")}</h2>
+      <label class="switchrow" for="club-logo">
+        <img src="logo.png" alt="">
+        <span class="lbl"><strong>${t("clubLogo")}</strong><span class="note">${t("clubLogoNote")}</span></span>
+        <span class="switch"><input id="club-logo" type="checkbox" role="switch"${S.clubLogo ? " checked" : ""}><span></span></span>
+      </label>
+    </section>
+    <section><h2>${t("backupH")}</h2>${localPanel()}</section>
+  </div>`;
+}
 function localPanel() {
   const standalone = NATIVE || matchMedia("(display-mode: standalone)").matches || navigator.standalone;
   const tooBig = S.store && S.sessions.length && S.store.backup > MAIL_LIMIT;
   let open = false; try { open = localStorage.getItem("scorebook-space-open") === "1"; } catch {}
-  return `<section class="local">
+  return `<div class="local">
     <div class="actions">${S.sessions.length ? `<button class="btn" data-act="backup" ${S.backingUp ? "disabled" : ""}>${S.backingUp ? t("backupBusy") : t("backup")}</button>
       <button class="btn" data-act="mailbackup" ${S.backingUp ? "disabled" : ""}>${t("emailBackup")}</button>` : ""}
       <label class="btn" for="restore-file">${t("restore")}</label><input id="restore-file" class="visually-hidden" type="file" accept=".json,.txt,application/json,text/plain"></div>
@@ -807,7 +847,7 @@ function localPanel() {
         ${S.store ? `<span class="storeline">${t("storageLine", fmtBytes(S.store.usage ?? S.store.photoBytes), S.store.quota && S.store.usage != null ? fmtBytes(Math.max(0, S.store.quota - S.store.usage)) : "")}${S.sessions.length ? `<br>${t("photosLine", S.store.photoCount, fmtBytes(S.store.backup))}` : ""}${S.persisted ? `<br>${t("protectedOk")}` : ""}</span>` : ""}</div>
       ${S.store && S.sessions.length && S.store.backup > MAIL_LIMIT ? `<p class="warn" style="margin:0">${t("backupTooBig", fmtBytes(S.store.backup))}</p>` : ""}
     </details>
-  </section>`;
+  </div>`;
 }
 async function backupJson() {
   const photos = [];
@@ -1255,6 +1295,8 @@ document.addEventListener("click", (e) => {
   const a = e.target.closest("[data-act]"); if (!a) return;
   const act = a.dataset.act, si = Number(a.dataset.s);
   switch (act) {
+    case "settings": if (S.view === "list" || S.view === "detail") { S.prevView = S.view; S.view = "settings"; S.selecting = false; S.picked.clear(); render(); scrollTo(0, 0); } break;
+    case "closesettings": S.view = S.prevView && S.current ? S.prevView : "list"; render(); scrollTo(0, 0); break;
     case "setlang": if (a.dataset.v !== LANG) setLang(a.dataset.v); break;
     case "new": S.current = null; S.draft = newDraft(); S.active = 0; S.view = "edit"; render(); scrollTo(0, 0); break;
     case "filter": S.filter = a.dataset.v; render(); break;
@@ -1311,6 +1353,7 @@ document.addEventListener("click", (e) => {
 });
 document.addEventListener("change", (e) => {
   const el = e.target;
+  if (el.id === "club-logo") { S.clubLogo = el.checked; try { localStorage.setItem("scorebook-logo", el.checked ? "club" : "app"); } catch {} render(); return; }
   if (el.id === "restore-file") { const f = el.files && el.files[0]; el.value = ""; if (f) restoreBackup(f); return; }
   if (el.id === "cam" || el.id === "pick") { const files = Array.from(el.files || []); el.value = ""; if (files.length) addPhotos(files); return; }
   if (S.view !== "edit") return;
