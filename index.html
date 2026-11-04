@@ -410,7 +410,7 @@ const STR = {
     reportNote: (n) => `Saves one file with the results and all ${n} target photos, to attach to an email or keep.`,
     copyTo: "To", copySubject: "Subject", reportFile: "shooting-results", csvFile: "myschiessbuch",
     csvHead: ["date", "discipline", "category", "description", "range", "weapon", "conditions", "series", "format", "score", "max", "score_10_shots_A10", "inner_tens", "tiefschuss", "shots", "notes"],
-    language: "Language", settings: "Settings", openSettings: "Open settings", logoH: "Logo",
+    language: "Language", settings: "Settings", exitSettings: "Exit settings", openSettings: "Open settings", logoH: "Logo",
     clubLogo: "Show SG Muttenz logo", clubLogoNote: "Replaces the app icon at the top left.", backupH: "Backup and data", exportH: "Export", exportCsv: "Export as CSV", exportNote: "One row per series, for Excel or Numbers.",
     chromeH: "Installing on Android? Use Chrome",
     chromeP: "Other browsers can show a warning that the app was \"built for an older version of Android\". Open this page in Chrome and tap ⋮ → Install app.",
@@ -491,7 +491,7 @@ const STR = {
     reportNote: (n) => `Speichert eine Datei mit den Resultaten und allen ${n} Scheibenfotos, zum Anhängen an eine E-Mail oder zum Aufbewahren.`,
     copyTo: "An", copySubject: "Betreff", reportFile: "schiessresultate", csvFile: "myschiessbuch",
     csvHead: ["datum", "disziplin", "kategorie", "beschreibung", "schiessstand", "waffe", "bedingungen", "serie", "format", "resultat", "maximum", "resultat_10_schuss_a10", "innenzehner", "tiefschuss", "schuesse", "notizen"],
-    language: "Sprache", settings: "Einstellungen", openSettings: "Einstellungen öffnen", logoH: "Logo",
+    language: "Sprache", settings: "Einstellungen", exitSettings: "Einstellungen verlassen", openSettings: "Einstellungen öffnen", logoH: "Logo",
     clubLogo: "SG-Muttenz-Logo anzeigen", clubLogoNote: "Ersetzt das App-Symbol oben links.", backupH: "Backup und Daten", exportH: "Export", exportCsv: "Als CSV exportieren", exportNote: "Eine Zeile pro Serie, für Excel oder Numbers.",
     chromeH: "Auf Android installieren? Nimm Chrome",
     chromeP: "Andere Browser zeigen evtl. die Warnung, die App sei «für eine ältere Android-Version entwickelt». Öffne diese Seite in Chrome und tippe auf ⋮ → App installieren.",
@@ -770,7 +770,7 @@ function render() {
     bar.innerHTML = `<button class="btn" data-act="mailback">${t("back")}</button>`;
     $("#app").innerHTML = mailView();
   } else if (S.view === "settings") {
-    bar.innerHTML = `<button class="btn" data-act="closesettings">${t("back")}</button>`;
+    bar.innerHTML = `<button class="btn" data-act="closesettings">${t("exitSettings")}</button>`;
     $("#app").innerHTML = settingsView();
   } else {
     bar.innerHTML = `<button class="btn" data-act="cancel">${t("cancel")}</button>`;
