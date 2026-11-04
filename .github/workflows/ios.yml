@@ -1,5 +1,5 @@
-# Builds the iPhone app and uploads it to App Store Connect / TestFlight.
-# Start it by hand: Actions → "iOS app" → Run workflow.
+# Builds the native iPhone app (ios-native/, SwiftUI) and uploads it to
+# App Store Connect / TestFlight. Start it by hand: Actions → "iOS app" → Run workflow.
 #
 # Needs these repository secrets (Settings → Secrets and variables → Actions):
 #   APPLE_TEAM_ID     10-character Team ID (developer.apple.com → Membership)
@@ -25,10 +25,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-
       - name: Use the newest Xcode
         run: |
           XC=$(ls -d /Applications/Xcode_*.app | grep -v -i beta | sort -V | tail -1)
@@ -49,15 +45,14 @@ jobs:
           [ -z "$P8" ] && missing="$missing ASC_KEY_P8"
           if [ -n "$missing" ]; then echo "::error::Missing repository secrets:$missing"; exit 1; fi
 
-      - name: Install Capacitor
-        run: npm install --no-audit --no-fund
-
-      - name: Prepare iOS project
-        env:
-          BUILD_NUMBER: ${{ github.run_number }}
-        run: npm run ios
+      - name: Generate Xcode project
+        working-directory: ios-native
+        run: |
+          brew install xcodegen >/dev/null
+          xcodegen generate
 
       - name: Build and upload to TestFlight
+        working-directory: ios-native
         env:
           TEAM: ${{ secrets.APPLE_TEAM_ID }}
           KEY_ID: ${{ secrets.ASC_KEY_ID }}
@@ -68,14 +63,13 @@ jobs:
           KEY="$RUNNER_TEMP/AuthKey_$KEY_ID.p8"
           printf '%s\n' "$P8" > "$KEY"
           AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY" -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER")
-          if [ -d ios/App/App.xcworkspace ]; then SRC=(-workspace ios/App/App.xcworkspace); else SRC=(-project ios/App/App.xcodeproj); fi
 
           # Archive unsigned: a development signature would need a registered device.
           # The export below signs with an App Store distribution certificate instead.
-          xcodebuild "${SRC[@]}" -scheme App -configuration Release \
+          xcodebuild -project MySchiessbuch.xcodeproj -scheme MySchiessbuch -configuration Release \
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/App.xcarchive" \
             DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_STYLE=Automatic CODE_SIGNING_ALLOWED=NO \
-            MARKETING_VERSION="1.0.$RUN" CURRENT_PROJECT_VERSION="$RUN" archive
+            MARKETING_VERSION="2.0.$RUN" CURRENT_PROJECT_VERSION="$RUN" archive
 
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
@@ -91,4 +85,4 @@ jobs:
 
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" "${AUTH[@]}"
-          echo "Uploaded version 1.0.$RUN ($RUN). It appears in TestFlight after Apple's processing (usually 5–30 minutes)."
+          echo "Uploaded version 2.0.$RUN ($RUN). It appears in TestFlight after Apple's processing (usually 5–30 minutes)."

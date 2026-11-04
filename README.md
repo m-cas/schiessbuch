@@ -29,7 +29,9 @@ Speichere regelmässig ein Backup.
 | `scripts/prepare-native.mjs` | Erzeugt das Android- bzw. iOS-Projekt und setzt Version, Signatur, Kamera-Berechtigungen |
 | `assets/logo.png` | Vorlage für App-Symbol und Startbild |
 | `.github/workflows/android.yml` | Baut die Android-App und veröffentlicht sie als Release (von Hand starten) |
-| `.github/workflows/ios.yml` | Baut die iPhone-App und lädt sie zu TestFlight hoch (von Hand starten) |
+| `ios-native/` | Native iPhone-App (SwiftUI); `project.yml` beschreibt das Xcode-Projekt (XcodeGen) |
+| `.github/workflows/ios.yml` | Baut die native iPhone-App und lädt sie zu TestFlight hoch (von Hand starten) |
+| `.github/workflows/ios-native-check.yml` | Test-Build der iPhone-App im Simulator mit Screenshots (Branch `native`) |
 
 Die Ordner `android/` und `ios/` werden beim Bauen auf GitHub erzeugt und nicht gespeichert.
 
