@@ -43,7 +43,7 @@ struct Segment {
 }
 
 enum SeriesFormat: String, CaseIterable, Identifiable {
-    case s10, p2s6r4, p2s5r23, op300, fs300, pstd, pop, pfs, ap10s, ap20s, custom
+    case s10, s2x10, p2s6r4, p2s5r23, op300, fs300, pstd, pop, pfs, ap10s, ap20s, custom
     var id: String { rawValue }
 
     /// Fixed parts of the format; nil for custom.
@@ -51,6 +51,7 @@ enum SeriesFormat: String, CaseIterable, Identifiable {
         func s(_ k: SegmentKind, _ n: Int, _ t: Target? = nil) -> Segment { Segment(kind: k, count: n, target: t) }
         switch self {
         case .s10: return [s(.single, 10)]
+        case .s2x10: return [s(.single, 10), s(.single, 10)]   // two groups of 10 single shots, one total
         case .p2s6r4: return [s(.practice, 2), s(.single, 6), s(.series, 4)]
         case .p2s5r23: return [s(.practice, 2), s(.single, 5), s(.series, 2), s(.series, 3)]
         case .op300: return [s(.single, 5, .a5), s(.single, 5, .b4), s(.series, 2, .b4), s(.series, 3, .b4), s(.series, 5, .b4)]
@@ -71,7 +72,7 @@ enum Discipline: String, CaseIterable, Identifiable {
 
     var formats: [SeriesFormat] {
         switch self {
-        case .r300: return [.s10, .p2s6r4, .p2s5r23, .op300, .fs300, .custom]
+        case .r300: return [.s10, .s2x10, .p2s6r4, .p2s5r23, .op300, .fs300, .custom]
         case .p25, .p50: return [.pstd, .pop, .pfs, .custom]
         case .ap10, .ag10: return [.ap10s, .ap20s, .custom]   // air pistol and air rifle 10m
         case .other: return [.custom]

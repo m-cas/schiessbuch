@@ -37,7 +37,7 @@ enum class SegmentKind { PRACTICE, SINGLE, SERIES }
 data class Segment(val kind: SegmentKind, val count: Int, val start: Int = 0, val target: Target? = null)
 
 enum class SeriesFormat(val key: String) {
-    S10("s10"), P2S6R4("p2s6r4"), P2S5R23("p2s5r23"), OP300("op300"), FS300("fs300"),
+    S10("s10"), S2X10("s2x10"), P2S6R4("p2s6r4"), P2S5R23("p2s5r23"), OP300("op300"), FS300("fs300"),
     PSTD("pstd"), POP("pop"), PFS("pfs"), AP10S("ap10s"), AP20S("ap20s"), CUSTOM("custom");
 
     /** Fixed parts of the format; null for custom. */
@@ -47,6 +47,7 @@ enum class SeriesFormat(val key: String) {
             val P = SegmentKind.PRACTICE; val E = SegmentKind.SINGLE; val R = SegmentKind.SERIES
             return when (this) {
                 S10 -> listOf(s(E, 10))
+                S2X10 -> listOf(s(E, 10), s(E, 10))   // two groups of 10 single shots, one total
                 P2S6R4 -> listOf(s(P, 2), s(E, 6), s(R, 4))
                 P2S5R23 -> listOf(s(P, 2), s(E, 5), s(R, 2), s(R, 3))
                 OP300 -> listOf(s(E, 5, Target.A5), s(E, 5, Target.B4), s(R, 2, Target.B4), s(R, 3, Target.B4), s(R, 5, Target.B4))
@@ -69,7 +70,7 @@ enum class Discipline(val key: String) {
 
     val formats: List<SeriesFormat>
         get() = when (this) {
-            R300 -> listOf(SeriesFormat.S10, SeriesFormat.P2S6R4, SeriesFormat.P2S5R23, SeriesFormat.OP300, SeriesFormat.FS300, SeriesFormat.CUSTOM)
+            R300 -> listOf(SeriesFormat.S10, SeriesFormat.S2X10, SeriesFormat.P2S6R4, SeriesFormat.P2S5R23, SeriesFormat.OP300, SeriesFormat.FS300, SeriesFormat.CUSTOM)
             P25, P50 -> listOf(SeriesFormat.PSTD, SeriesFormat.POP, SeriesFormat.PFS, SeriesFormat.CUSTOM)
             AP10, AG10 -> listOf(SeriesFormat.AP10S, SeriesFormat.AP20S, SeriesFormat.CUSTOM)
             OTHER -> listOf(SeriesFormat.CUSTOM)

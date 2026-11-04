@@ -365,7 +365,7 @@ const STR = {
     // presets
     "p.r300": "Rifle 300m", "p.p25": "Pistol 25m", "p.p50": "Pistol 50m", "p.ap10": "Air Pistol 10m", "p.ag10": "Air Rifle 10m", "p.other": "Other",
     "f.All": "All", "f.r300": "G300", "f.p25": "P25", "f.p50": "P50", "f.ap10": "LP10", "f.ag10": "LG10", "f.other": "Other",
-    "st.s10": "10 shots · A10", "st.p2s6r4": "12 shots · 2 practice, 6 single, 4 in series · A10", "st.p2s5r23": "12 shots · 2 practice, 5 single, series of 2 and 3 · A10",
+    "st.s10": "10 shots · A10", "st.s2x10": "2×10 shots · single, one total · A10", "st.p2s6r4": "12 shots · 2 practice, 6 single, 4 in series · A10", "st.p2s5r23": "12 shots · 2 practice, 5 single, series of 2 and 3 · A10",
     customN: (n, tg, p) => `Custom · ${p ? p + " practice + " : ""}${n} ${n === 1 ? "shot" : "shots"} · ${tg}`, target: "Target", practiceLbl: "Practice", fewerP: "Fewer practice shots", moreP: "More practice shots",
     "st.op300": "OP · 20 shots A5/B4", "st.fs300": "Feldschiessen rifle · 18 shots B4",
     "st.custom": "Custom · choose shots and target", "st.customP": "Custom · choose number of shots",
@@ -464,7 +464,7 @@ const STR = {
     appName: "MySchiessbuch", locale: "de-CH",
     "p.r300": "Gewehr 300m", "p.p25": "Pistole 25m", "p.p50": "Pistole 50m", "p.ap10": "Luftpistole 10m", "p.ag10": "Luftgewehr 10m", "p.other": "Andere",
     "f.All": "Alle", "f.r300": "G300", "f.p25": "P25", "f.p50": "P50", "f.ap10": "LP10", "f.ag10": "LG10", "f.other": "Andere",
-    "st.s10": "10 Schüsse · A10", "st.p2s6r4": "12 Schüsse · 2 Probe, 6 Einzel, 4 Serie · A10", "st.p2s5r23": "12 Schüsse · 2 Probe, 5 Einzel, Serien zu 2 und 3 · A10",
+    "st.s10": "10 Schüsse · A10", "st.s2x10": "2×10 Schüsse · Einzel, ein Total · A10", "st.p2s6r4": "12 Schüsse · 2 Probe, 6 Einzel, 4 Serie · A10", "st.p2s5r23": "12 Schüsse · 2 Probe, 5 Einzel, Serien zu 2 und 3 · A10",
     customN: (n, tg, p) => `Eigene · ${p ? p + " Probe + " : ""}${n} ${n === 1 ? "Schuss" : "Schüsse"} · ${tg}`, target: "Scheibe", practiceLbl: "Probe", fewerP: "Weniger Probeschüsse", moreP: "Mehr Probeschüsse",
     "st.op300": "OP · 20 Schüsse A5/B4", "st.fs300": "Feldschiessen Gewehr · 18 Schüsse B4",
     "st.custom": "Eigene · Schüsse und Scheibe wählen", "st.customP": "Eigene · Anzahl Schüsse wählen",
@@ -578,6 +578,7 @@ const fmtScore = (v) => (Math.round(v * 10) / 10).toLocaleString(t("locale"), { 
 const A5 = { max: 5, tgt: "A5" }, B4 = { max: 4, tgt: "B4" };
 const SERIES_TYPES = {
   s10:     { segs: [{ k: "single", n: 10 }] },
+  s2x10:   { segs: [{ k: "single", n: 10 }, { k: "single", n: 10 }] },   // two groups of 10 single shots, one total
   p2s6r4:  { segs: [{ k: "practice", n: 2 }, { k: "single", n: 6 }, { k: "series", n: 4 }] },
   p2s5r23: { segs: [{ k: "practice", n: 2 }, { k: "single", n: 5 }, { k: "series", n: 2 }, { k: "series", n: 3 }] },
   op300:   { segs: [{ k: "single", n: 5, ...A5 }, { k: "single", n: 5, ...B4 }, { k: "series", n: 2, ...B4 }, { k: "series", n: 3, ...B4 }, { k: "series", n: 5, ...B4 }] },
@@ -589,7 +590,7 @@ const SERIES_TYPES = {
   ap20s:   { segs: [{ k: "single", n: 20 }] },
   custom:  { free: true },
 };
-const RIFLE_FORMATS = ["s10", "p2s6r4", "p2s5r23", "op300", "fs300", "custom"];
+const RIFLE_FORMATS = ["s10", "s2x10", "p2s6r4", "p2s5r23", "op300", "fs300", "custom"];
 const PISTOL_FORMATS = ["pstd", "pop", "pfs", "custom"];
 const isPistol = (preset) => preset === "p25" || preset === "p50";
 const stlabel = (k) => t("st." + k);
