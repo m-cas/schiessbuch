@@ -1,6 +1,7 @@
 # Builds the Android app and publishes the installable APK as a GitHub Release.
 # Download link for the newest version:
-#   https://github.com/m-cas/schiessbuch/releases/latest/download/Schiessbuch.apk
+#   https://github.com/m-cas/schiessbuch/releases/latest/download/MySchiessbuch.apk
+# (Schiessbuch.apk is published too, so the earlier link keeps working.)
 #
 # Signing: add these repository secrets (Settings → Secrets and variables → Actions)
 #   ANDROID_KEYSTORE_BASE64   the .jks keystore, base64 encoded
@@ -68,16 +69,19 @@ jobs:
           chmod +x gradlew
           if [ -n "$ANDROID_KEYSTORE_FILE" ]; then
             ./gradlew --no-daemon assembleRelease
-            cp app/build/outputs/apk/release/app-release.apk ../Schiessbuch.apk
+            cp app/build/outputs/apk/release/app-release.apk ../MySchiessbuch.apk
           else
             ./gradlew --no-daemon assembleDebug
-            cp app/build/outputs/apk/debug/app-debug.apk ../Schiessbuch.apk
+            cp app/build/outputs/apk/debug/app-debug.apk ../MySchiessbuch.apk
           fi
+
+      - name: Copy under the earlier file name
+        run: cp MySchiessbuch.apk Schiessbuch.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Schiessbuch-android-${{ github.run_number }}
-          path: Schiessbuch.apk
+          name: MySchiessbuch-android-${{ github.run_number }}
+          path: MySchiessbuch.apk
 
       - name: Publish release
         # only signed builds become a release; unsigned test builds stay an artifact
@@ -85,9 +89,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-${{ github.run_number }}
-          name: Schiessbuch Android 1.0.${{ github.run_number }}
+          name: MySchiessbuch Android 1.0.${{ github.run_number }}
           body: |
             Android app, version 1.0.${{ github.run_number }}.
-            Install: open this page on the phone, tap **Schiessbuch.apk** and allow installing apps from this source when asked.
-          files: Schiessbuch.apk
+            Install: open this page on the phone, tap **MySchiessbuch.apk** and allow installing apps from this source when asked.
+          files: |
+            MySchiessbuch.apk
+            Schiessbuch.apk
           make_latest: true

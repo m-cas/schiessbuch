@@ -57,9 +57,9 @@ if (platform === "android") {
 if (platform === "ios") {
   patch("ios/App/App/Info.plist", (s) => {
     const keys = {
-      NSCameraUsageDescription: "Das Schiessbuch braucht die Kamera, um deine Scheiben zu fotografieren. / Scorebook uses the camera to photograph your targets.",
-      NSPhotoLibraryUsageDescription: "Das Schiessbuch braucht Zugriff auf Fotos, um Scheibenbilder hinzuzufügen. / Scorebook uses your photos to add target pictures.",
-      NSPhotoLibraryAddUsageDescription: "Das Schiessbuch kann Scheibenbilder in deinen Fotos speichern. / Scorebook can save target pictures to your photos.",
+      NSCameraUsageDescription: "MySchiessbuch braucht die Kamera, um deine Scheiben zu fotografieren. / MySchiessbuch uses the camera to photograph your targets.",
+      NSPhotoLibraryUsageDescription: "MySchiessbuch braucht Zugriff auf Fotos, um Scheibenbilder hinzuzufügen. / MySchiessbuch uses your photos to add target pictures.",
+      NSPhotoLibraryAddUsageDescription: "MySchiessbuch kann Scheibenbilder in deinen Fotos speichern. / MySchiessbuch can save target pictures to your photos.",
     };
     let add = "";
     for (const [k, v] of Object.entries(keys)) if (!s.includes(`<key>${k}</key>`)) add += `\t<key>${k}</key>\n\t<string>${v}</string>\n`;

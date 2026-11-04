@@ -1,4 +1,4 @@
-# Schiessbuch
+# MySchiessbuch
 
 Eigenständige App zum Erfassen von Schiessresultaten und Fotos der Papierscheiben.
 Alle Übungen und Fotos werden nur auf dem Telefon gespeichert. Es wird nichts hochgeladen.
@@ -8,7 +8,7 @@ Ein Code, drei Varianten:
 
 | Variante | Installation |
 |---|---|
-| **Android-App** | Auf dem Telefon öffnen: <https://github.com/m-cas/schiessbuch/releases/latest/download/Schiessbuch.apk> und die Installation erlauben. |
+| **Android-App** | Auf dem Telefon öffnen: <https://github.com/m-cas/schiessbuch/releases/latest/download/MySchiessbuch.apk> und die Installation erlauben. |
 | **iPhone-App** | Über TestFlight (Einladung per E-Mail) bzw. später aus dem App Store. |
 | **Web-App** | <https://m-cas.github.io/schiessbuch/> in Safari bzw. Chrome öffnen → «Zum Home-Bildschirm». |
 

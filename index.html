@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Scorebook</title>
+<title>MySchiessbuch</title>
 <meta name="description" content="Record shooting results and photos of your paper targets. All data stays on this device.">
 <meta name="theme-color" content="#2c5a38">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Scorebook">
+<meta name="apple-mobile-web-app-title" content="MySchiessbuch">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest">
@@ -63,7 +63,7 @@ button { cursor: pointer; }
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .bar-in { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding-block: 10px; min-height: 56px; }
 .brand { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-.brand h1 { font-family: var(--display); font-weight: 700; font-size: 24px; letter-spacing: .02em; text-transform: uppercase; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brand h1 { font-family: var(--display); font-weight: 700; font-size: 24px; letter-spacing: .01em; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wrap { max-width: 640px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 96px; display: grid; gap: 18px; }
 
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px; font-weight: 600; min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
@@ -283,7 +283,7 @@ td.r, th.r { text-align: right; }
 <header class="bar"><div class="bar-in">
   <div class="brand">
     <img class="logo" src="logo.png" width="44" height="45" alt="Schützengesellschaft Muttenz">
-    <h1 id="title">Range Scorebook</h1>
+    <h1 id="title">MySchiessbuch</h1>
   </div>
   <div class="langsw" role="group" aria-label="Language / Sprache"><button data-act="setlang" data-v="en" aria-pressed="true">EN</button><button data-act="setlang" data-v="de" aria-pressed="false">DE</button></div>
   <div id="barActions" class="baract"></div>
@@ -298,7 +298,7 @@ td.r, th.r { text-align: right; }
 /* ---------- language ---------- */
 const STR = {
   en: {
-    appName: "Range Scorebook", locale: "en-GB",
+    appName: "MySchiessbuch", locale: "en-GB",
     pl: (n, one, many) => (n === 1 ? one : many),
     // presets
     "p.r300": "Rifle 300 m", "p.p25": "Pistol 25 m", "p.p50": "Pistol 50 m", "p.other": "Other",
@@ -311,16 +311,16 @@ const STR = {
     "seg.practice": "Practice · not counted", "seg.single": "Single shots", seriesOf: (n) => `Series of ${n}`,
     // bar & list
     none: "None", all: "All", selected: (n) => `${n} selected`, cancel: "Cancel", email: "Email", export: "Export", newBtn: "+ New", back: "Back",
-    loading: "Loading your scorebook…", signInH: "Storage isn't available", signInP: "This browser doesn't allow saving data on this device. Turn off private browsing and open the app again.",
+    loading: "Loading MySchiessbuch…", signInH: "Storage isn't available", signInP: "This browser doesn't allow saving data on this device. Turn off private browsing and open the app again.",
     localH: "Data on this phone", localP: "Sessions and photos are stored only on this device. Nothing is uploaded. Save a backup now and then, and before changing phones.",
     selectBtn: "Select", deleteN: (n) => `Delete${n ? " (" + n + ")" : ""}`,
     confirmBulk: (n, p) => `Delete ${n} ${n === 1 ? "session" : "sessions"}${p ? ` and ${p} ${p === 1 ? "photo" : "photos"}` : ""}? This can't be undone.`,
     bulkDeleted: (n) => `${n} ${n === 1 ? "session" : "sessions"} deleted`,
-    emailBackup: "Email backup", backupMailSubject: (d) => `Scorebook backup ${d}`,
-    backupMailText: "Backup of my scorebook with all sessions and target photos. To load it: open Scorebook, tap Restore backup and choose this file.",
+    emailBackup: "Email backup", backupMailSubject: (d) => `MySchiessbuch backup ${d}`,
+    backupMailText: "Backup of MySchiessbuch with all sessions and target photos. To load it: open MySchiessbuch, tap Restore backup and choose this file.",
     backupNoShare: "This browser can't attach files to an email, so the backup was saved instead. Attach it from Files or Downloads.",
     backup: "Save backup", restore: "Restore backup", backupBusy: "Preparing backup…", restored: (n) => `${n} ${n === 1 ? "session" : "sessions"} restored`,
-    badBackup: "This file isn't a Scorebook backup.", restoreFail: "The backup couldn't be restored.", backupFile: "scorebook-backup",
+    badBackup: "This file isn't a MySchiessbuch backup.", restoreFail: "The backup couldn't be restored.", backupFile: "myschiessbuch-backup",
     sharePhotos: "Share with photos", sharePhotosNote: "Opens the share sheet with the text and all target photos attached. Choose Mail and add the recipient.",
     shareTextNote: "Opens the share sheet with this text. Choose Mail and add the recipient.", shareText: "Share",
     fileSaved: "File ready", storageLine: (u, a) => `Storage used: ${u}${a ? ` · ${a} available` : ""}`, photosLine: (n, b) => `${n} ${n === 1 ? "photo" : "photos"} · backup about ${b}`,
@@ -361,7 +361,7 @@ const STR = {
     // toasts
     seriesFull: "This series is complete. Add a series for more shots.", seriesFullCustom: "All shots of this series are entered. Increase Shots to add more.", tooLarge: "That photo is too large. Try a smaller one.",
     storageFull: "Photo storage is full. Delete old sessions to make room.", photoFail: "The photo couldn't be saved. Try again.",
-    addDate: "Add a date first.", saved: "Session saved", dbFull: "The scorebook is full. Delete old sessions to save new ones.",
+    addDate: "Add a date first.", saved: "Session saved", dbFull: "MySchiessbuch is full. Delete old sessions to save new ones.",
     saveFail: "The session couldn't be saved. Check your connection and try again.", deleted: "Session deleted", delFail: "The session couldn't be deleted. Try again.",
     exportFail: "The export couldn't be saved.", wholeNumber: (m) => `Enter a whole number from 0 to ${m}.`,
     copied: "Email text copied", selectedText: "Text selected. Use Copy from your keyboard menu.",
@@ -378,7 +378,7 @@ const STR = {
     copyText: "Copy text", copyNote: "If the mail app didn't open, copy the text and paste it into a new email.", recipient: "Recipient",
     preparing: "Preparing report…", saveReport: "Save report with photos",
     reportNote: (n) => `Saves one file with the results and all ${n} target photos, to attach to an email or keep.`,
-    copyTo: "To", copySubject: "Subject", reportFile: "shooting-results", csvFile: "scorebook",
+    copyTo: "To", copySubject: "Subject", reportFile: "shooting-results", csvFile: "myschiessbuch",
     csvHead: ["date", "discipline", "category", "description", "range", "weapon", "conditions", "series", "format", "score", "max", "score_10_shots_A10", "inner_tens", "tiefschuss", "shots", "notes"],
     language: "Language",
     chromeH: "Installing on Android? Use Chrome",
@@ -386,7 +386,7 @@ const STR = {
     openChrome: "Open in Chrome", copyUrl: "Copy address", urlCopied: "Address copied. Paste it into Chrome.", hide: "Hide",
   },
   de: {
-    appName: "Schiessbuch", locale: "de-CH",
+    appName: "MySchiessbuch", locale: "de-CH",
     "p.r300": "Gewehr 300 m", "p.p25": "Pistole 25 m", "p.p50": "Pistole 50 m", "p.other": "Andere",
     "f.All": "Alle", "f.r300": "Gewehr 300 m", "f.p25": "Pistole 25 m", "f.p50": "Pistole 50 m", "f.other": "Andere",
     "st.s10": "10 Schüsse · A10", "st.p2s6r4": "12 Schüsse · 2 Probe, 6 Einzel, 4 Serie · A10", "st.p2s5r23": "12 Schüsse · 2 Probe, 5 Einzel, Serien zu 2 und 3 · A10",
@@ -396,16 +396,16 @@ const STR = {
     "st.pstd": "Standard · 5/5/5", "st.pop": "OP · 5 Einzel + 5/5/5", "st.pfs": "Feldschiessen · 3 Einzel + 5/5/5",
     "seg.practice": "Probe · zählt nicht", "seg.single": "Einzelschüsse", seriesOf: (n) => `Serie zu ${n}`,
     none: "Keine", all: "Alle", selected: (n) => `${n} ausgewählt`, cancel: "Abbrechen", email: "E-Mail", export: "Export", newBtn: "+ Neu", back: "Zurück",
-    loading: "Schiessbuch wird geladen…", signInH: "Speicher nicht verfügbar", signInP: "Dieser Browser erlaubt keine Datenspeicherung auf dem Gerät. Schalte das private Surfen aus und öffne die App erneut.",
+    loading: "MySchiessbuch wird geladen…", signInH: "Speicher nicht verfügbar", signInP: "Dieser Browser erlaubt keine Datenspeicherung auf dem Gerät. Schalte das private Surfen aus und öffne die App erneut.",
     localH: "Daten auf diesem Telefon", localP: "Übungen und Fotos werden nur auf diesem Gerät gespeichert. Nichts wird hochgeladen. Speichere ab und zu ein Backup, und vor einem Telefonwechsel.",
     selectBtn: "Auswählen", deleteN: (n) => `Löschen${n ? " (" + n + ")" : ""}`,
     confirmBulk: (n, p) => `${n} ${n === 1 ? "Übung" : "Übungen"}${p ? ` und ${p} ${p === 1 ? "Foto" : "Fotos"}` : ""} löschen? Das kann nicht rückgängig gemacht werden.`,
     bulkDeleted: (n) => `${n} ${n === 1 ? "Übung" : "Übungen"} gelöscht`,
-    emailBackup: "Backup per E-Mail", backupMailSubject: (d) => `Schiessbuch-Backup ${d}`,
-    backupMailText: "Backup meines Schiessbuchs mit allen Übungen und Scheibenfotos. Zum Laden: Schiessbuch öffnen, «Backup wiederherstellen» antippen und diese Datei wählen.",
+    emailBackup: "Backup per E-Mail", backupMailSubject: (d) => `MySchiessbuch-Backup ${d}`,
+    backupMailText: "Backup von MySchiessbuch mit allen Übungen und Scheibenfotos. Zum Laden: MySchiessbuch öffnen, «Backup wiederherstellen» antippen und diese Datei wählen.",
     backupNoShare: "Dieser Browser kann keine Dateien an E-Mails anhängen, darum wurde das Backup gespeichert. Hänge es aus «Dateien» oder «Downloads» an.",
     backup: "Backup speichern", restore: "Backup wiederherstellen", backupBusy: "Backup wird erstellt…", restored: (n) => `${n} ${n === 1 ? "Übung" : "Übungen"} wiederhergestellt`,
-    badBackup: "Diese Datei ist kein Schiessbuch-Backup.", restoreFail: "Das Backup konnte nicht wiederhergestellt werden.", backupFile: "schiessbuch-backup",
+    badBackup: "Diese Datei ist kein MySchiessbuch-Backup.", restoreFail: "Das Backup konnte nicht wiederhergestellt werden.", backupFile: "myschiessbuch-backup",
     sharePhotos: "Mit Fotos teilen", sharePhotosNote: "Öffnet das Teilen-Menü mit dem Text und allen Scheibenfotos im Anhang. Wähle «Mail» und gib den Empfänger ein.",
     shareTextNote: "Öffnet das Teilen-Menü mit diesem Text. Wähle «Mail» und gib den Empfänger ein.", shareText: "Teilen",
     fileSaved: "Datei bereit", storageLine: (u, a) => `Speicher belegt: ${u}${a ? ` · ${a} verfügbar` : ""}`, photosLine: (n, b) => `${n} ${n === 1 ? "Foto" : "Fotos"} · Backup ca. ${b}`,
@@ -442,7 +442,7 @@ const STR = {
     practiceShotN: (n) => `Probeschuss ${n}`, shotN: (n) => `Schuss ${n}`, typeThenAdd: (m) => `0–${m} eingeben, dann Hinzufügen`, tapToRemove: "Erfassten Schuss antippen zum Entfernen",
     seriesFull: "Diese Serie ist vollständig. Füge eine Serie für weitere Schüsse hinzu.", seriesFullCustom: "Alle Schüsse dieser Serie sind erfasst. Erhöhe «Schüsse», um weitere einzugeben.", tooLarge: "Dieses Foto ist zu gross. Versuche ein kleineres.",
     storageFull: "Der Fotospeicher ist voll. Lösche alte Übungen, um Platz zu schaffen.", photoFail: "Das Foto konnte nicht gespeichert werden. Versuche es nochmals.",
-    addDate: "Bitte zuerst ein Datum eingeben.", saved: "Übung gespeichert", dbFull: "Das Schiessbuch ist voll. Lösche alte Übungen, um neue zu speichern.",
+    addDate: "Bitte zuerst ein Datum eingeben.", saved: "Übung gespeichert", dbFull: "MySchiessbuch ist voll. Lösche alte Übungen, um neue zu speichern.",
     saveFail: "Die Übung konnte nicht gespeichert werden. Prüfe die Verbindung und versuche es nochmals.", deleted: "Übung gelöscht", delFail: "Die Übung konnte nicht gelöscht werden. Versuche es nochmals.",
     exportFail: "Der Export konnte nicht gespeichert werden.", wholeNumber: (m) => `Gib eine ganze Zahl von 0 bis ${m} ein.`,
     copied: "E-Mail-Text kopiert", selectedText: "Text markiert. Kopiere ihn über das Tastaturmenü.",
@@ -458,7 +458,7 @@ const STR = {
     copyText: "Text kopieren", copyNote: "Falls sich die Mail-App nicht geöffnet hat, kopiere den Text und füge ihn in eine neue E-Mail ein.", recipient: "Empfänger",
     preparing: "Bericht wird erstellt…", saveReport: "Bericht mit Fotos speichern",
     reportNote: (n) => `Speichert eine Datei mit den Resultaten und allen ${n} Scheibenfotos, zum Anhängen an eine E-Mail oder zum Aufbewahren.`,
-    copyTo: "An", copySubject: "Betreff", reportFile: "schiessresultate", csvFile: "schiessbuch",
+    copyTo: "An", copySubject: "Betreff", reportFile: "schiessresultate", csvFile: "myschiessbuch",
     csvHead: ["datum", "disziplin", "kategorie", "beschreibung", "schiessstand", "waffe", "bedingungen", "serie", "format", "resultat", "maximum", "resultat_10_schuss_a10", "innenzehner", "tiefschuss", "schuesse", "notizen"],
     language: "Sprache",
     chromeH: "Auf Android installieren? Nimm Chrome",

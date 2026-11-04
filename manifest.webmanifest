@@ -1,6 +1,6 @@
 {
-  "name": "Scorebook – Schiessbuch",
-  "short_name": "Scorebook",
+  "name": "MySchiessbuch",
+  "short_name": "MySchiessbuch",
   "description": "Record shooting results and photos of your paper targets. All data stays on this device.",
   "start_url": "./",
   "scope": "./",

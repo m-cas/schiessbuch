@@ -1,6 +1,6 @@
 {
   "appId": "io.github.mcas.schiessbuch",
-  "appName": "Schiessbuch",
+  "appName": "MySchiessbuch",
   "webDir": "www",
   "android": {
     "adjustMarginsForEdgeToEdge": "force"

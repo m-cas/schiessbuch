@@ -2,7 +2,7 @@
   "name": "schiessbuch",
   "version": "1.0.0",
   "private": true,
-  "description": "Schiessbuch – record shooting results and photos of paper targets. Web app, Android and iOS from one code base.",
+  "description": "MySchiessbuch – record shooting results and photos of paper targets. Web app, Android and iOS from one code base.",
   "scripts": {
     "web": "node scripts/copy-web.mjs",
     "android": "node scripts/copy-web.mjs && node scripts/prepare-native.mjs android",
