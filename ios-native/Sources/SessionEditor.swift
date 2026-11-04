@@ -244,10 +244,10 @@ struct SeriesEditorSection: View {
         Section {
             if discipline.formats.count > 1 {
                 Picker(tx.format, selection: Binding(get: { series.format }, set: { changeFormat($0) })) {
-                    ForEach(discipline.formats) { f in Text(tx.formatName(f, discipline: discipline)).tag(f) }
+                    ForEach(discipline.formats) { f in Text(f == .custom && series.isComposite ? tx.seriesLabel(series, discipline: discipline) : tx.formatName(f, discipline: discipline)).tag(f) }
                 }
             }
-            if series.format == .custom && discipline.hasTargetChoice {
+            if series.format == .custom && discipline.hasTargetChoice && !series.isComposite {
                 Picker(tx.target, selection: Binding(get: { series.targetValue }, set: { series.target = $0.rawValue; Self.clamp(&series, discipline: discipline) })) {
                     ForEach(Target.allCases) { t in Text("\(t.rawValue) · 0–\(t.max)").tag(t) }
                 }
@@ -260,7 +260,7 @@ struct SeriesEditorSection: View {
             if st.practiceCount > 0 && series.shots.indices.contains(0) {
                 Text(tx.practiceSum(st.practice)).font(.footnote).foregroundStyle(.secondary)
             }
-            if series.format == .custom {
+            if series.format == .custom && !series.isComposite {
                 Stepper(value: Binding(get: { st.practiceCount }, set: { series.practice = max(0, min(20, $0)) }), in: 0...20) {
                     LabeledContent(tx.practiceShots, value: "\(st.practiceCount)")
                 }
@@ -293,11 +293,10 @@ struct SeriesEditorSection: View {
     private var shotsGrid: some View {
         VStack(alignment: .leading, spacing: 8) {
             let segs = series.segments
-            let groups = series.groupTotals
             ForEach(Array(segs.enumerated()), id: \.offset) { gi, g in
                 VStack(alignment: .leading, spacing: 4) {
                     if segs.count > 1 {
-                        Text(groups.map { gs in "\(tx.groupN(gs[gi].n)) · \(gs[gi].shots > 0 ? String(gs[gi].sum) : "–") / \(gs[gi].max)" }
+                        Text(series.group(of: gi).map { gr in "\(tx.groupN(gr.n))\(g.kind == .series ? " · " + tx.segmentName(g.kind, count: g.count) : "")\(g.target.map { " · " + $0.rawValue } ?? "") · \(gr.shots > 0 ? String(gr.sum) : "–") / \(gr.max)" }
                              ?? (tx.segmentName(g.kind, count: g.count) + (g.target.map { " · " + $0.rawValue } ?? "")))
                             .font(.caption2.weight(.semibold)).foregroundStyle(.secondary).textCase(.uppercase)
                     }
@@ -336,7 +335,9 @@ struct SeriesEditorSection: View {
     }
 
     private func changeFormat(_ f: SeriesFormat) {
+        if f == .custom && series.isComposite { return }
         let prev = series.stats
+        series.parts = nil
         series.type = f.rawValue
         if let parts = f.parts {
             let n = parts.reduce(0) { $0 + $1.count }

@@ -64,6 +64,7 @@ class Tx(lang: String) {
         SeriesFormat.CUSTOM -> if (d.hasTargetChoice) p("Eigene · Schüsse und Scheibe wählen", "Custom · choose shots and target") else p("Eigene · Anzahl Schüsse wählen", "Custom · choose number of shots")
     }
     fun seriesLabel(s: Series, d: Discipline): String {
+        if (s.isComposite) return groupingText(s.parts!!, ::chPrac)
         if (s.format != SeriesFormat.CUSTOM) return formatName(s.format, d)
         val st = s.stats
         val pr = if (st.practiceCount > 0) (if (de) "${st.practiceCount} Probe + " else "${st.practiceCount} practice + ") else ""
@@ -205,6 +206,7 @@ class Tx(lang: String) {
     val chEmptyP get() = p("Lade die CSV-Datei des Vereins mit den zu schiessenden Übungen. Eine Zeile pro Übung:", "Load the club's CSV file with the sessions to shoot. One line per session:")
     val chNoHistory get() = p("Noch keine früheren Meisterschaften.", "No earlier championships yet.")
     val chHistDel get() = p("Aus dem Verlauf entfernen", "Remove from history")
+    fun chPrac(n: Int) = p("$n Probe", "$n practice")
     fun chCustom(n: Int, tg: String, pr: Int) = p("Eigene · ", "Custom · ") + (if (pr > 0) p("$pr Probe + ", "$pr practice + ") else "") + shotsN(n) + " · " + tg
 
     fun longDate(d: LocalDate): String = d.format(DateTimeFormatter.ofPattern(if (de) "EEE, d. MMM yyyy" else "EEE d MMM yyyy", locale))

@@ -7,6 +7,16 @@ struct ChampSeries: Codable, Hashable {
     var target: String?
     var planned: Int?
     var practice: Int?
+    var parts: [SeriesPart]? = nil
+
+    /// Only the grouping and practice shots: "3 Probe + 10 + 10", "2 Probe + 6 + 4", "10".
+    func groupText(_ tx: Tx) -> String {
+        let p: [SeriesPart]
+        if let parts, !parts.isEmpty { p = parts }
+        else if let f = SeriesFormat(rawValue: type), let segs = f.parts { p = segs.enumerated().map { SeriesPart(k: $1.kind, n: $1.count, t: "A10", g: $0 + 1) } }
+        else { p = ((practice ?? 0) > 0 ? [SeriesPart(k: .practice, n: practice ?? 0, t: "A10", g: 1)] : []) + [SeriesPart(k: .single, n: planned ?? 10, t: "A10", g: 1)] }
+        return groupingText(p, practice: tx.chPrac)
+    }
 }
 
 struct ChampItem: Codable, Hashable, Identifiable {
@@ -99,26 +109,42 @@ enum ChampParser {
         return nil
     }
 
-    /// One token per series: a format code (s10, op300, pstd …) or custom:SHOTS[:TARGET[:PRACTICE]], or just a number of shots.
+    /// Series are separated by "!"; parts joined by "+" form ONE series (each part its own group with a subtotal).
+    /// A part is a format code (s10, op300, pstd …), custom:SHOTS[:TARGET[:PRACTICE]], or just a number of shots.
+    private struct Part { var code: SeriesFormat?; var n: Int; var t: String; var p: Int; var segs: [(SegmentKind, Int, String)] }
+
+    private static func part(_ raw: String, _ d: Discipline) -> Part? {
+        let tk = raw.lowercased()
+        if let f = SeriesFormat(rawValue: tk), f != .custom, d.formats.contains(f), let segs = f.parts {
+            return Part(code: f, n: segs.reduce(0) { $0 + $1.count }, t: Target.a10.rawValue, p: 0, segs: segs.map { ($0.kind, $0.count, ($0.target ?? .a10).rawValue) })
+        }
+        var parts = tk.split(separator: ":").map(String.init)
+        if let first = parts.first, ["custom", "eigene", "c"].contains(first) { parts.removeFirst() }
+        guard let n = parts.first.flatMap(Int.init), n > 0, parts.count <= 3 else { return nil }
+        let tgt = parts.count > 1 ? Target(rawValue: parts[1].uppercased()) : nil
+        let prac = parts.count > 2 ? Int(parts[2]) : 0
+        if (parts.count > 1 && tgt == nil) || prac == nil { return nil }
+        let t = (d.hasTargetChoice ? tgt : nil)?.rawValue ?? Target.a10.rawValue
+        let p = min(20, prac ?? 0), cnt = min(200, n)
+        return Part(code: nil, n: cnt, t: t, p: p, segs: (p > 0 ? [(.practice, p, t)] : []) + [(.single, cnt, t)])
+    }
+
     static func series(_ text: String, _ d: Discipline, warn: (String) -> Void) -> [ChampSeries] {
-        let toks = text.split(whereSeparator: { " +,|\t".contains($0) }).map(String.init)
         var out: [ChampSeries] = []
-        for raw in toks {
-            let tk = raw.lowercased()
-            if let f = SeriesFormat(rawValue: tk), f != .custom, d.formats.contains(f) {
-                out.append(ChampSeries(type: f.rawValue, target: Target.a10.rawValue, planned: f.parts?.reduce(0) { $0 + $1.count }, practice: 0)); continue
+        for group in text.split(separator: "!").map({ $0.trimmingCharacters(in: .whitespaces) }).filter({ !$0.isEmpty }) {
+            let parts = group.split(separator: "+").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                .compactMap { raw -> Part? in if let r = part(raw, d) { return r }; warn(raw); return nil }
+            guard !parts.isEmpty else { continue }
+            if parts.count == 1, let f = parts[0].code {
+                out.append(ChampSeries(type: f.rawValue, target: Target.a10.rawValue, planned: parts[0].n, practice: 0))
+            } else if parts.count == 1 {
+                out.append(ChampSeries(type: SeriesFormat.custom.rawValue, target: parts[0].t, planned: parts[0].n, practice: parts[0].p))
+            } else {
+                let segs = parts.enumerated().flatMap { i, p in p.segs.map { SeriesPart(k: $0.0, n: $0.1, t: $0.2, g: i + 1) } }
+                out.append(ChampSeries(type: SeriesFormat.custom.rawValue, target: segs.first?.t,
+                                       planned: segs.filter { $0.k != .practice }.reduce(0) { $0 + $1.n },
+                                       practice: segs.filter { $0.k == .practice }.reduce(0) { $0 + $1.n }, parts: segs))
             }
-            var parts = tk.split(separator: ":").map(String.init)
-            if let first = parts.first, ["custom", "eigene", "c"].contains(first) { parts.removeFirst() }
-            if let n = parts.first.flatMap(Int.init), n > 0, parts.count <= 3 {
-                let tgt = parts.count > 1 ? Target(rawValue: parts[1].uppercased()) : nil
-                let prac = parts.count > 2 ? Int(parts[2]) : 0
-                if (parts.count > 1 && tgt == nil) || prac == nil { warn(raw); continue }
-                out.append(ChampSeries(type: SeriesFormat.custom.rawValue, target: (d.hasTargetChoice ? tgt : nil)?.rawValue ?? Target.a10.rawValue,
-                                       planned: min(200, n), practice: min(20, prac ?? 0)))
-                continue
-            }
-            warn(raw)
         }
         if out.isEmpty {
             let f = d.defaultFormat
@@ -227,6 +253,7 @@ extension Store {
             r.target = c.target ?? Target.a10.rawValue
             r.planned = c.planned ?? r.planned
             r.practice = c.practice ?? 0
+            r.parts = c.parts
             return r
         }
         save(s)
@@ -248,7 +275,7 @@ extension Store {
     func seedDemoChamp() {
         let csv = """
         id;jahr;meisterschaft;titel;disziplin;serien;datum;schiessstand
-        VM1;2026;Vereinsmeisterschaft SG Muttenz 2026;Runde 1 Gewehr;r300;s10+s10;30.04.2026;Muttenz
+        VM1;2026;Vereinsmeisterschaft SG Muttenz 2026;Runde 1 Gewehr;r300;s10!s10;30.04.2026;Muttenz
         OP;2026;;Obligatorisches;r300;op300;31.08.2026;
         P25;2026;;Pistole Standard;p25;pstd;30.06.2026;Muttenz
         FREI;2026;;Final Gewehr;r300;custom:20:A100:2;30.09.2026;Muttenz

@@ -52,7 +52,9 @@
     "«Aktivieren» legt die Übung mit Disziplin, Serien, Beschreibung und Kategorie Meisterschaft an und öffnet sie. Der Eintrag wird danach grau mit Häkchen und Resultat angezeigt.",
     "«Zurücksetzen» gibt einen Eintrag wieder frei; du wählst, ob die erfasste Übung bleibt oder gelöscht wird.",
     "Eine Datei eines neuen Jahres ersetzt die aktuelle Meisterschaft; die alte kommt in den «Verlauf». Erfasste Übungen bleiben immer erhalten. Beim Neuladen desselben Jahres bleiben aktivierte Einträge aktiviert.",
-    "Dateiformat: eine Kopfzeile, dann eine Zeile pro Übung mit den Spalten id;jahr;meisterschaft;titel;disziplin;serien;datum;schiessstand;notizen. Eine Beispieldatei gibt es in der Web-Version."
+    "Dateiformat: eine Kopfzeile, dann eine Zeile pro Übung mit den Spalten id;jahr;meisterschaft;titel;disziplin;serien;datum;schiessstand;notizen. Eine Beispieldatei gibt es in der Web-Version.",
+    "Spalte serien: ! trennt Serien, + verbindet Teile zu einer einzigen Serie. c:10:a10!c:5:a10 ergibt zwei Serien (10 und 5 Schüsse) mit je eigenem Total; c:6:a10+c:4:a10 ergibt eine Serie mit den Gruppen 6 und 4, jede mit Teiltotal, und einem Gesamttotal. c:10:a10:3 bedeutet 3 Probeschüsse und 10 gezählte Schüsse.",
+    "In der Liste steht pro Serie nur die Aufteilung mit allfälligen Probeschüssen, z. B. «3 Probe + 10 + 10» oder «10 | 5»."
    ]
   },
   {
@@ -124,7 +126,9 @@
     "Activate creates the session with discipline, series, description and category Championship, and opens it. The item then shows greyed out with a tick and its result.",
     "Reset makes an item available again; you choose whether the recorded session is kept or deleted.",
     "A file for a new year replaces the current championship; the old one moves to History. Recorded sessions always stay. Reloading the same year keeps activated items activated.",
-    "File format: a header line, then one line per session with the columns id;jahr;meisterschaft;titel;disziplin;serien;datum;schiessstand;notizen. An example file is in the web version."
+    "File format: a header line, then one line per session with the columns id;jahr;meisterschaft;titel;disziplin;serien;datum;schiessstand;notizen. An example file is in the web version.",
+    "Column serien: ! separates series, + joins parts into one series. c:10:a10!c:5:a10 gives two series (10 and 5 shots), each with its own total; c:6:a10+c:4:a10 gives one series with groups of 6 and 4, each with a subtotal, and one overall total. c:10:a10:3 means 3 practice shots and 10 counted shots.",
+    "The list shows only the grouping of each series with any practice shots, e.g. \"3 practice + 10 + 10\" or \"10 | 5\"."
    ]
   },
   {

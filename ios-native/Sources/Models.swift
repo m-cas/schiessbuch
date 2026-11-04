@@ -33,13 +33,25 @@ enum Target: String, CaseIterable, Identifiable {
     }
 }
 
-enum SegmentKind: String { case practice, single, series }
+enum SegmentKind: String, Codable, Hashable { case practice, single, series }
+
+/// One part of a composite series (parts joined with "+" in a championship file); g = group number.
+struct SeriesPart: Codable, Hashable { var k: SegmentKind; var n: Int; var t: String; var g: Int }
+
+/// "3 Probe + 10 + 10": practice shots and the size of each group.
+func groupingText(_ parts: [SeriesPart], practice word: (Int) -> String) -> String {
+    let prac = parts.filter { $0.k == .practice }.reduce(0) { $0 + $1.n }
+    var order: [Int] = [], sizes: [Int: Int] = [:]
+    for q in parts where q.k != .practice { if sizes[q.g] == nil { order.append(q.g) }; sizes[q.g, default: 0] += q.n }
+    return (prac > 0 ? word(prac) + " + " : "") + order.map { String(sizes[$0] ?? 0) }.joined(separator: " + ")
+}
 
 struct Segment {
     let kind: SegmentKind
     let count: Int
     var start: Int = 0
     var target: Target? = nil   // fixed target for this part (OP / Feldschiessen rifle)
+    var group: Int? = nil       // group of a composite series
 }
 
 enum SeriesFormat: String, CaseIterable, Identifiable {
@@ -111,8 +123,9 @@ struct Series: Codable, Hashable {
     var total: Double? = nil
     var tief: Int? = nil
     var desc: String? = nil          // legacy, merged into the session description
+    var parts: [SeriesPart]? = nil   // composite series from a championship file
 
-    enum CodingKeys: String, CodingKey { case type, target, planned, practice, shots, total, tief, desc }
+    enum CodingKeys: String, CodingKey { case type, target, planned, practice, shots, total, tief, desc, parts }
 
     init(format: SeriesFormat = .s10) {
         type = format.rawValue
@@ -129,7 +142,10 @@ struct Series: Codable, Hashable {
         if let d = try? c.decodeIfPresent(Double.self, forKey: .total) { total = d }
         tief = Self.int(c, .tief)
         desc = try? c.decodeIfPresent(String.self, forKey: .desc)
+        parts = (try? c.decodeIfPresent([SeriesPart].self, forKey: .parts)).flatMap { $0.isEmpty ? nil : $0 }
     }
+    /// Built from parts joined with "+" in a championship file: one series with its own fixed layout.
+    var isComposite: Bool { format == .custom && !(parts ?? []).isEmpty }
     private static func int(_ c: KeyedDecodingContainer<CodingKeys>, _ k: CodingKeys) -> Int? {
         if let i = try? c.decodeIfPresent(Int.self, forKey: k) { return i }
         if let d = try? c.decodeIfPresent(Double.self, forKey: k) { return Int(d) }
@@ -147,6 +163,14 @@ struct Series: Codable, Hashable {
     var hasResult: Bool { !shots.isEmpty || total != nil }
 
     var segments: [Segment] {
+        if isComposite, let parts {
+            var start = 0
+            return parts.map { q in
+                let t = Target(rawValue: q.t) ?? .a10
+                defer { start += q.n }
+                return Segment(kind: q.k, count: q.n, start: start, target: t == targetValue ? nil : t, group: q.g)
+            }
+        }
         if let parts = format.parts {
             var start = 0
             return parts.map { var p = $0; p.start = start; start += p.count; return p }
@@ -184,6 +208,21 @@ struct Series: Codable, Hashable {
     /// 2×10 single shots: each group of 10 has its own subtotal next to the overall total.
     struct Group { var n: Int; var sum: Int; var max: Int; var shots: Int }
     var groupTotals: [Group]? {
+        if isComposite {
+            let segs = segments.filter { $0.kind != .practice }
+            var order: [Int] = []
+            for s in segs { let g = s.group ?? 1; if !order.contains(g) { order.append(g) } }
+            guard order.count > 1 else { return nil }
+            return order.map { g in
+                var sum = 0, cnt = 0, mx = 0
+                for s in segs where (s.group ?? 1) == g {
+                    let end = min(shots.count, s.start + s.count)
+                    if s.start < end { sum += shots[s.start..<end].reduce(0) { $0 + $1.points }; cnt += end - s.start }
+                    mx += s.count * (s.target?.max ?? targetValue.max)
+                }
+                return Group(n: g, sum: sum, max: mx, shots: cnt)
+            }
+        }
         guard format == .s2x10 else { return nil }
         return segments.enumerated().map { n, g in
             let end = min(shots.count, g.start + g.count)
@@ -192,13 +231,24 @@ struct Series: Codable, Hashable {
         }
     }
 
+    /// The group a segment belongs to (nil for practice shots or series without groups).
+    func group(of i: Int) -> Group? {
+        guard let gt = groupTotals else { return nil }
+        let segs = segments
+        guard segs.indices.contains(i), segs[i].kind != .practice else { return nil }
+        return isComposite ? gt.first { $0.n == segs[i].group } : (gt.indices.contains(i) ? gt[i] : nil)
+    }
+
     var shotsText: String {
-        let gt = groupTotals
-        return segments.enumerated().compactMap { n, g -> String? in
+        let segs = segments
+        return segs.enumerated().compactMap { n, g -> String? in
             let end = min(shots.count, g.start + g.count)
             guard g.start < end else { return nil }
             let v = shots[g.start..<end].map(\.label).joined(separator: " ")
-            return g.kind == .practice ? "(\(v))" : v + (gt.map { " [\($0[n].sum)]" } ?? "")
+            if g.kind == .practice { return "(\(v))" }
+            // subtotal after the last scoring part of each group
+            let last = !isComposite || !segs.dropFirst(n + 1).contains { $0.kind != .practice && $0.group == g.group }
+            return v + (last ? group(of: n).map { " [\($0.sum)]" } ?? "" : "")
         }.joined(separator: " · ")
     }
 }

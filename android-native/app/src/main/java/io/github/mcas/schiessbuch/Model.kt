@@ -34,7 +34,26 @@ enum class Target(val key: String, val max: Int) {
 
 enum class SegmentKind { PRACTICE, SINGLE, SERIES }
 
-data class Segment(val kind: SegmentKind, val count: Int, val start: Int = 0, val target: Target? = null)
+data class Segment(val kind: SegmentKind, val count: Int, val start: Int = 0, val target: Target? = null, val group: Int? = null)
+
+/** One part of a composite series (parts joined with "+" in a championship file); g = group number. */
+data class SeriesPart(val k: SegmentKind, val n: Int, val t: String, val g: Int) {
+    fun toJson() = JSONObject().apply { put("k", k.name.lowercase()); put("n", n); put("t", t); put("g", g) }
+    companion object {
+        fun fromJson(o: JSONObject): SeriesPart? {
+            val k = SegmentKind.entries.firstOrNull { it.name.equals(o.optString("k"), true) } ?: return null
+            return SeriesPart(k, o.optInt("n").coerceIn(1, 200), o.optStringOrNull("t") ?: Target.A10.key, o.optInt("g", 1))
+        }
+    }
+}
+
+/** "3 Probe + 10 + 10": practice shots and the size of each group. */
+fun groupingText(parts: List<SeriesPart>, practiceWord: (Int) -> String): String {
+    val prac = parts.filter { it.k == SegmentKind.PRACTICE }.sumOf { it.n }
+    val groups = LinkedHashMap<Int, Int>()
+    parts.filter { it.k != SegmentKind.PRACTICE }.forEach { groups[it.g] = (groups[it.g] ?: 0) + it.n }
+    return (if (prac > 0) practiceWord(prac) + " + " else "") + groups.values.joinToString(" + ")
+}
 
 enum class SeriesFormat(val key: String) {
     S10("s10"), S2X10("s2x10"), S6R4("s6r4"), P2S6R4("p2s6r4"), P2S5R23("p2s5r23"), OP300("op300"), FS300("fs300"),
@@ -105,7 +124,11 @@ data class Series(
     val total: Double? = null,
     val tief: Int? = null,
     val desc: String? = null,
+    val parts: List<SeriesPart>? = null,
 ) {
+    /** Built from parts joined with "+" in a championship file: one series with its own fixed layout. */
+    val isComposite: Boolean get() = format == SeriesFormat.CUSTOM && !parts.isNullOrEmpty()
+
     /** The format, with older "10 shots" series of another length treated as custom. */
     val format: SeriesFormat
         get() {
@@ -117,6 +140,13 @@ data class Series(
 
     val segments: List<Segment>
         get() {
+            if (isComposite) {
+                var start = 0
+                return parts!!.map { q ->
+                    val t = Target.of(q.t)
+                    Segment(q.k, q.n, start, if (t == targetValue) null else t, q.g).also { start += q.n }
+                }
+            }
             format.parts?.let { parts ->
                 var start = 0
                 return parts.map { p -> p.copy(start = start).also { start += p.count } }
@@ -151,21 +181,42 @@ data class Series(
     /** 2×10 single shots: each group of 10 has its own subtotal next to the overall total. */
     data class Group(val n: Int, val sum: Int, val max: Int, val shots: Int)
     val groupTotals: List<Group>?
-        get() = if (format != SeriesFormat.S2X10) null else segments.mapIndexed { n, g ->
+        get() {
+            if (isComposite) {
+                val segs = segments.filter { it.kind != SegmentKind.PRACTICE }
+                if (segs.map { it.group }.toSet().size < 2) return null
+                return segs.groupBy { it.group ?: 1 }.map { (g, list) ->
+                    var sum = 0; var cnt = 0
+                    list.forEach { s -> val end = min(shots.size, s.start + s.count); if (s.start < end) { sum += shots.subList(s.start, end).sumOf { it.points }; cnt += end - s.start } }
+                    Group(g, sum, list.sumOf { it.count * (it.target?.max ?: targetValue.max) }, cnt)
+                }
+            }
+            return if (format != SeriesFormat.S2X10) null else segments.mapIndexed { n, g ->
             val end = min(shots.size, g.start + g.count)
             val v = if (g.start < end) shots.subList(g.start, end) else emptyList()
             Group(n + 1, v.sumOf { it.points }, g.count * (g.target?.max ?: targetValue.max), v.size)
         }
+        }
+
+    /** The group a segment belongs to (null for practice shots or series without groups). */
+    fun groupOf(i: Int): Group? {
+        val gt = groupTotals ?: return null
+        val seg = segments[i]
+        if (seg.kind == SegmentKind.PRACTICE) return null
+        return if (isComposite) gt.firstOrNull { it.n == seg.group } else gt.getOrNull(i)
+    }
 
     /** "(7 8) · 10 9 9" with practice shots in brackets; group subtotals in square brackets. */
     val shotsText: String
         get() {
-            val gt = groupTotals
-            return segments.mapIndexedNotNull { n, g ->
+            val segs = segments
+            return segs.mapIndexedNotNull { n, g ->
                 val end = min(shots.size, g.start + g.count)
                 if (g.start >= end) null else {
                     val v = shots.subList(g.start, end).joinToString(" ") { it.label }
-                    if (g.kind == SegmentKind.PRACTICE) "($v)" else v + (gt?.let { " [${it[n].sum}]" } ?: "")
+                    // subtotal after the last scoring part of each group
+                    val last = !isComposite || segs.drop(n + 1).none { it.kind != SegmentKind.PRACTICE && it.group == g.group }
+                    if (g.kind == SegmentKind.PRACTICE) "($v)" else v + (groupOf(n)?.takeIf { last }?.let { " [${it.sum}]" } ?: "")
                 }
             }.joinToString(" · ")
         }
@@ -181,6 +232,7 @@ data class Series(
         put("type", type); put("target", target ?: JSONObject.NULL); put("planned", planned ?: JSONObject.NULL)
         put("practice", practice ?: JSONObject.NULL); put("shots", JSONArray(shots.map { it.toJson() }))
         put("total", total ?: JSONObject.NULL); put("tief", tief ?: JSONObject.NULL)
+        if (isComposite) put("parts", JSONArray(parts!!.map { it.toJson() }))
     }
 
     companion object {
@@ -196,6 +248,7 @@ data class Series(
                 total = o.optDoubleOrNull("total"),
                 tief = o.optIntOrNull("tief"),
                 desc = o.optStringOrNull("desc"),
+                parts = o.optJSONArray("parts")?.let { a -> (0 until a.length()).mapNotNull { a.optJSONObject(it)?.let(SeriesPart::fromJson) } }?.takeIf { it.isNotEmpty() },
             )
         }
     }

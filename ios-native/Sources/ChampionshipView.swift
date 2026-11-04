@@ -142,10 +142,7 @@ struct ChampionshipView: View {
     private func row(_ item: ChampItem, live: Bool) -> some View {
         let s = store.champSession(item)
         let active = s != nil
-        let what = tx.disciplineName(item.discipline) + " · " + item.series.map { c in
-            let f = SeriesFormat(rawValue: c.type) ?? .custom
-            return f == .custom ? tx.chCustom(c.planned ?? 10, c.target ?? "A10", c.practice ?? 0) : tx.formatName(f, discipline: item.discipline)
-        }.joined(separator: " + ")
+        let what = tx.disciplineName(item.discipline) + " · " + item.series.map { $0.groupText(tx) }.joined(separator: " | ")
         let meta = [item.day.map { tx.longDate($0) }, item.location].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
         return HStack(alignment: .top, spacing: 12) {
             Image(systemName: active ? "checkmark.circle.fill" : "circle")

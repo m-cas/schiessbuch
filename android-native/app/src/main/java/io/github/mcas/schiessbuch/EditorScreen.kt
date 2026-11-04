@@ -346,16 +346,16 @@ private fun SeriesEditor(
                 Spacer(Modifier.weight(1f))
                 Text("${tx.score(st.total)} / ${st.max}", fontWeight = FontWeight.SemiBold)
             }
-            if (d.formats.size > 1) Dropdown(tx.format, tx.formatName(series.format, d), d.formats, { tx.formatName(it, d) }) { f ->
+            if (d.formats.size > 1) Dropdown(tx.format, if (series.isComposite) tx.seriesLabel(series, d) else tx.formatName(series.format, d), d.formats, { if (it == SeriesFormat.CUSTOM && series.isComposite) tx.seriesLabel(series, d) else tx.formatName(it, d) }) { f ->
                 onChange(changeFormat(series, f, d)); onActivate()
             }
-            if (series.format == SeriesFormat.CUSTOM && d.hasTargetChoice) Dropdown(tx.target, "${series.targetValue.key} · 0–${series.targetValue.max}", Target.entries, { "${it.key} · 0–${it.max}" }) { t ->
+            if (series.format == SeriesFormat.CUSTOM && d.hasTargetChoice && !series.isComposite) Dropdown(tx.target, "${series.targetValue.key} · 0–${series.targetValue.max}", Target.entries, { "${it.key} · 0–${it.max}" }) { t ->
                 onChange(series.copy(target = t.key).clamped(d))
             }
             if (st.manual) Text(tx.totalLock, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             else ShotsGrid(series, isActive, tx, onActivate) { j -> onChange(series.copy(shots = series.shots.toMutableList().also { it.removeAt(j) })); onActivate() }
             if (st.practiceCount > 0 && series.shots.isNotEmpty()) Text(tx.practiceSum(st.practice), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (series.format == SeriesFormat.CUSTOM) {
+            if (series.format == SeriesFormat.CUSTOM && !series.isComposite) {
                 Stepper(tx.practiceShots, st.practiceCount, 0..20) { n ->
                     onChange(series.copy(practice = n)); onActivate()
                 }
@@ -384,8 +384,9 @@ private fun changeFormat(series: Series, f: SeriesFormat, d: Discipline): Series
     val parts = f.parts
     val s = if (parts != null) {
         val n = parts.sumOf { it.count }
-        series.copy(type = f.key, planned = n, practice = 0, target = Target.A10.key, shots = series.shots.take(n))
-    } else series.copy(type = f.key, practice = prev.practiceCount, planned = maxOf(prev.counted, series.shots.size - prev.practiceCount))
+        series.copy(type = f.key, planned = n, practice = 0, target = Target.A10.key, shots = series.shots.take(n), parts = null)
+    } else if (series.isComposite && f == SeriesFormat.CUSTOM) series
+    else series.copy(parts = null, type = f.key, practice = prev.practiceCount, planned = maxOf(prev.counted, series.shots.size - prev.practiceCount))
     return s.clamped(d)
 }
 
@@ -432,11 +433,10 @@ private fun ShotsGrid(series: Series, isActive: Boolean, tx: Tx, onActivate: () 
     val line = MaterialTheme.colorScheme.outlineVariant
     val accent = MaterialTheme.colorScheme.primary
     Column(Modifier.fillMaxWidth().clickable(onClick = onActivate), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        val groups = series.groupTotals
         segs.forEachIndexed { gi, g ->
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (segs.size > 1) Text(
-                    (groups?.get(gi)?.let { "${tx.groupN(it.n)} · ${if (it.shots > 0) it.sum.toString() else "–"} / ${it.max}" }
+                    (series.groupOf(gi)?.let { "${tx.groupN(it.n)}${if (g.kind == SegmentKind.SERIES) " · " + tx.segmentName(g.kind, g.count) else ""}${g.target?.let { t -> " · " + t.key } ?: ""} · ${if (it.shots > 0) it.sum.toString() else "–"} / ${it.max}" }
                         ?: (tx.segmentName(g.kind, g.count) + (g.target?.let { " · " + it.key } ?: ""))).uppercase(tx.locale),
                     style = MaterialTheme.typography.labelSmall, color = muted,
                 )

@@ -14,10 +14,20 @@ import java.net.URL
  * A championship: the sessions the club asks to be shot in one year, loaded from a CSV file.
  * Kept on the phone in the same JSON shape as the web app ("championship" in backups).
  */
-data class ChampSeries(val type: String, val target: String?, val planned: Int?, val practice: Int?) {
-    fun toJson() = JSONObject().apply { put("type", type); put("target", target ?: JSONObject.NULL); put("planned", planned ?: JSONObject.NULL); put("practice", practice ?: JSONObject.NULL) }
+data class ChampSeries(val type: String, val target: String?, val planned: Int?, val practice: Int?, val parts: List<SeriesPart>? = null) {
+    fun toJson() = JSONObject().apply {
+        put("type", type); put("target", target ?: JSONObject.NULL); put("planned", planned ?: JSONObject.NULL); put("practice", practice ?: JSONObject.NULL)
+        if (!parts.isNullOrEmpty()) put("parts", JSONArray(parts.map { it.toJson() }))
+    }
+    /** Only the grouping and practice shots: "3 Probe + 10 + 10", "2 Probe + 6 + 4", "10". */
+    fun groupText(tx: Tx): String {
+        val p = parts ?: SeriesFormat.of(type)?.parts?.mapIndexed { i, g -> SeriesPart(g.kind, g.count, Target.A10.key, i + 1) }
+            ?: ((if ((practice ?: 0) > 0) listOf(SeriesPart(SegmentKind.PRACTICE, practice!!, Target.A10.key, 1)) else emptyList()) + SeriesPart(SegmentKind.SINGLE, planned ?: 10, Target.A10.key, 1))
+        return groupingText(p, tx::chPrac)
+    }
     companion object {
-        fun fromJson(o: JSONObject) = ChampSeries(o.optStringOrNull("type") ?: SeriesFormat.CUSTOM.key, o.optStringOrNull("target"), o.optIntOrNull("planned"), o.optIntOrNull("practice"))
+        fun fromJson(o: JSONObject) = ChampSeries(o.optStringOrNull("type") ?: SeriesFormat.CUSTOM.key, o.optStringOrNull("target"), o.optIntOrNull("planned"), o.optIntOrNull("practice"),
+            o.optJSONArray("parts")?.let { a -> (0 until a.length()).mapNotNull { a.optJSONObject(it)?.let(SeriesPart::fromJson) } }?.takeIf { it.isNotEmpty() })
     }
 }
 
@@ -115,20 +125,37 @@ object ChampParser {
         return null
     }
 
-    /** One token per series: a format code (s10, op300, pstd …) or custom:SHOTS[:TARGET[:PRACTICE]], or just a number of shots. */
+    /** Series are separated by "!"; parts joined by "+" form ONE series (each part its own group with a subtotal).
+     *  A part is a format code (s10, op300, pstd …), custom:SHOTS[:TARGET[:PRACTICE]], or just a number of shots. */
+    private class Part(val code: SeriesFormat?, val n: Int, val t: String, val p: Int, val segs: List<Triple<SegmentKind, Int, String>>)
+
+    private fun part(raw: String, d: Discipline): Part? {
+        val tk = raw.lowercase()
+        val f = SeriesFormat.of(tk)
+        if (f != null && f != SeriesFormat.CUSTOM && f in d.formats)
+            return Part(f, f.slots, Target.A10.key, 0, f.parts!!.map { Triple(it.kind, it.count, (it.target ?: Target.A10).key) })
+        val m = Regex("""^(?:custom|eigene|c)?:?(\d{1,3})(?::(a10|a100|b4|b5|a5))?(?::(\d{1,2}))?$""").find(tk) ?: return null
+        val n = m.groupValues[1].toIntOrNull()?.takeIf { it > 0 }?.let { minOf(200, it) } ?: return null
+        val t = m.groupValues[2].takeIf { it.isNotEmpty() && d.hasTargetChoice }?.uppercase() ?: Target.A10.key
+        val p = minOf(20, m.groupValues[3].toIntOrNull() ?: 0)
+        return Part(null, n, t, p, (if (p > 0) listOf(Triple(SegmentKind.PRACTICE, p, t)) else emptyList()) + Triple(SegmentKind.SINGLE, n, t))
+    }
+
     fun series(text: String, d: Discipline, warn: (String) -> Unit): List<ChampSeries> {
         val out = mutableListOf<ChampSeries>()
-        for (raw in text.split(Regex("""[\s+,|]+""")).filter { it.isNotEmpty() }) {
-            val tk = raw.lowercase()
-            val f = SeriesFormat.of(tk)
-            if (f != null && f != SeriesFormat.CUSTOM && f in d.formats) { out.add(ChampSeries(f.key, Target.A10.key, f.slots, 0)); continue }
-            val m = Regex("""^(?:custom|eigene|c)?:?(\d{1,3})(?::(a10|a100|b4|b5|a5))?(?::(\d{1,2}))?$""").find(tk)
-            val n = m?.groupValues?.get(1)?.toIntOrNull()
-            if (m != null && n != null && n > 0) {
-                val tgt = m.groupValues[2].takeIf { it.isNotEmpty() && d.hasTargetChoice }?.uppercase() ?: Target.A10.key
-                out.add(ChampSeries(SeriesFormat.CUSTOM.key, tgt, minOf(200, n), minOf(20, m.groupValues[3].toIntOrNull() ?: 0))); continue
+        for (group in text.split('!').map { it.trim() }.filter { it.isNotEmpty() }) {
+            val parts = group.split('+').map { it.trim() }.filter { it.isNotEmpty() }.mapNotNull { raw -> part(raw, d) ?: run { warn(raw); null } }
+            if (parts.isEmpty()) continue
+            val one = parts.singleOrNull()
+            when {
+                one?.code != null -> out.add(ChampSeries(one.code.key, Target.A10.key, one.code.slots, 0))
+                one != null -> out.add(ChampSeries(SeriesFormat.CUSTOM.key, one.t, one.n, one.p))
+                else -> {
+                    val segs = parts.flatMapIndexed { i, p -> p.segs.map { (k, n, t) -> SeriesPart(k, n, t, i + 1) } }
+                    out.add(ChampSeries(SeriesFormat.CUSTOM.key, segs.first().t, segs.filter { it.k != SegmentKind.PRACTICE }.sumOf { it.n },
+                        segs.filter { it.k == SegmentKind.PRACTICE }.sumOf { it.n }, segs))
+                }
             }
-            warn(raw)
         }
         if (out.isEmpty()) out.add(ChampSeries(d.defaultFormat.key, Target.A10.key, d.defaultFormat.slots, 0))
         return out
@@ -240,7 +267,7 @@ class ChampStore(private val file: File, private val store: Store) {
             location = item.location ?: last?.location, weapon = if (last?.discipline == d) last.weapon else null, notes = item.notes,
             series = item.series.map { c ->
                 Series(type = (SeriesFormat.of(c.type) ?: d.defaultFormat).key, target = c.target ?: Target.A10.key,
-                    planned = c.planned ?: SeriesFormat.of(c.type)?.slots ?: 10, practice = c.practice ?: 0)
+                    planned = c.planned ?: SeriesFormat.of(c.type)?.slots ?: 10, practice = c.practice ?: 0, parts = c.parts)
             },
         )
         store.save(s)
@@ -261,7 +288,7 @@ class ChampStore(private val file: File, private val store: Store) {
         if (state.current != null) return
         val csv = """
             id;jahr;meisterschaft;titel;disziplin;serien;datum;schiessstand
-            VM1;2026;Vereinsmeisterschaft SG Muttenz 2026;Runde 1 Gewehr;r300;s10+s10;30.04.2026;Muttenz
+            VM1;2026;Vereinsmeisterschaft SG Muttenz 2026;Runde 1 Gewehr;r300;s10!s10;30.04.2026;Muttenz
             OP;2026;;Obligatorisches;r300;op300;31.08.2026;
             P25;2026;;Pistole Standard;p25;pstd;30.06.2026;Muttenz
             FREI;2026;;Final Gewehr;r300;custom:20:A100:2;30.09.2026;Muttenz

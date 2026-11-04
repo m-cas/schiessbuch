@@ -244,10 +244,7 @@ fun ChampScreen(store: Store, tx: Tx, nav: Nav) {
 @Composable
 private fun ChampRow(item: ChampItem, session: Session?, live: Boolean, tx: Tx, onActivate: () -> Unit, onReset: () -> Unit, onOpen: (String) -> Unit) {
     val active = session != null
-    val what = tx.disciplineName(item.discipline) + " · " + item.series.joinToString(" + ") { c ->
-        val f = SeriesFormat.of(c.type) ?: SeriesFormat.CUSTOM
-        if (f == SeriesFormat.CUSTOM) tx.chCustom(c.planned ?: 10, c.target ?: "A10", c.practice ?: 0) else tx.formatName(f, item.discipline)
-    }
+    val what = tx.disciplineName(item.discipline) + " · " + item.series.joinToString(" | ") { it.groupText(tx) }
     val meta = listOfNotNull(item.day?.let(tx::longDate), item.location).filter { it.isNotEmpty() }.joinToString(" · ")
     Card(
         Modifier.fillMaxWidth(),

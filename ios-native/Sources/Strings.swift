@@ -70,6 +70,7 @@ struct Tx {
         }
     }
     func seriesLabel(_ s: Series, discipline: Discipline) -> String {
+        if s.isComposite, let parts = s.parts { return groupingText(parts, practice: chPrac) }
         guard s.format == .custom else { return formatName(s.format, discipline: discipline) }
         let st = s.stats
         let pr = st.practiceCount > 0 ? (de ? "\(st.practiceCount) Probe + " : "\(st.practiceCount) practice + ") : ""
@@ -220,6 +221,7 @@ struct Tx {
     var chEmptyH: String { p("Keine Meisterschaft geladen", "No championship loaded") }
     var chEmptyP: String { p("Lade die CSV-Datei des Vereins mit den zu schiessenden Übungen. Eine Zeile pro Übung:", "Load the club's CSV file with the sessions to shoot. One line per session:") }
     var chNoHistory: String { p("Noch keine früheren Meisterschaften.", "No earlier championships yet.") }
+    func chPrac(_ n: Int) -> String { p("\(n) Probe", "\(n) practice") }
     var chHistDel: String { p("Aus dem Verlauf entfernen", "Remove from history") }
     func chCustom(_ n: Int, _ tg: String, _ pr: Int) -> String { p("Eigene · ", "Custom · ") + (pr > 0 ? p("\(pr) Probe + ", "\(pr) practice + ") : "") + shotsN(n) + " · " + tg }
 }
