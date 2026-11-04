@@ -110,6 +110,8 @@ struct Series: Codable, Hashable {
     var tief: Int? = nil
     var desc: String? = nil          // legacy, merged into the session description
 
+    enum CodingKeys: String, CodingKey { case type, target, planned, practice, shots, total, tief, desc }
+
     init(format: SeriesFormat = .s10) {
         type = format.rawValue
         if let parts = format.parts { planned = parts.reduce(0) { $0 + $1.count } } else { planned = 10 }
@@ -207,6 +209,10 @@ struct Session: Codable, Identifiable, Hashable {
     var max: Int? = nil
     var tief: Int? = nil
     var program: String? = nil
+
+    enum CodingKeys: String, CodingKey {
+        case id, date, preset, category, desc, location, weapon, conditions, notes, photos, series, createdAt, updatedAt, max, tief, program
+    }
 
     init() {}
 
