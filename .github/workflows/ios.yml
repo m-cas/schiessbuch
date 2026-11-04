@@ -63,9 +63,11 @@ jobs:
           AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY" -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER")
           if [ -d ios/App/App.xcworkspace ]; then SRC=(-workspace ios/App/App.xcworkspace); else SRC=(-project ios/App/App.xcodeproj); fi
 
+          # Archive unsigned: a development signature would need a registered device.
+          # The export below signs with an App Store distribution certificate instead.
           xcodebuild "${SRC[@]}" -scheme App -configuration Release \
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/App.xcarchive" \
-            "${AUTH[@]}" DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_STYLE=Automatic CODE_SIGNING_ALLOWED=NO \
             MARKETING_VERSION="1.0.$RUN" CURRENT_PROJECT_VERSION="$RUN" archive
 
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
