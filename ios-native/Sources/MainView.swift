@@ -11,6 +11,7 @@ struct MainView: View {
     @State private var editMode: EditMode = .inactive
     @State private var selection = Set<String>()
     @State private var showSettings = false
+    @State private var showChamp = false
     @State private var editing: Session? = nil
     @State private var mail: OutgoingMail? = nil
     @State private var confirmDelete = false
@@ -72,6 +73,7 @@ struct MainView: View {
             .navigationDestination(for: String.self) { id in SessionDetailView(id: id) }
             .toolbar { toolbar }
             .sheet(isPresented: $showSettings, onDismiss: refreshStorage) { SettingsView() }
+            .sheet(isPresented: $showChamp) { ChampionshipView() }
             .sheet(item: $editing) { s in SessionEditor(original: s, isNew: store.session(s.id) == nil) }
             .mailOrShare($mail)
             .confirmationDialog(tx.confirmDelete(selection.count, photos: photoCount(selection)), isPresented: $confirmDelete, titleVisibility: .visible) {
@@ -88,12 +90,16 @@ struct MainView: View {
     // MARK: parts
 
     private var filters: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(tx.discipline).font(.caption.weight(.semibold)).foregroundStyle(.secondary).textCase(.uppercase)
             Picker(tx.discipline, selection: $filterRaw) {
                 Text(tx.all).tag("all")
-                ForEach(Discipline.allCases) { d in Text(tx.disciplineName(d)).tag(d.rawValue) }
+                ForEach(Discipline.allCases) { d in Text(tx.disciplineShort(d)).tag(d.rawValue) }
             }
-            .pickerStyle(.menu)
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            Divider().padding(.vertical, 4)
+            Text(tx.category).font(.caption.weight(.semibold)).foregroundStyle(.secondary).textCase(.uppercase)
             HStack(spacing: 8) {
                 ForEach(Category.allCases) { c in
                     Toggle(tx.categoryName(c), isOn: Binding(
@@ -163,6 +169,10 @@ struct MainView: View {
             }
             .accessibilityLabel(tx.settings)
         }
+        ToolbarItem(placement: .topBarLeading) {
+            Button { showChamp = true } label: { Image(systemName: "trophy") }
+                .accessibilityLabel(tx.chTitle)
+        }
         if !store.sessions.isEmpty {
             ToolbarItem(placement: .topBarTrailing) {
                 Button(isSelecting ? tx.done : tx.select) {
@@ -214,6 +224,7 @@ struct MainView: View {
     private func openScreenForScreenshots() {
         switch UserDefaults.standard.string(forKey: "screen") {
         case "settings": showSettings = true
+        case "champ": showChamp = true
         case "detail": if let s = store.sessions.first { path = [s.id] }
         case "editor":
             var s = newSession()

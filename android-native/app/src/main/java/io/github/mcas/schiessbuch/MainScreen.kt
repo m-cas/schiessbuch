@@ -4,6 +4,10 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,9 +34,11 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -106,6 +112,7 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                     }
                 },
                 actions = {
+                    if (!selecting) IconButton(onClick = { nav.push(Screen.Champ) }) { Icon(Icons.Outlined.EmojiEvents, tx.chTitle) }
                     if (store.sessions.isNotEmpty()) TextButton(onClick = { if (selecting) endSelection() else selecting = true }) {
                         Text(if (selecting) tx.done else tx.select)
                     }
@@ -144,38 +151,54 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item {
-                // all six on one line, no scrolling
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    (listOf("all" to tx.all) + Discipline.entries.map { it.key to tx.disciplineShort(it) }).forEach { (k, l) ->
-                        val on = filter == k
-                        Surface(
-                            selected = on, onClick = { filter = k; prefs.filterDiscipline = k },
-                            modifier = Modifier.weight(1f).height(36.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (on) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
-                            contentColor = if (on) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                            border = if (on) null else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                // Two clearly separate filters: one discipline (joined bar), any number of categories (chips).
+                OutlinedCard(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(tx.discipline.uppercase(tx.locale), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        val line = MaterialTheme.colorScheme.outline
+                        Row(
+                            Modifier.fillMaxWidth().height(36.dp).clip(RoundedCornerShape(9.dp))
+                                .border(1.dp, line, RoundedCornerShape(9.dp)),
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(l, maxLines = 1, style = MaterialTheme.typography.labelLarge, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Medium)
+                            val keys = listOf("all" to tx.all) + Discipline.entries.map { it.key to tx.disciplineShort(it) }
+                            keys.forEachIndexed { i, (k, l) ->
+                                val on = filter == k
+                                if (i > 0) Box(Modifier.width(1.dp).fillMaxHeight().background(line))
+                                Box(
+                                    Modifier.weight(1f).fillMaxHeight()
+                                        .background(if (on) MaterialTheme.colorScheme.onSurface else Color.Transparent)
+                                        .selectable(selected = on, onClick = { filter = k; prefs.filterDiscipline = k }),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        l, maxLines = 1, softWrap = false, style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = if (on) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (on) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface,
+                                    )
+                                }
                             }
                         }
-                    }
-                }
-            }
-            item {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Category.entries.forEach { c ->
-                        val on = c.key in cats
-                        FilterChip(
-                            selected = on,
-                            onClick = {
-                                val next = if (on) cats - c.key else cats + c.key
-                                if (next.isNotEmpty()) { cats = next; prefs.filterCategories = next }
-                            },
-                            label = { Text(tx.categoryName(c)) },
-                            leadingIcon = if (on) ({ Icon(Icons.Filled.Check, null, Modifier.size(FilterChipDefaults.IconSize)) }) else null,
-                        )
+                        HorizontalDivider(Modifier.padding(vertical = 6.dp))
+                        Text(tx.category.uppercase(tx.locale), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Category.entries.forEach { c ->
+                                val on = c.key in cats
+                                FilterChip(
+                                    selected = on,
+                                    onClick = {
+                                        val next = if (on) cats - c.key else cats + c.key
+                                        if (next.isNotEmpty()) { cats = next; prefs.filterCategories = next }
+                                    },
+                                    label = { Text(tx.categoryName(c)) },
+                                    leadingIcon = if (on) ({ Icon(Icons.Filled.Check, null, Modifier.size(FilterChipDefaults.IconSize)) }) else null,
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary,
+                                    ),
+                                )
+                            }
+                        }
                     }
                 }
             }

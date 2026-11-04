@@ -65,13 +65,13 @@ enum class SeriesFormat(val key: String) {
 }
 
 enum class Discipline(val key: String) {
-    R300("r300"), P25("p25"), P50("p50"), AP10("ap10"), OTHER("other");
+    R300("r300"), P25("p25"), P50("p50"), AP10("ap10"), AG10("ag10"), OTHER("other");
 
     val formats: List<SeriesFormat>
         get() = when (this) {
             R300 -> listOf(SeriesFormat.S10, SeriesFormat.P2S6R4, SeriesFormat.P2S5R23, SeriesFormat.OP300, SeriesFormat.FS300, SeriesFormat.CUSTOM)
             P25, P50 -> listOf(SeriesFormat.PSTD, SeriesFormat.POP, SeriesFormat.PFS, SeriesFormat.CUSTOM)
-            AP10 -> listOf(SeriesFormat.AP10S, SeriesFormat.AP20S, SeriesFormat.CUSTOM)
+            AP10, AG10 -> listOf(SeriesFormat.AP10S, SeriesFormat.AP20S, SeriesFormat.CUSTOM)
             OTHER -> listOf(SeriesFormat.CUSTOM)
         }
     val defaultFormat: SeriesFormat get() = formats.first()

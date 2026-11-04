@@ -26,6 +26,7 @@ class Store(private val context: Context, demo: Boolean = false) {
     private val sessionsFile = File(base, "sessions.json")
     val photosDir = File(base, "photos").apply { mkdirs() }
     val sessions = mutableStateListOf<Session>()
+    val champ = ChampStore(File(base, "championship.json"), this)
 
     init {
         load()
@@ -132,7 +133,9 @@ class Store(private val context: Context, demo: Boolean = false) {
                 w.write(Base64.encodeToString(f.readBytes(), Base64.NO_WRAP))
                 w.write("\"}")
             }
-            w.write("]}")
+            w.write("]")
+            if (!champ.state.isEmpty) { w.write(",\"championship\":"); w.write(champ.state.toJson().toString()) }
+            w.write("}")
         }
     }
     fun backupFile(name: String): File {
@@ -162,6 +165,8 @@ class Store(private val context: Context, demo: Boolean = false) {
         incoming.forEach { byId[it.id] = it }
         sessions.clear(); sessions.addAll(sorted(byId.values.toList()))
         persist()
+        val c = ChampState.fromJson(o.optJSONObject("championship"))
+        if (!c.isEmpty) champ.set(if (c.url.isEmpty()) c.copy(url = champ.state.url) else c)
         return incoming.size
     }
 

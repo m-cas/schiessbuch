@@ -24,6 +24,6 @@ for L in de en; do
   adb shell cmd uimode night yes; shot "main-$L-dark" $L
 done
 adb shell cmd uimode night no
-for S in editor detail settings; do shot "$S-de" de $S; done
+for S in editor detail settings champ; do shot "$S-de" de $S; done
 adb logcat -d -s AndroidRuntime:E > shots/crash.log || true
 ls -la shots
