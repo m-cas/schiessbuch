@@ -23,7 +23,7 @@
   {
    "t": "Serienformate",
    "p": [
-    "G300: 10 Schüsse A10 · 2×10 Einzelschüsse A10 (zwei Teiltotale, ein Gesamttotal) · 12 Schüsse mit 2 Probe, 6 Einzel, 4 Serie · 12 Schüsse mit 2 Probe, 5 Einzel, Serien zu 2 und 3 · OP (20 Schüsse A5/B4) · Feldschiessen (18 Schüsse B4) · Eigene (Schüsse, Probe und Scheibe A10, A100, B4, B5, A5 wählbar).",
+    "G300: 10 Schüsse A10 · 2×10 Einzelschüsse A10 (zwei Teiltotale, ein Gesamttotal) · 10 Schüsse mit 6 Einzel, 4 Serie · 12 Schüsse mit 2 Probe, 6 Einzel, 4 Serie · 12 Schüsse mit 2 Probe, 5 Einzel, Serien zu 2 und 3 · OP (20 Schüsse A5/B4) · Feldschiessen (18 Schüsse B4) · Eigene (Schüsse, Probe und Scheibe A10, A100, B4, B5, A5 wählbar).",
     "P25 und P50: Standard 5/5/5 · OP 5 Einzel + 5/5/5 · Feldschiessen 3 Einzel + 5/5/5 · Eigene. Immer 0–10.",
     "LP10 und LG10: 10 Schüsse · 20 Schüsse · Eigene. Immer 0–10."
    ]
@@ -95,7 +95,7 @@
   {
    "t": "Series formats",
    "p": [
-    "G300: 10 shots A10 · 2×10 single shots A10 (two subtotals, one overall total) · 12 shots with 2 practice, 6 single, 4 in series · 12 shots with 2 practice, 5 single, series of 2 and 3 · OP (20 shots A5/B4) · Feldschiessen (18 shots B4) · Custom (choose shots, practice and target A10, A100, B4, B5, A5).",
+    "G300: 10 shots A10 · 2×10 single shots A10 (two subtotals, one overall total) · 10 shots with 6 single, 4 in series · 12 shots with 2 practice, 6 single, 4 in series · 12 shots with 2 practice, 5 single, series of 2 and 3 · OP (20 shots A5/B4) · Feldschiessen (18 shots B4) · Custom (choose shots, practice and target A10, A100, B4, B5, A5).",
     "P25 and P50: Standard 5/5/5 · OP 5 single + 5/5/5 · Feldschiessen 3 single + 5/5/5 · Custom. Always 0–10.",
     "LP10 and LG10: 10 shots · 20 shots · Custom. Always 0–10."
    ]
