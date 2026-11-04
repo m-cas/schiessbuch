@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -106,6 +107,7 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                     }
                 },
                 actions = {
+                    if (!selecting) IconButton(onClick = { nav.push(Screen.Champ) }) { Icon(Icons.Outlined.EmojiEvents, tx.chTitle) }
                     if (store.sessions.isNotEmpty()) TextButton(onClick = { if (selecting) endSelection() else selecting = true }) {
                         Text(if (selecting) tx.done else tx.select)
                     }

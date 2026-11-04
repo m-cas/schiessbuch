@@ -32,6 +32,7 @@ class MainActivity : ComponentActivity() {
         val prefs = Prefs(this)
         intent.getStringExtra("lang")?.let { prefs.lang = it }
         val startScreen = intent.getStringExtra("screen")
+        if (demo) store.champ.seedDemo(Tx(prefs.lang))
         setContent { AppTheme { App(store, prefs, startScreen) } }
     }
 }
@@ -54,6 +55,7 @@ sealed class Screen {
     data class Detail(val id: String) : Screen()
     data class Editor(val session: Session, val isNew: Boolean) : Screen()
     data object Settings : Screen()
+    data object Champ : Screen()
 }
 
 class Nav(start: Screen) {
@@ -71,6 +73,7 @@ fun App(store: Store, prefs: Prefs, startScreen: String?) {
     LaunchedEffect(Unit) {
         when (startScreen) {
             "settings" -> nav.push(Screen.Settings)
+            "champ" -> nav.push(Screen.Champ)
             "detail" -> store.sessions.firstOrNull()?.let { nav.push(Screen.Detail(it.id)) }
             "editor" -> {
                 var s = newSession(store)
@@ -85,6 +88,7 @@ fun App(store: Store, prefs: Prefs, startScreen: String?) {
         is Screen.Detail -> DetailScreen(store, tx, nav, s.id)
         is Screen.Editor -> EditorScreen(store, tx, nav, s.session, s.isNew)
         Screen.Settings -> SettingsScreen(store, prefs, tx, nav)
+        Screen.Champ -> ChampScreen(store, tx, nav)
     }
 }
 
