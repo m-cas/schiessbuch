@@ -432,10 +432,12 @@ private fun ShotsGrid(series: Series, isActive: Boolean, tx: Tx, onActivate: () 
     val line = MaterialTheme.colorScheme.outlineVariant
     val accent = MaterialTheme.colorScheme.primary
     Column(Modifier.fillMaxWidth().clickable(onClick = onActivate), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        segs.forEach { g ->
+        val groups = series.groupTotals
+        segs.forEachIndexed { gi, g ->
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (segs.size > 1) Text(
-                    (tx.segmentName(g.kind, g.count) + (g.target?.let { " · " + it.key } ?: "")).uppercase(tx.locale),
+                    (groups?.get(gi)?.let { "${tx.groupN(it.n)} · ${if (it.shots > 0) it.sum.toString() else "–"} / ${it.max}" }
+                        ?: (tx.segmentName(g.kind, g.count) + (g.target?.let { " · " + it.key } ?: ""))).uppercase(tx.locale),
                     style = MaterialTheme.typography.labelSmall, color = muted,
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {

@@ -149,6 +149,9 @@ private fun SeriesResult(index: Int, series: Series, d: Discipline, tx: Tx) {
         }
         Text(tx.seriesLabel(series, d), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (series.shots.isNotEmpty()) Text(series.shotsText, style = MaterialTheme.typography.bodyLarge)
+        series.groupTotals?.takeIf { series.shots.isNotEmpty() }?.let { gt ->
+            Text(gt.joinToString(" · ") { "${tx.groupN(it.n)}: ${it.sum}/${it.max}" }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+        }
         else if (st.manual) Text(tx.totalOnly, color = MaterialTheme.colorScheme.onSurfaceVariant)
         val extra = listOfNotNull(
             series.tief?.let { "${tx.tief} $it" },

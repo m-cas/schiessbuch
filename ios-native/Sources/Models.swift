@@ -180,12 +180,24 @@ struct Series: Codable, Hashable {
         return (s.total / Double(s.max) * 1000).rounded() / 10
     }
     /// "(7 8) · 10 9 9" with practice shots in brackets.
+    /// 2×10 single shots: each group of 10 has its own subtotal next to the overall total.
+    struct Group { var n: Int; var sum: Int; var max: Int; var shots: Int }
+    var groupTotals: [Group]? {
+        guard format == .s2x10 else { return nil }
+        return segments.enumerated().map { n, g in
+            let end = min(shots.count, g.start + g.count)
+            let v = g.start < end ? Array(shots[g.start..<end]) : []
+            return Group(n: n + 1, sum: v.reduce(0) { $0 + $1.points }, max: g.count * (g.target?.max ?? targetValue.max), shots: v.count)
+        }
+    }
+
     var shotsText: String {
-        segments.compactMap { g -> String? in
+        let gt = groupTotals
+        return segments.enumerated().compactMap { n, g -> String? in
             let end = min(shots.count, g.start + g.count)
             guard g.start < end else { return nil }
             let v = shots[g.start..<end].map(\.label).joined(separator: " ")
-            return g.kind == .practice ? "(\(v))" : v
+            return g.kind == .practice ? "(\(v))" : v + (gt.map { " [\($0[n].sum)]" } ?? "")
         }.joined(separator: " · ")
     }
 }

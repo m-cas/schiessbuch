@@ -50,7 +50,7 @@ class Tx(lang: String) {
     }
     fun formatName(f: SeriesFormat, d: Discipline) = when (f) {
         SeriesFormat.S10 -> p("10 Schüsse · A10", "10 shots · A10")
-        SeriesFormat.S2X10 -> p("2×10 Schüsse · Einzel, ein Total · A10", "2×10 shots · single, one total · A10")
+        SeriesFormat.S2X10 -> p("2×10 Einzelschüsse · A10", "2×10 single shots · A10")
         SeriesFormat.P2S6R4 -> p("12 Schüsse · 2 Probe, 6 Einzel, 4 Serie · A10", "12 shots · 2 practice, 6 single, 4 in series · A10")
         SeriesFormat.P2S5R23 -> p("12 Schüsse · 2 Probe, 5 Einzel, Serien zu 2 und 3 · A10", "12 shots · 2 practice, 5 single, series of 2 and 3 · A10")
         SeriesFormat.OP300 -> p("OP · 20 Schüsse A5/B4", "OP · 20 shots A5/B4")
@@ -74,6 +74,7 @@ class Tx(lang: String) {
         SegmentKind.SERIES -> p("Serie zu $count", "Series of $count")
     }
 
+    fun groupN(n: Int) = p("Gruppe $n", "Group $n")
     val date get() = p("Datum", "Date")
     val description get() = p("Beschreibung", "Description")
     val descriptionPh get() = p("z. B. kniend, Vereinsstich, neues Visier", "e.g. kneeling, club match, new sight")

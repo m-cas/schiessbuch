@@ -293,10 +293,12 @@ struct SeriesEditorSection: View {
     private var shotsGrid: some View {
         VStack(alignment: .leading, spacing: 8) {
             let segs = series.segments
-            ForEach(Array(segs.enumerated()), id: \.offset) { _, g in
+            let groups = series.groupTotals
+            ForEach(Array(segs.enumerated()), id: \.offset) { gi, g in
                 VStack(alignment: .leading, spacing: 4) {
                     if segs.count > 1 {
-                        Text(tx.segmentName(g.kind, count: g.count) + (g.target.map { " · " + $0.rawValue } ?? ""))
+                        Text(groups.map { gs in "\(tx.groupN(gs[gi].n)) · \(gs[gi].shots > 0 ? String(gs[gi].sum) : "–") / \(gs[gi].max)" }
+                             ?? (tx.segmentName(g.kind, count: g.count) + (g.target.map { " · " + $0.rawValue } ?? "")))
                             .font(.caption2.weight(.semibold)).foregroundStyle(.secondary).textCase(.uppercase)
                     }
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 38), spacing: 6)], alignment: .leading, spacing: 6) {

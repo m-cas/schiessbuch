@@ -100,6 +100,9 @@ struct SeriesResultRow: View {
             Text(tx.seriesLabel(series, discipline: discipline)).font(.caption).foregroundStyle(.secondary)
             if !series.shots.isEmpty {
                 Text(series.shotsText).font(.callout.monospacedDigit())
+                if let gt = series.groupTotals {
+                    Text(gt.map { "\(tx.groupN($0.n)): \($0.sum)/\($0.max)" }.joined(separator: " · ")).font(.subheadline.weight(.semibold)).monospacedDigit()
+                }
             } else if st.manual {
                 Text(tx.totalOnly).font(.callout).foregroundStyle(.secondary)
             }

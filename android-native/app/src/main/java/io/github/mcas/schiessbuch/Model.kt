@@ -147,15 +147,27 @@ data class Series(
             if (s.max <= 0) return null
             return (s.total / s.max * 1000).roundToInt() / 10.0
         }
-    /** "(7 8) · 10 9 9" with practice shots in brackets. */
-    val shotsText: String
-        get() = segments.mapNotNull { g ->
+    /** 2×10 single shots: each group of 10 has its own subtotal next to the overall total. */
+    data class Group(val n: Int, val sum: Int, val max: Int, val shots: Int)
+    val groupTotals: List<Group>?
+        get() = if (format != SeriesFormat.S2X10) null else segments.mapIndexed { n, g ->
             val end = min(shots.size, g.start + g.count)
-            if (g.start >= end) null else {
-                val v = shots.subList(g.start, end).joinToString(" ") { it.label }
-                if (g.kind == SegmentKind.PRACTICE) "($v)" else v
-            }
-        }.joinToString(" · ")
+            val v = if (g.start < end) shots.subList(g.start, end) else emptyList()
+            Group(n + 1, v.sumOf { it.points }, g.count * (g.target?.max ?: targetValue.max), v.size)
+        }
+
+    /** "(7 8) · 10 9 9" with practice shots in brackets; group subtotals in square brackets. */
+    val shotsText: String
+        get() {
+            val gt = groupTotals
+            return segments.mapIndexedNotNull { n, g ->
+                val end = min(shots.size, g.start + g.count)
+                if (g.start >= end) null else {
+                    val v = shots.subList(g.start, end).joinToString(" ") { it.label }
+                    if (g.kind == SegmentKind.PRACTICE) "($v)" else v + (gt?.let { " [${it[n].sum}]" } ?: "")
+                }
+            }.joinToString(" · ")
+        }
 
     /** Keeps every shot within its target; X only where it is allowed. */
     fun clamped(d: Discipline): Series = copy(shots = shots.mapIndexed { j, v ->
