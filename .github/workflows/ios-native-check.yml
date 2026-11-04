@@ -61,7 +61,7 @@ jobs:
               xcrun simctl terminate "$DEV" io.github.mcas.schiessbuch || true
             done
           done
-          for SCREEN in editor detail settings; do
+          for SCREEN in editor detail settings champ; do
             xcrun simctl ui "$DEV" appearance light
             xcrun simctl launch "$DEV" io.github.mcas.schiessbuch -demo YES -lang de -screen $SCREEN >/dev/null
             sleep 6

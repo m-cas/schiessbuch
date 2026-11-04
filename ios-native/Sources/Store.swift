@@ -8,9 +8,11 @@ import Observation
 final class Store {
     private(set) var sessions: [Session] = []
     var lastError: String? = nil
+    var champ = ChampState()
 
     @ObservationIgnored private let fm = FileManager.default
     @ObservationIgnored private let base: URL
+    var dataDir: URL { base }
     private var sessionsURL: URL { base.appendingPathComponent("sessions.json") }
     var photosDir: URL { base.appendingPathComponent("photos", isDirectory: true) }
     @ObservationIgnored private var thumbCache = NSCache<NSString, UIImage>()
@@ -20,7 +22,9 @@ final class Store {
         base = support.appendingPathComponent(demo ? "demo" : "data", isDirectory: true)
         try? fm.createDirectory(at: photosDir, withIntermediateDirectories: true)
         load()
+        loadChamp()
         if demo && sessions.isEmpty { seedDemo() }
+        if demo && champ.current == nil { seedDemoChamp() }
     }
 
     // MARK: sessions
@@ -98,6 +102,7 @@ final class Store {
     private struct Backup: Codable {
         var app: String; var version: Int?; var exported: String?
         var sessions: [Session]; var photos: [BackupPhoto]?
+        var championship: ChampState?
     }
 
     func backupFile(name: String) throws -> URL {
@@ -105,7 +110,8 @@ final class Store {
         for id in Set(sessions.flatMap(\.photos)) {
             if let d = try? Data(contentsOf: photoURL(id)) { photos.append(BackupPhoto(id: id, data: "data:image/jpeg;base64," + d.base64EncodedString())) }
         }
-        let b = Backup(app: "scorebook", version: 1, exported: ISO8601DateFormatter().string(from: Date()), sessions: sessions, photos: photos)
+        let b = Backup(app: "scorebook", version: 1, exported: ISO8601DateFormatter().string(from: Date()), sessions: sessions, photos: photos,
+                       championship: champ.current != nil || !champ.history.isEmpty ? champ : nil)
         let url = fm.temporaryDirectory.appendingPathComponent(name + ".json")
         try JSONEncoder().encode(b).write(to: url, options: .atomic)
         return url
@@ -127,6 +133,12 @@ final class Store {
         for s in b.sessions { byId[s.id] = s.normalizedForCurrentVersion() }
         sessions = sorted(Array(byId.values))
         persist()
+        if let c = b.championship, c.current != nil || !c.history.isEmpty {
+            let url = champ.url
+            champ = c
+            if champ.url.isEmpty { champ.url = url }
+            saveChamp()
+        }
         return b.sessions.count
     }
 

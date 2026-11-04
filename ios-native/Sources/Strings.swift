@@ -181,6 +181,41 @@ struct Tx {
     func longDate(_ d: Date) -> String { d.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted).weekday(.abbreviated).locale(locale)) }
     func shortDate(_ d: Date) -> String { d.formatted(Date.FormatStyle().day(.twoDigits).month(.twoDigits).year().locale(locale)) }
     func score(_ v: Double) -> String { v.formatted(.number.precision(.fractionLength(0...1)).locale(locale)) }
+
+    // Championship
+    var chTitle: String { p("Meisterschaft", "Championship") }
+    var chCurrent: String { p("Aktuell", "Current") }
+    var chHistory: String { p("Verlauf", "History") }
+    var chUrl: String { p("Adresse der CSV-Datei", "Address of the CSV file") }
+    var chLoad: String { p("Laden", "Load") }
+    var chReload: String { p("Neu laden", "Reload") }
+    var chFromFile: String { p("Datei wählen", "Choose file") }
+    var chActivate: String { p("Aktivieren", "Activate") }
+    var chReset: String { p("Zurücksetzen", "Reset") }
+    var chResetAsk: String { p("Eintrag wieder freigeben. Die bereits erfasste Übung behalten oder löschen?", "Make this item available again. Keep the session already recorded, or delete it?") }
+    var chKeep: String { p("Übung behalten", "Keep session") }
+    var chDelete: String { p("Übung löschen", "Delete session") }
+    func chProgress(_ d: Int, _ n: Int) -> String { p("\(d) von \(n) erledigt", "\(d) of \(n) done") }
+    var chNoResult: String { p("noch kein Resultat", "no result yet") }
+    var chNotShot: String { p("nicht geschossen", "not shot") }
+    func chAskSame(_ y: Int) -> String { p("Meisterschaft \(y) neu laden? Aktivierte Einträge und ihre Übungen bleiben erhalten.", "Reload championship \(y)? Activated items and their sessions stay as they are.") }
+    func chAskNew(_ y: Int, _ old: Int) -> String { p("Meisterschaft \(y) laden? Sie ersetzt \(old); diese kommt in den Verlauf. Alle erfassten Übungen bleiben.", "Load championship \(y)? It replaces \(old), which moves to History. All recorded sessions stay.") }
+    func chLoaded(_ n: Int, _ y: Int) -> String { p("\(n) Einträge für \(y) geladen", "\(n) items loaded for \(y)") }
+    func chWarnN(_ n: Int) -> String { de ? "\(n) \(n == 1 ? "Zeile" : "Zeilen") mit Problemen" : "\(n) \(n == 1 ? "line" : "lines") with problems" }
+    var chNoRows: String { p("Die Datei enthält keine Einträge.", "The file contains no items.") }
+    var chNeedCols: String { p("Die Datei braucht mindestens die Spalten titel und disziplin.", "The file needs at least the columns titel and disziplin.") }
+    var chNoYear: String { p("Die Datei braucht ein Jahr (Spalte jahr).", "The file needs a year (column jahr).") }
+    func chBadDisc(_ l: Int, _ v: String) -> String { p("Zeile \(l): unbekannte Disziplin «\(v)», übersprungen", "Line \(l): unknown discipline \"\(v)\", skipped") }
+    func chBadSeries(_ l: Int, _ v: String) -> String { p("Zeile \(l): unbekannte Serie «\(v)», ignoriert", "Line \(l): unknown series \"\(v)\", ignored") }
+    var chNeedUrl: String { p("Zuerst die Adresse der CSV-Datei eingeben.", "Enter the address of the CSV file first.") }
+    var chFetchFail: String { p("Die Datei konnte nicht geladen werden. Adresse prüfen oder «Datei wählen» nutzen.", "The file couldn't be loaded. Check the address or use Choose file.") }
+    var chBadFile: String { p("Diese Datei konnte nicht gelesen werden.", "This file couldn't be read.") }
+    func chDefaultName(_ y: Int) -> String { p("Meisterschaft \(y)", "Championship \(y)") }
+    var chEmptyH: String { p("Keine Meisterschaft geladen", "No championship loaded") }
+    var chEmptyP: String { p("Lade die CSV-Datei des Vereins mit den zu schiessenden Übungen. Eine Zeile pro Übung:", "Load the club's CSV file with the sessions to shoot. One line per session:") }
+    var chNoHistory: String { p("Noch keine früheren Meisterschaften.", "No earlier championships yet.") }
+    var chHistDel: String { p("Aus dem Verlauf entfernen", "Remove from history") }
+    func chCustom(_ n: Int, _ tg: String, _ pr: Int) -> String { p("Eigene · ", "Custom · ") + (pr > 0 ? p("\(pr) Probe + ", "\(pr) practice + ") : "") + shotsN(n) + " · " + tg }
 }
 
 private struct LangKey: EnvironmentKey { static let defaultValue = "de" }
