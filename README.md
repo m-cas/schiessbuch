@@ -28,7 +28,7 @@ Speichere regelmässig ein Backup.
 | `scripts/copy-web.mjs` | Kopiert die Web-App nach `www/` für die nativen Apps |
 | `scripts/prepare-native.mjs` | Erzeugt das Android- bzw. iOS-Projekt und setzt Version, Signatur, Kamera-Berechtigungen |
 | `assets/logo.png` | Vorlage für App-Symbol und Startbild |
-| `.github/workflows/android.yml` | Baut bei jeder Änderung die Android-App und veröffentlicht sie als Release |
+| `.github/workflows/android.yml` | Baut die Android-App und veröffentlicht sie als Release (von Hand starten) |
 | `.github/workflows/ios.yml` | Baut die iPhone-App und lädt sie zu TestFlight hoch (von Hand starten) |
 
 Die Ordner `android/` und `ios/` werden beim Bauen auf GitHub erzeugt und nicht gespeichert.
@@ -38,7 +38,7 @@ Die Ordner `android/` und `ios/` werden beim Bauen auf GitHub erzeugt und nicht 
 1. Änderung in `index.html` auf `main` speichern. Bei Änderungen der Web-App in `sw.js`
    die Nummer bei `CACHE` erhöhen, damit Telefone die neue Version laden.
 2. **Web-App:** GitHub Pages ist nach etwa einer Minute aktuell.
-3. **Android:** läuft automatisch (Actions → «Android app»). Die neue APK erscheint unter *Releases*.
+3. **Android:** von Hand starten: Actions → «Android app» → *Run workflow*. Die neue APK erscheint unter *Releases*.
 4. **iPhone:** Actions → «iOS app» → *Run workflow*. Nach Apples Prüfung (meist 5–30 Minuten)
    erscheint der Build in TestFlight.
 

@@ -12,10 +12,9 @@
 # workflow run; it is not published as a release.
 name: Android app
 
+# Started by hand only (Actions → "Android app" → Run workflow), so no build
+# runs without an explicit decision.
 on:
-  push:
-    branches: [main]
-    paths-ignore: ["README.md", ".github/workflows/ios.yml"]
   workflow_dispatch:
 
 permissions:
