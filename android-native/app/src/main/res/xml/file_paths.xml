@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <files-path name="photos" path="data/photos/" />
+    <files-path name="demo_photos" path="demo/photos/" />
+    <cache-path name="share" path="share/" />
+</paths>

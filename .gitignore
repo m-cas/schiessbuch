@@ -12,3 +12,9 @@ ios-native/Generated/
 ios-native/build/
 ios-native/build.log
 ios-native/shots/
+android-native/.gradle/
+android-native/build/
+android-native/app/build/
+android-native/build.log
+android-native/shots/
+android-native/local.properties
