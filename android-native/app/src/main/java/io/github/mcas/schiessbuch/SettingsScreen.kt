@@ -215,6 +215,6 @@ private fun Action(icon: ImageVector, title: String, note: String?, enabled: Boo
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         leadingContent = { Icon(icon, null, tint = MaterialTheme.colorScheme.primary.copy(alpha = alpha)) },
         headlineContent = { Text(title, color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)) },
-        supportingContent = note?.let { { Text(it) } },
+        supportingContent = if (note != null) ({ Text(note) }) else null,
     )
 }

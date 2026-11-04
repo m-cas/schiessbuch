@@ -497,10 +497,11 @@ private fun ShotKeypad(series: Series, index: Int, d: Discipline, tx: Tx, onValu
                 val keys: List<Shot?> = values + listOf(null)
                 keys.chunked(6).forEach { row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        row.forEach { k ->
+                        row.forEach { key ->
                             val mod = Modifier.weight(1f).height(46.dp)
+                            val k: Shot = key ?: Shot.Value(-1)
                             when {
-                                k == null -> OutlinedButton(onClick = onBack, mod, contentPadding = PaddingValues(0.dp), shape = RoundedCornerShape(10.dp)) {
+                                key == null -> OutlinedButton(onClick = onBack, mod, contentPadding = PaddingValues(0.dp), shape = RoundedCornerShape(10.dp)) {
                                     Icon(Icons.AutoMirrored.Outlined.Backspace, tx.removeLast)
                                 }
                                 k == Shot.X -> Button(onClick = { onValue(k) }, mod, enabled = !full, contentPadding = PaddingValues(0.dp), shape = RoundedCornerShape(10.dp),
