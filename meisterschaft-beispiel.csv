@@ -1,8 +1,10 @@
 id;jahr;meisterschaft;titel;disziplin;serien;datum;schiessstand;notizen
 VM1;2027;Vereinsmeisterschaft SG Muttenz 2027;Runde 1 Gewehr;r300;s10+s10;30.04.2027;Muttenz;
 VM2;2027;;Runde 2 Gewehr;r300;p2s6r4;31.05.2027;Muttenz;
+VM3;2027;;Runde 3 Gewehr 2x10;r300;s2x10;30.06.2027;Muttenz;Zwei Gruppen zu 10 Einzelschüssen, ein Total
 OP;2027;;Obligatorisches;r300;op300;31.08.2027;;
 FS;2027;;Feldschiessen;r300;fs300;06.06.2027;;Eidg. Feldschiessen
 P25;2027;;Pistole Standard;p25;pstd;30.06.2027;Muttenz;
 LP;2027;;Luftpistole;ap10;ap20s;;;
+LG;2027;;Luftgewehr;ag10;ap10s+ap10s;;;
 FREI;2027;;Final Gewehr;r300;custom:20:A100:2;30.09.2027;Muttenz;20 Schuss A100 mit 2 Probe
