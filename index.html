@@ -301,6 +301,7 @@ td.r, th.r { text-align: right; }
 .langsw { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; flex: none; }
 .langsw button { border: 0; background: transparent; padding: 0 9px; min-height: 34px; font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--muted); }
 .langsw button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.baract .btn { white-space: nowrap; }
 .baract { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .bar-in { flex-wrap: wrap; row-gap: 8px; }
 @media (max-width: 460px) { .baract { flex-basis: 100%; } .baract .btn { flex: 1; } }
@@ -337,7 +338,7 @@ const STR = {
     "st.pstd": "Standard · 5/5/5", "st.pop": "OP · 5 single + 5/5/5", "st.pfs": "Feldschiessen · 3 single + 5/5/5",
     "seg.practice": "Practice · not counted", "seg.single": "Single shots", seriesOf: (n) => `Series of ${n}`,
     // bar & list
-    none: "None", all: "All", selected: (n) => `${n} selected`, cancel: "Cancel", email: "Email", export: "Export", newBtn: "+ New", back: "Back",
+    none: "None", all: "All", selected: (n) => `${n} selected`, cancel: "Cancel", email: "Email", export: "Export", newBtn: "New Session", back: "Back",
     loading: "Loading MySchiessbuch…", signInH: "Storage isn't available", signInP: "This browser doesn't allow saving data on this device. Turn off private browsing and open the app again.",
     localH: "Data on this phone", localP: "Sessions and photos are stored only on this device. Nothing is uploaded. Save a backup now and then, and before changing phones.",
     selectBtn: "Select", deleteN: (n) => `Delete${n ? " (" + n + ")" : ""}`,
@@ -355,7 +356,7 @@ const STR = {
     backupTooBig: (b) => `This backup is about ${b}, too large for most email services (about 20–25 MB). Use Save backup and keep the file in Dropbox or Files instead.`, storageWarn: "This browser may delete stored data if the app isn't installed. Add it to your home screen to keep your data safe.",
     loadErr: (c) => `Your sessions can't be loaded right now (${c}). Reload the page to try again.`, filterLabel: "Filter by discipline",
     slow: "Still connecting. What you see may be out of date.", emptyH: "No sessions yet",
-    emptyP: "Record your first range session: pick the discipline, tap in each shot, and photograph the paper target.", newSession: "+ New session",
+    emptyP: "Record your first range session: pick the discipline, tap in each shot, and photograph the paper target.", newSession: "New Session",
     category: "Category", "cat.training": "Training", "cat.championship": "Championship", "cat.other": "Other", catFilterLabel: "Filter by category",
     avg: "Avg series", trendYears: "Score by year", trendNorm: "Each series converted to 10 shots on A10 <span style=\"white-space:nowrap\">(0–100)</span>.", yearAvg: (a, n) => `Ø ${a} · ${n} ${n === 1 ? "session" : "sessions"}`, keySession: "Session average", keySeries: "Single series",
     tief: "Tiefschuss", tiefShort: "TS", tiefErr: (n) => `Tiefschuss in series ${n} must be a whole number from 0 to 100.`, normCaption: "Series scores converted to 10 shots on A10 (0–100).",
@@ -408,7 +409,7 @@ const STR = {
     copyTo: "To", copySubject: "Subject", reportFile: "shooting-results", csvFile: "myschiessbuch",
     csvHead: ["date", "discipline", "category", "description", "range", "weapon", "conditions", "series", "format", "score", "max", "score_10_shots_A10", "inner_tens", "tiefschuss", "shots", "notes"],
     language: "Language", settings: "Settings", openSettings: "Open settings", logoH: "Logo",
-    clubLogo: "Show SG Muttenz logo", clubLogoNote: "Replaces the app icon at the top left.", backupH: "Backup and data",
+    clubLogo: "Show SG Muttenz logo", clubLogoNote: "Replaces the app icon at the top left.", backupH: "Backup and data", exportH: "Export", exportCsv: "Export as CSV", exportNote: "One row per series, for Excel or Numbers.",
     chromeH: "Installing on Android? Use Chrome",
     chromeP: "Other browsers can show a warning that the app was \"built for an older version of Android\". Open this page in Chrome and tap ⋮ → Install app.",
     openChrome: "Open in Chrome", copyUrl: "Copy address", urlCopied: "Address copied. Paste it into Chrome.", hide: "Hide",
@@ -423,7 +424,7 @@ const STR = {
     "st.custom": "Eigene · Schüsse und Scheibe wählen", "st.customP": "Eigene · Anzahl Schüsse wählen",
     "st.pstd": "Standard · 5/5/5", "st.pop": "OP · 5 Einzel + 5/5/5", "st.pfs": "Feldschiessen · 3 Einzel + 5/5/5",
     "seg.practice": "Probe · zählt nicht", "seg.single": "Einzelschüsse", seriesOf: (n) => `Serie zu ${n}`,
-    none: "Keine", all: "Alle", selected: (n) => `${n} ausgewählt`, cancel: "Abbrechen", email: "E-Mail", export: "Export", newBtn: "+ Neu", back: "Zurück",
+    none: "Keine", all: "Alle", selected: (n) => `${n} ausgewählt`, cancel: "Abbrechen", email: "E-Mail", export: "Export", newBtn: "Neue Übung", back: "Zurück",
     loading: "MySchiessbuch wird geladen…", signInH: "Speicher nicht verfügbar", signInP: "Dieser Browser erlaubt keine Datenspeicherung auf dem Gerät. Schalte das private Surfen aus und öffne die App erneut.",
     localH: "Daten auf diesem Telefon", localP: "Übungen und Fotos werden nur auf diesem Gerät gespeichert. Nichts wird hochgeladen. Speichere ab und zu ein Backup, und vor einem Telefonwechsel.",
     selectBtn: "Auswählen", deleteN: (n) => `Löschen${n ? " (" + n + ")" : ""}`,
@@ -441,7 +442,7 @@ const STR = {
     backupTooBig: (b) => `Dieses Backup ist ca. ${b} gross, zu gross für die meisten E-Mail-Dienste (ca. 20–25 MB). Speichere es mit «Backup speichern» und lege die Datei in Dropbox oder «Dateien» ab.`, storageWarn: "Dieser Browser löscht gespeicherte Daten evtl., wenn die App nicht installiert ist. Füge sie zum Home-Bildschirm hinzu, damit deine Daten sicher sind.",
     loadErr: (c) => `Deine Übungen können gerade nicht geladen werden (${c}). Lade die Seite neu und versuche es nochmals.`, filterLabel: "Nach Disziplin filtern",
     slow: "Verbindung wird noch aufgebaut. Die Anzeige ist evtl. nicht aktuell.", emptyH: "Noch keine Übungen",
-    emptyP: "Erfasse deine erste Übung: Disziplin wählen, jeden Schuss eintippen und die Scheibe fotografieren.", newSession: "+ Neue Übung",
+    emptyP: "Erfasse deine erste Übung: Disziplin wählen, jeden Schuss eintippen und die Scheibe fotografieren.", newSession: "Neue Übung",
     category: "Kategorie", "cat.training": "Training", "cat.championship": "Meisterschaft", "cat.other": "Andere", catFilterLabel: "Nach Kategorie filtern",
     avg: "Ø Serie", trendYears: "Resultat nach Jahr", trendNorm: "Jede Serie umgerechnet auf 10 Schüsse A10 <span style=\"white-space:nowrap\">(0–100)</span>.", yearAvg: (a, n) => `Ø ${a} · ${n} ${n === 1 ? "Übung" : "Übungen"}`, keySession: "Ø der Übung", keySeries: "Einzelne Serien",
     tief: "Tiefschuss", tiefShort: "TS", tiefErr: (n) => `Der Tiefschuss in Serie ${n} muss eine ganze Zahl von 0 bis 100 sein.`, normCaption: "Serienresultate umgerechnet auf 10 Schüsse A10 (0–100).",
@@ -489,7 +490,7 @@ const STR = {
     copyTo: "An", copySubject: "Betreff", reportFile: "schiessresultate", csvFile: "myschiessbuch",
     csvHead: ["datum", "disziplin", "kategorie", "beschreibung", "schiessstand", "waffe", "bedingungen", "serie", "format", "resultat", "maximum", "resultat_10_schuss_a10", "innenzehner", "tiefschuss", "schuesse", "notizen"],
     language: "Sprache", settings: "Einstellungen", openSettings: "Einstellungen öffnen", logoH: "Logo",
-    clubLogo: "SG-Muttenz-Logo anzeigen", clubLogoNote: "Ersetzt das App-Symbol oben links.", backupH: "Backup und Daten",
+    clubLogo: "SG-Muttenz-Logo anzeigen", clubLogoNote: "Ersetzt das App-Symbol oben links.", backupH: "Backup und Daten", exportH: "Export", exportCsv: "Als CSV exportieren", exportNote: "Eine Zeile pro Serie, für Excel oder Numbers.",
     chromeH: "Auf Android installieren? Nimm Chrome",
     chromeP: "Andere Browser zeigen evtl. die Warnung, die App sei «für eine ältere Android-Version entwickelt». Öffne diese Seite in Chrome und tippe auf ⋮ → App installieren.",
     openChrome: "In Chrome öffnen", copyUrl: "Adresse kopieren", urlCopied: "Adresse kopiert. Füge sie in Chrome ein.", hide: "Ausblenden",
@@ -754,8 +755,7 @@ function render() {
       ? `<div class="selbar-in ask" role="alertdialog" aria-label="${t("del")}"><span class="msg">${t("confirmBulk", S.picked.size, np)}</span><button class="btn" data-act="bulkno">${t("keepIt")}</button><button class="btn danger solid" data-act="bulkyes">${t("del")}</button></div>`
       : `<div class="selbar-in"><span class="count">${t("selected", S.picked.size)}</span><button class="btn" data-act="selcancel">${t("cancel")}</button><button class="btn danger" data-act="bulkdel" ${S.picked.size ? "" : "disabled"}>${t("deleteN", 0)}</button><button class="btn primary" data-act="mailpicked" ${S.picked.size ? "" : "disabled"}>${t("email")}</button></div>`;
   } else if (S.view === "list") {
-    bar.innerHTML = S.sessions.length && S.downloads ? `<button class="btn ghost" data-act="csv">${t("export")}</button>` : "";
-    if (S.sessions.length) bar.innerHTML += `<button class="btn" data-act="select">${t("selectBtn")}</button>`;
+    bar.innerHTML = S.sessions.length ? `<button class="btn" data-act="select">${t("selectBtn")}</button>` : "";
     if (S.db && S.uid) bar.innerHTML += `<button class="btn primary" data-act="new">${t("newBtn")}</button>`;
     $("#app").innerHTML = chromeHint() + listView();
   } else if (S.view === "detail") {
@@ -829,6 +829,10 @@ function settingsView() {
         <span class="lbl"><strong>${t("clubLogo")}</strong><span class="note">${t("clubLogoNote")}</span></span>
         <span class="switch"><input id="club-logo" type="checkbox" role="switch"${S.clubLogo ? " checked" : ""}><span></span></span>
       </label>
+    </section>
+    <section><h2>${t("exportH")}</h2>
+      <div class="actions"><button class="btn" data-act="csv" ${S.sessions.length && S.downloads ? "" : "disabled"}>${t("exportCsv")}</button></div>
+      <p class="note" style="margin:8px 0 0">${t("exportNote")}</p>
     </section>
     <section><h2>${t("backupH")}</h2>${localPanel()}</section>
   </div>`;
