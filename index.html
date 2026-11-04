@@ -78,6 +78,8 @@ button { cursor: pointer; }
 .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
 .chips::-webkit-scrollbar { display: none; }
 .chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.chips.disc { display: flex; gap: 5px; justify-content: space-between; overflow: visible; }
+.chips.disc .chip { flex: 1 1 auto; padding: 6px 4px; text-align: center; min-width: 0; }
 .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 2px solid var(--ink); border-bottom: 1px solid var(--line); }
@@ -330,7 +332,7 @@ const STR = {
     pl: (n, one, many) => (n === 1 ? one : many),
     // presets
     "p.r300": "Rifle 300m", "p.p25": "Pistol 25m", "p.p50": "Pistol 50m", "p.ap10": "Air Pistol 10m", "p.other": "Other",
-    "f.All": "All", "f.r300": "Rifle 300m", "f.p25": "Pistol 25m", "f.p50": "Pistol 50m", "f.ap10": "Air Pistol 10m", "f.other": "Other",
+    "f.All": "All", "f.r300": "G300", "f.p25": "P25", "f.p50": "P50", "f.ap10": "LP10", "f.other": "Other",
     "st.s10": "10 shots · A10", "st.p2s6r4": "12 shots · 2 practice, 6 single, 4 in series · A10", "st.p2s5r23": "12 shots · 2 practice, 5 single, series of 2 and 3 · A10",
     customN: (n, tg, p) => `Custom · ${p ? p + " practice + " : ""}${n} ${n === 1 ? "shot" : "shots"} · ${tg}`, target: "Target", practiceLbl: "Practice", fewerP: "Fewer practice shots", moreP: "More practice shots",
     "st.op300": "OP · 20 shots A5/B4", "st.fs300": "Feldschiessen rifle · 18 shots B4",
@@ -417,7 +419,7 @@ const STR = {
   de: {
     appName: "MySchiessbuch", locale: "de-CH",
     "p.r300": "Gewehr 300m", "p.p25": "Pistole 25m", "p.p50": "Pistole 50m", "p.ap10": "Luftpistole 10m", "p.other": "Andere",
-    "f.All": "Alle", "f.r300": "Gewehr 300m", "f.p25": "Pistole 25m", "f.p50": "Pistole 50m", "f.ap10": "Luftpistole 10m", "f.other": "Andere",
+    "f.All": "Alle", "f.r300": "G300", "f.p25": "P25", "f.p50": "P50", "f.ap10": "LP10", "f.other": "Andere",
     "st.s10": "10 Schüsse · A10", "st.p2s6r4": "12 Schüsse · 2 Probe, 6 Einzel, 4 Serie · A10", "st.p2s5r23": "12 Schüsse · 2 Probe, 5 Einzel, Serien zu 2 und 3 · A10",
     customN: (n, tg, p) => `Eigene · ${p ? p + " Probe + " : ""}${n} ${n === 1 ? "Schuss" : "Schüsse"} · ${tg}`, target: "Scheibe", practiceLbl: "Probe", fewerP: "Weniger Probeschüsse", moreP: "Mehr Probeschüsse",
     "st.op300": "OP · 20 Schüsse A5/B4", "st.fs300": "Feldschiessen Gewehr · 18 Schüsse B4",
@@ -782,7 +784,7 @@ function listView() {
   if (S.error === "nodb") return `<div class="empty"><h2>${t("signInH")}</h2><p>${t("signInP")}</p></div>`;
   if (S.error) return `<div class="warn">${esc(t("loadErr", S.error))}</div>`;
   const rows = S.sessions.filter((x) => (S.filter === "All" || pkey(x) === S.filter) && S.cats.has(catOf(x)));
-  const chips = `<div class="filters"><div class="chips" role="group" aria-label="${t("filterLabel")}">${FILTERS.map((f) => `<button class="chip" data-act="filter" data-v="${f}" aria-pressed="${S.filter === f}">${t("f." + f)}</button>`).join("")}</div>
+  const chips = `<div class="filters"><div class="chips disc" role="group" aria-label="${t("filterLabel")}">${FILTERS.map((f) => `<button class="chip" data-act="filter" data-v="${f}" aria-pressed="${S.filter === f}"${f !== "All" ? ` title="${esc(plabel(f))}" aria-label="${esc(plabel(f))}"` : ""}>${t("f." + f)}</button>`).join("")}</div>
     <div class="chips" role="group" aria-label="${t("catFilterLabel")}">${CATS.map((c) => `<button class="chip multi" data-act="catfilter" data-v="${c}" aria-pressed="${S.cats.has(c)}">${t("cat." + c)}</button>`).join("")}</div></div>`;
   const slow = S.slow ? `<p class="note">${t("slow")}</p>` : "";
   if (!S.sessions.length) return slow + `<div class="empty">
@@ -802,7 +804,7 @@ function listView() {
     ${sv.length ? `<p class="note" style="margin:0">${t("normCaption")}</p>` : ""}
     ${rows.length ? trendView(rows) : ""}
     <div class="list-h"><h2>${t("sessions")}</h2><span class="note">${rows.length}</span></div>
-    <div class="list">${rows.length ? yearGroups(rows) : `<p class="note">${esc(t("noneInFilter", [S.filter === "All" ? "" : t("f." + S.filter), ...CATS.filter((c) => S.cats.has(c)).map((c) => t("cat." + c))].filter(Boolean).join(" · ")))}</p>`}</div>`;
+    <div class="list">${rows.length ? yearGroups(rows) : `<p class="note">${esc(t("noneInFilter", [S.filter === "All" ? "" : plabel(S.filter), ...CATS.filter((c) => S.cats.has(c)).map((c) => t("cat." + c))].filter(Boolean).join(" · ")))}</p>`}</div>`;
 }
 
 function needsChromeHint() {
