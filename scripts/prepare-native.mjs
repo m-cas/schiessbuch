@@ -55,6 +55,10 @@ if (platform === "android") {
 }
 
 if (platform === "ios") {
+  // Minimum iOS version for the app and its plugins.
+  const IOS_MIN = "18.0";
+  patch("ios/App/App.xcodeproj/project.pbxproj", (s) => s.replace(/IPHONEOS_DEPLOYMENT_TARGET = [\d.]+;/g, `IPHONEOS_DEPLOYMENT_TARGET = ${IOS_MIN};`));
+  if (existsSync("ios/App/Podfile")) patch("ios/App/Podfile", (s) => s.replace(/platform :ios, '[\d.]+'/, `platform :ios, '${IOS_MIN}'`));
   patch("ios/App/App/Info.plist", (s) => {
     const keys = {
       NSCameraUsageDescription: "MySchiessbuch braucht die Kamera, um deine Scheiben zu fotografieren. / MySchiessbuch uses the camera to photograph your targets.",

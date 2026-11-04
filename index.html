@@ -102,7 +102,14 @@ button { cursor: pointer; }
 .trend-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 
 .list { display: grid; gap: 10px; }
-.list { gap: 8px; }
+.list { gap: 14px; }
+.ygroup { display: grid; gap: 8px; }
+.yhead { display: flex; align-items: baseline; gap: 10px; border: 0; border-bottom: 2px solid var(--ink); background: transparent; padding: 6px 2px; min-height: 44px; text-align: left; }
+.yname { font-family: var(--display); font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ycount { flex: 1; color: var(--muted); font-size: 14px; }
+.ychev { align-self: center; color: var(--muted); transition: transform .15s; }
+.ygroup.open .ychev { transform: rotate(180deg); }
+.ylist { display: grid; gap: 8px; }
 .sess { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
 .sess.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .srow { display: flex; align-items: stretch; }
@@ -249,7 +256,8 @@ td.r, th.r { text-align: right; }
 .card[aria-pressed] { grid-template-columns: 24px 64px 1fr auto; }
 .card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .tick { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--line); display: grid; place-items: center; color: var(--accent-ink); }
-.card[aria-pressed="true"] .tick { background: var(--accent); border-color: var(--accent); }
+.card[aria-pressed="true"] .tick, .srow-main[aria-pressed="true"] .tick { background: var(--accent); border-color: var(--accent); }
+.tick { flex: none; }
 .selbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--surface); border-top: 1px solid var(--line);
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
 .selbar-in { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 10px; }
@@ -543,7 +551,7 @@ const isPractice = (s, j) => segments(s).some((g) => g.k === "practice" && j >= 
 
 const S = { db: null, assets: null, downloads: null, uid: null, sessions: [], loaded: false, slow: false, error: null,
   view: "list", filter: "All", draft: null, active: 0, current: null, confirmDel: false, saving: false, uploads: 0,
-  selecting: false, picked: new Set(), expanded: new Set(), mail: null, building: false, cats: loadCats() };
+  selecting: false, picked: new Set(), expanded: new Set(), openYears: null, mail: null, building: false, cats: loadCats() };
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 /* ---------- local storage (IndexedDB) ---------- */
@@ -763,7 +771,7 @@ function listView() {
     </div>
     ${sv.length ? `<p class="note" style="margin:0">${t("normCaption")}</p>` : ""}
     ${rows.length ? trendView(rows) : ""}
-    <div class="list">${rows.length ? rows.map(cardView).join("") : `<p class="note">${esc(t("noneInFilter", [S.filter === "All" ? "" : t("f." + S.filter), ...CATS.filter((c) => S.cats.has(c)).map((c) => t("cat." + c))].filter(Boolean).join(" · ")))}</p>`}</div>${S.selecting ? "" : local}`;
+    <div class="list">${rows.length ? yearGroups(rows) : `<p class="note">${esc(t("noneInFilter", [S.filter === "All" ? "" : t("f." + S.filter), ...CATS.filter((c) => S.cats.has(c)).map((c) => t("cat." + c))].filter(Boolean).join(" · ")))}</p>`}</div>${S.selecting ? "" : local}`;
 }
 
 function needsChromeHint() {
@@ -890,6 +898,22 @@ function cardScores(x) {
   if (done.length === 1) { const s = done[0], ss = seriesStats(s); return `<span class="big num">${ss.total}</span><br><span class="of num">/ ${ss.max}${ss.x ? ` · ${ss.x}X` : ""}</span>${s.tief != null ? `<br><span class="ts">${t("tiefShort")} ${s.tief}</span>` : ""}`; }
   const shown = done.slice(0, 4).map((s) => { const ss = seriesStats(s); return `<span class="num">${ss.total}<small>/${ss.max}</small>${s.tief != null ? ` <span class="ts">${t("tiefShort")} ${s.tief}</span>` : ""}</span>`; });
   return `<span class="slist">${shown.join("")}${done.length > 4 ? `<span class="ts">+${done.length - 4}</span>` : ""}</span>`;
+}
+function yearGroups(rows) {
+  const by = new Map();
+  for (const x of rows) { const y = /^\d{4}/.test(x.date || "") ? x.date.slice(0, 4) : "—"; if (!by.has(y)) by.set(y, []); by.get(y).push(x); }
+  const years = [...by.keys()].sort().reverse();
+  if (!S.openYears) S.openYears = new Set(years.slice(0, 1));
+  return years.map((y) => {
+    const xs = by.get(y), open = S.openYears.has(y), np = xs.filter((x) => S.picked.has(x.id)).length;
+    return `<section class="ygroup${open ? " open" : ""}">
+      <button class="yhead" data-act="year" data-y="${esc(y)}" aria-expanded="${open}">
+        <span class="yname">${esc(y)}</span><span class="ycount">${t("sessionsN", xs.length)}${S.selecting && np ? ` · ${t("selected", np)}` : ""}</span>
+        <svg class="ychev" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      ${open ? `<div class="ylist">${xs.map(cardView).join("")}</div>` : ""}
+    </section>`;
+  }).join("");
 }
 function cardView(x) {
   const st = sessionStats(x), k = pkey(x), id = esc(x.id), open = S.expanded.has(x.id), on = S.picked.has(x.id);
@@ -1253,6 +1277,7 @@ document.addEventListener("click", (e) => {
     case "select": S.selecting = true; S.bulkAsk = false; S.picked.clear(); render(); break;
     case "selcancel": S.selecting = false; S.bulkAsk = false; S.picked.clear(); render(); break;
     case "selall": if (S.picked.size === S.sessions.length) S.picked.clear(); else S.sessions.forEach((x) => S.picked.add(x.id)); render(); break;
+    case "year": { const y = a.dataset.y; S.openYears.has(y) ? S.openYears.delete(y) : S.openYears.add(y); render(); break; }
     case "toggle": { const id = a.dataset.id; S.expanded.has(id) ? S.expanded.delete(id) : S.expanded.add(id); render(); break; }
     case "pick": { S.bulkAsk = false; const id = a.dataset.id; S.picked.has(id) ? S.picked.delete(id) : S.picked.add(id); render(); break; }
     case "mailpicked": S.current = null; startMail([...S.picked]); break;
