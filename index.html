@@ -103,10 +103,13 @@ button { cursor: pointer; }
 
 .list { display: grid; gap: 10px; }
 .list { gap: 14px; }
+.list-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 2px; padding-top: 18px; border-top: 6px solid var(--sunken); }
+.list-h h2 { font-family: var(--display); font-size: 26px; text-transform: uppercase; letter-spacing: .03em; margin: 0; }
 .ygroup { display: grid; gap: 8px; }
 .yhead { display: flex; align-items: baseline; gap: 10px; border: 0; border-bottom: 2px solid var(--ink); background: transparent; padding: 6px 2px; min-height: 44px; text-align: left; }
 .yname { font-family: var(--display); font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.ycount { flex: 1; color: var(--muted); font-size: 14px; }
+.ycount { color: var(--muted); font-size: 13px; font-weight: 600; background: var(--sunken); border-radius: 999px; padding: 2px 10px; align-self: center; }
+.ychev { margin-left: auto; }
 .ychev { align-self: center; color: var(--muted); transition: transform .15s; }
 .ygroup.open .ychev { transform: rotate(180deg); }
 .ylist { display: grid; gap: 8px; }
@@ -309,8 +312,8 @@ const STR = {
     appName: "MySchiessbuch", locale: "en-GB",
     pl: (n, one, many) => (n === 1 ? one : many),
     // presets
-    "p.r300": "Rifle 300 m", "p.p25": "Pistol 25 m", "p.p50": "Pistol 50 m", "p.other": "Other",
-    "f.All": "All", "f.r300": "Rifle 300 m", "f.p25": "Pistol 25 m", "f.p50": "Pistol 50 m", "f.other": "Other",
+    "p.r300": "Rifle 300m", "p.p25": "Pistol 25m", "p.p50": "Pistol 50m", "p.other": "Other",
+    "f.All": "All", "f.r300": "Rifle 300m", "f.p25": "Pistol 25m", "f.p50": "Pistol 50m", "f.other": "Other",
     "st.s10": "10 shots · A10", "st.p2s6r4": "12 shots · 2 practice, 6 single, 4 in series · A10", "st.p2s5r23": "12 shots · 2 practice, 5 single, series of 2 and 3 · A10",
     customN: (n, tg, p) => `Custom · ${p ? p + " practice + " : ""}${n} ${n === 1 ? "shot" : "shots"} · ${tg}`, target: "Target", practiceLbl: "Practice", fewerP: "Fewer practice shots", moreP: "More practice shots",
     "st.op300": "OP · 20 shots A5/B4", "st.fs300": "Feldschiessen rifle · 18 shots B4",
@@ -395,8 +398,8 @@ const STR = {
   },
   de: {
     appName: "MySchiessbuch", locale: "de-CH",
-    "p.r300": "Gewehr 300 m", "p.p25": "Pistole 25 m", "p.p50": "Pistole 50 m", "p.other": "Andere",
-    "f.All": "Alle", "f.r300": "Gewehr 300 m", "f.p25": "Pistole 25 m", "f.p50": "Pistole 50 m", "f.other": "Andere",
+    "p.r300": "Gewehr 300m", "p.p25": "Pistole 25m", "p.p50": "Pistole 50m", "p.other": "Andere",
+    "f.All": "Alle", "f.r300": "Gewehr 300m", "f.p25": "Pistole 25m", "f.p50": "Pistole 50m", "f.other": "Andere",
     "st.s10": "10 Schüsse · A10", "st.p2s6r4": "12 Schüsse · 2 Probe, 6 Einzel, 4 Serie · A10", "st.p2s5r23": "12 Schüsse · 2 Probe, 5 Einzel, Serien zu 2 und 3 · A10",
     customN: (n, tg, p) => `Eigene · ${p ? p + " Probe + " : ""}${n} ${n === 1 ? "Schuss" : "Schüsse"} · ${tg}`, target: "Scheibe", practiceLbl: "Probe", fewerP: "Weniger Probeschüsse", moreP: "Mehr Probeschüsse",
     "st.op300": "OP · 20 Schüsse A5/B4", "st.fs300": "Feldschiessen Gewehr · 18 Schüsse B4",
@@ -771,6 +774,7 @@ function listView() {
     </div>
     ${sv.length ? `<p class="note" style="margin:0">${t("normCaption")}</p>` : ""}
     ${rows.length ? trendView(rows) : ""}
+    <div class="list-h"><h2>${t("sessions")}</h2><span class="note">${rows.length}</span></div>
     <div class="list">${rows.length ? yearGroups(rows) : `<p class="note">${esc(t("noneInFilter", [S.filter === "All" ? "" : t("f." + S.filter), ...CATS.filter((c) => S.cats.has(c)).map((c) => t("cat." + c))].filter(Boolean).join(" · ")))}</p>`}</div>${S.selecting ? "" : local}`;
 }
 
