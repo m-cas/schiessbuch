@@ -293,6 +293,12 @@ struct SessionRow: View {
     let session: Session
     let tx: Tx
     var wide = false
+    private var results: String {
+        session.series.filter { $0.hasResult }.map { r -> String in
+            let st = r.stats
+            return tx.score(st.total) + "/" + String(st.max)
+        }.joined(separator: " · ")
+    }
     var body: some View {
         HStack(spacing: 12) {
             Text(tx.shortDate(session.day)).monospacedDigit().foregroundStyle(.secondary)
@@ -301,7 +307,7 @@ struct SessionRow: View {
             if wide {
                 Text(tx.disciplineShort(session.discipline)).foregroundStyle(.secondary)
                 Spacer(minLength: 8)
-                Text(session.series.filter(\.hasResult).map { "\(tx.score($0.stats.total))/\($0.stats.max)" }.joined(separator: " · "))
+                Text(results)
                     .fontWeight(.semibold).monospacedDigit().lineLimit(1)
             }
         }
@@ -312,6 +318,23 @@ struct SessionRow: View {
 struct SessionCard: View {
     let session: Session
     let tx: Tx
+
+    private var whereLine: String {
+        var parts = [tx.longDate(session.day), tx.disciplineShort(session.discipline)]
+        if let loc = session.location, !loc.isEmpty { parts.append(loc) }
+        return parts.joined(separator: " · ")
+    }
+    private var countLine: String {
+        var parts = [tx.seriesN(session.series.count), tx.shotsN(session.countedShots)]
+        if !session.photos.isEmpty { parts.append(tx.photosN(session.photos.count)) }
+        return parts.joined(separator: " · ")
+    }
+    private func scoreText(_ r: Series, big: Bool) -> Text {
+        let st = r.stats
+        let value = Text(tx.score(st.total)).font(big ? .title2.weight(.bold) : .callout.weight(.semibold)).monospacedDigit()
+        let max = Text(" / " + String(st.max)).font(.caption).foregroundStyle(.secondary)
+        return value + max
+    }
     var body: some View {
         let done = session.series.filter(\.hasResult)
         HStack(alignment: .center, spacing: 12) {
@@ -324,18 +347,13 @@ struct SessionCard: View {
             }
             .frame(width: 60, height: 60)
             VStack(alignment: .leading, spacing: 3) {
-                Text(tx.longDate(session.day) + " · " + tx.disciplineShort(session.discipline) + ((session.location ?? "").isEmpty ? "" : " · " + (session.location ?? "")))
-                    .font(.footnote).foregroundStyle(.secondary).lineLimit(2)
-                Text([tx.seriesN(session.series.count), tx.shotsN(session.countedShots)].joined(separator: " · ") + (session.photos.isEmpty ? "" : " · " + tx.photosN(session.photos.count)))
-                    .font(.footnote).foregroundStyle(.secondary)
+                Text(whereLine).font(.footnote).foregroundStyle(.secondary).lineLimit(2)
+                Text(countLine).font(.footnote).foregroundStyle(.secondary)
             }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 2) {
                 if done.isEmpty { Text("–").foregroundStyle(.secondary) }
-                ForEach(Array(done.prefix(4).enumerated()), id: \.offset) { _, r in
-                    Text(tx.score(r.stats.total)).font(done.count == 1 ? .title2.weight(.bold) : .callout.weight(.semibold)).monospacedDigit()
-                    + Text(" / \(r.stats.max)").font(.caption).foregroundStyle(.secondary)
-                }
+                ForEach(Array(done.prefix(4).enumerated()), id: \.offset) { _, r in scoreText(r, big: done.count == 1) }
             }
         }
         .padding(.vertical, 4)
