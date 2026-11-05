@@ -215,6 +215,8 @@ struct Tx {
     var chFromFile: String { p("Datei wählen", "Choose file") }
     var chActivate: String { p("Aktivieren", "Activate") }
     var chSettings: String { p("Meisterschaft einrichten", "Championship settings") }
+    func chSoon(_ d: Int) -> String { d == 0 ? p("Heute", "Today") : de ? "In \(d) \(d == 1 ? "Tag" : "Tagen")" : "In \(d) \(d == 1 ? "day" : "days")" }
+    var chPast: String { p("Datum ist vorbei", "Date has passed") }
     var chEmptyCog: String { p("Lade die Datei des Vereins unter «Meisterschaft einrichten» (Zahnrad oben links).", "Load the club's file under Championship settings (cog at the top left).") }
     var chOnlyOne: String { p("Es wird nur eine Meisterschaft gespeichert. Eine Datei eines anderen Jahres ersetzt sie; erfasste Übungen bleiben.", "Only one championship is kept. A file for another year replaces it; recorded sessions stay.") }
     func chLoadedInfo(_ y: Int, _ n: Int) -> String { p("Geladen: Meisterschaft \(y) mit \(n) Einträgen.", "Loaded: championship \(y) with \(n) items.") }

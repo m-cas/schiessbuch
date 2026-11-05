@@ -202,7 +202,7 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
         LazyColumn(
             Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = pad.calculateTopPadding() + 4.dp, bottom = pad.calculateBottomPadding() + 24.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             item {
                 // Two clearly separate filters: one discipline (joined bar), any number of categories (chips).
@@ -258,7 +258,7 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
             }
             item {
                 Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         StatsRow(rows, tx)
                         if (rows.isNotEmpty()) {
                             // the chart can be folded away; the choice is remembered
@@ -269,11 +269,13 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                                 Text(tx.trendYears.uppercase(tx.locale), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
                                 Icon(Icons.Filled.ExpandMore, null, Modifier.size(20.dp).rotate(if (chartOpen) 180f else 0f), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            if (chartOpen) TrendChart(rows, tx, showTitle = false)
+                            if (chartOpen) {
+                                TrendChart(rows, tx, showTitle = false)
+                                Text(tx.normCaption, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
                     }
                 }
-                Text(tx.normCaption, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, top = 6.dp, bottom = 10.dp))
             }
             if (rows.isEmpty()) item { Text(tx.noMatch, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(8.dp)) }
             years.forEach { (year, list) ->

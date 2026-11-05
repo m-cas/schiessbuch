@@ -48,6 +48,7 @@ struct MainView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .listSectionSpacing(.compact)
             .environment(\.editMode, $editMode)
             .navigationTitle(tx.appName)
             // own header like the web version (logo + title, three buttons) instead of the system bar
@@ -102,9 +103,12 @@ struct MainView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(tx.chartToggle)
-                    if chartOpen { TrendChart(sessions: rows, tx: tx, showTitle: false).padding(.bottom, 6) }
+                    if chartOpen {
+                        TrendChart(sessions: rows, tx: tx, showTitle: false)
+                        Text(tx.normCaption).font(.caption).foregroundStyle(.secondary).padding(.bottom, 4)
+                    }
                 }
-            } footer: { Text(tx.normCaption) }
+            }
 
             if rows.isEmpty {
                 Text(tx.noMatch).foregroundStyle(.secondary)

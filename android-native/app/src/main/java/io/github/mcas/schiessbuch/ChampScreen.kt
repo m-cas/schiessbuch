@@ -98,8 +98,8 @@ fun ChampScreen(store: Store, tx: Tx, nav: Nav) {
     ) { pad ->
         LazyColumn(
             Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = pad.calculateTopPadding() + 4.dp, bottom = pad.calculateBottomPadding() + 24.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = pad.calculateTopPadding(), bottom = pad.calculateBottomPadding() + 24.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             val cur = st.current
             if (cur == null) item {
@@ -113,7 +113,7 @@ fun ChampScreen(store: Store, tx: Tx, nav: Nav) {
             } else {
                 val done = cur.items.count { cs.sessionFor(it) != null }
                 item {
-                    Column(Modifier.padding(bottom = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(Modifier.padding(bottom = 2.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Text("${tx.chTitle} ${cur.year}".uppercase(tx.locale), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         FitText(cur.name, MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), min = 13)
                         LinearProgressIndicator(progress = { if (cur.items.isEmpty()) 0f else done.toFloat() / cur.items.size }, modifier = Modifier.fillMaxWidth())
@@ -250,6 +250,10 @@ private fun ChampRow(item: ChampItem, session: Session?, tx: Tx, onActivate: () 
     val active = session != null
     val what = tx.disciplineName(item.discipline) + " · " + item.series.joinToString(" | ") { it.groupText(tx) }
     val meta = listOfNotNull(item.day?.let(tx::longDate), item.location).filter { it.isNotEmpty() }.joinToString(" · ")
+    // date of the item: past → + disabled and red; within 3 weeks → yellow warning triangle
+    val days = item.day?.let { java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), it) }
+    val past = !active && days != null && days < 0
+    val soon = !active && days != null && days in 0..21
     Card(
         Modifier.fillMaxWidth(),
         colors = if (active) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)) else CardDefaults.cardColors(),
@@ -264,7 +268,10 @@ private fun ChampRow(item: ChampItem, session: Session?, tx: Tx, onActivate: () 
                 val fade = Modifier.alpha(if (active) 0.6f else 1f)
                 FitText(item.title, MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold), min = 11, modifier = fade)
                 Text(what, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = fade)
-                if (meta.isNotEmpty()) Text(meta, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = fade)
+                if (meta.isNotEmpty()) Row(fade, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (soon) Icon(Icons.Filled.Warning, tx.chSoon(days!!.toInt()), tint = androidx.compose.ui.graphics.Color(0xFFE0A800), modifier = Modifier.size(14.dp))
+                    Text(meta, style = MaterialTheme.typography.bodySmall, color = if (past) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 if (!item.notes.isNullOrEmpty()) Text(item.notes, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = fade)
                 if (session != null) {
                     val done = session.series.filter { it.hasResult }
@@ -276,8 +283,13 @@ private fun ChampRow(item: ChampItem, session: Session?, tx: Tx, onActivate: () 
             }
             if (active) FilledTonalIconButton(onClick = onReset, modifier = Modifier.size(40.dp)) {
                 Icon(Icons.Filled.Close, tx.chReset, tint = MaterialTheme.colorScheme.error)
-            } else FilledIconButton(onClick = onActivate, modifier = Modifier.size(40.dp)) {
-                Icon(Icons.Filled.Add, tx.chActivate)
+            } else FilledIconButton(
+                onClick = onActivate, enabled = !past, modifier = Modifier.size(40.dp),
+                colors = if (past) IconButtonDefaults.filledIconButtonColors(
+                    disabledContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.5f), disabledContentColor = androidx.compose.ui.graphics.Color.White,
+                ) else IconButtonDefaults.filledIconButtonColors(),
+            ) {
+                Icon(Icons.Filled.Add, if (past) tx.chPast else tx.chActivate)
             }
         }
     }

@@ -185,6 +185,8 @@ class Tx(lang: String) {
     val chFromFile get() = p("Datei wählen", "Choose file")
     val chActivate get() = p("Aktivieren", "Activate")
     val chSettings get() = p("Meisterschaft einrichten", "Championship settings")
+    fun chSoon(d: Int) = if (d == 0) p("Heute", "Today") else if (de) "In $d ${if (d == 1) "Tag" else "Tagen"}" else "In $d ${if (d == 1) "day" else "days"}"
+    val chPast get() = p("Datum ist vorbei", "Date has passed")
     val chEmptyCog get() = p("Lade die Datei des Vereins unter «Meisterschaft einrichten» (Zahnrad oben links).", "Load the club's file under Championship settings (cog at the top left).")
     val chOnlyOne get() = p("Es wird nur eine Meisterschaft gespeichert. Eine Datei eines anderen Jahres ersetzt sie; erfasste Übungen bleiben.", "Only one championship is kept. A file for another year replaces it; recorded sessions stay.")
     fun chLoadedInfo(y: Int, n: Int) = p("Geladen: Meisterschaft $y mit $n Einträgen.", "Loaded: championship $y with $n items.")

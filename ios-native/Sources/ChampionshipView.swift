@@ -21,13 +21,12 @@ struct ChampionshipView: View {
                 if let cur = store.champ.current {
                     let done = cur.items.filter { store.champSession($0) != nil }.count
                     Section {
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 5) {
                             Text("\(tx.chTitle) \(String(cur.year))").font(.caption).foregroundStyle(.secondary).textCase(.uppercase)
                             Text(cur.name).font(.title3.weight(.bold)).lineLimit(1).minimumScaleFactor(0.6)
                             ProgressView(value: Double(done), total: Double(max(cur.items.count, 1)))
                             Text(tx.chProgress(done, cur.items.count)).font(.footnote).foregroundStyle(.secondary).monospacedDigit()
                         }
-                        .padding(.vertical, 4)
                     }
                     Section {
                         ForEach(cur.items) { item in row(item) }
@@ -44,6 +43,8 @@ struct ChampionshipView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .listSectionSpacing(.compact)
+            .contentMargins(.top, 6, for: .scrollContent)
             .navigationTitle(tx.chTitle)
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: String.self) { id in SessionDetailView(id: id) }
@@ -70,7 +71,14 @@ struct ChampionshipView: View {
         let s = store.champSession(item)
         let active = s != nil
         let what = tx.disciplineName(item.discipline) + " · " + item.series.map { $0.groupText(tx) }.joined(separator: " | ")
-        let meta = [item.day.map { tx.longDate($0) }, item.location].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+        let place = item.location ?? ""
+        // date of the item: past → + disabled and red; within 3 weeks → yellow warning triangle
+        let days: Int? = item.day.flatMap { d in
+            let c = Calendar.current
+            return c.dateComponents([.day], from: c.startOfDay(for: Date()), to: c.startOfDay(for: d)).day
+        }
+        let past = !active && (days ?? 0) < 0 && days != nil
+        let soon = !active && days != nil && days! >= 0 && days! <= 21
         return HStack(alignment: .bottom, spacing: 10) {
             Image(systemName: active ? "checkmark.circle.fill" : "circle")
                 .font(.title3).foregroundStyle(active ? Color.accentColor : Color.secondary)
@@ -80,7 +88,14 @@ struct ChampionshipView: View {
                 Group {
                     Text(item.title).fontWeight(.semibold).lineLimit(1).minimumScaleFactor(0.7)
                     Text(what).font(.caption).foregroundStyle(.secondary)
-                    if !meta.isEmpty { Text(meta).font(.caption).foregroundStyle(.secondary) }
+                    if item.day != nil || !place.isEmpty {
+                        HStack(spacing: 4) {
+                            if soon { Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow).accessibilityLabel(tx.chSoon(days ?? 0)) }
+                            Text([item.day.map { tx.longDate($0) }, place].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
+                                .foregroundStyle(past ? Color.red : Color.secondary)
+                        }
+                        .font(.caption)
+                    }
                     if let n = item.notes, !n.isEmpty { Text(n).font(.caption).foregroundStyle(.secondary) }
                 }
                 .opacity(active ? 0.55 : 1)
@@ -99,10 +114,11 @@ struct ChampionshipView: View {
                     .font(.system(size: active ? 15 : 18, weight: .bold))
                     .frame(width: 36, height: 36)
                     .foregroundStyle(active ? Color.red : Color.white)
-                    .background(Circle().fill(active ? Color(.secondarySystemFill) : Color.accentColor))
+                    .background(Circle().fill(active ? Color(.secondarySystemFill) : past ? Color.red.opacity(0.55) : Color.accentColor))
             }
             .buttonStyle(.borderless)
-            .accessibilityLabel(active ? tx.chReset : tx.chActivate)
+            .disabled(past)
+            .accessibilityLabel(active ? tx.chReset : past ? tx.chPast : tx.chActivate)
         }
         .padding(.vertical, 2)
     }
