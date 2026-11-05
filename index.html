@@ -1512,7 +1512,7 @@ function champItemView(item) {
   const tool = active
     ? `<button class="ch-btn x" data-act="chreset" data-id="${id}" aria-label="${t("chReset")}" title="${t("chReset")}">✕</button>`
     : `<button class="ch-btn plus" data-act="chact" data-id="${id}" aria-label="${t("chActivate")}" title="${t("chActivate")}">+</button>`;
-  const ask = active && S.champReset === item.id ? `<div class="confirm" role="alertdialog"><span>${t("chResetAsk")}</span><div class="actions"><button class="btn" data-act="chkeep" data-id="${id}">${t("chKeep")}</button><button class="btn danger solid" data-act="chdel" data-id="${id}">${t("chDelete")}</button><button class="btn ghost" data-act="chresetno">${t("cancel")}</button></div></div>` : "";
+  const ask = active && S.champReset === item.id ? `<div class="confirm" role="alertdialog"><span>${t("chResetAsk")}</span><div class="actions"><button class="btn" data-act="chkeep" data-id="${id}">${t("chKeep")}</button><button class="btn danger solid" data-act="chdel" data-id="${id}">${t("chDelete")}</button><button class="btn" data-act="chresetno">${t("cancel")}</button></div></div>` : "";
   return `<li class="ch-item${active ? " done" : ""}">
     <div class="ch-main">
       <span class="ch-check" aria-hidden="true">${active ? "✓" : ""}</span>

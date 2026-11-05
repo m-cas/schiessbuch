@@ -56,7 +56,8 @@ struct ChampionshipView: View {
             }
             .sheet(item: $editing) { s in SessionEditor(original: s, isNew: false) }
             .sheet(isPresented: $showSettings) { ChampSettingsView() }
-            .confirmationDialog(tx.chResetAsk, isPresented: Binding(get: { resetItem != nil }, set: { if !$0 { resetItem = nil } }), titleVisibility: .visible) {
+            // an alert always shows all three choices (a confirmation dialog hides Cancel when shown as a popover)
+            .alert(tx.chResetAsk, isPresented: Binding(get: { resetItem != nil }, set: { if !$0 { resetItem = nil } })) {
                 Button(tx.chKeep) { if let i = resetItem { store.resetChamp(i.id, deleteSession: false) }; resetItem = nil }
                 Button(tx.chDelete, role: .destructive) { if let i = resetItem { store.resetChamp(i.id, deleteSession: true) }; resetItem = nil }
                 Button(tx.cancel, role: .cancel) { resetItem = nil }
@@ -172,7 +173,7 @@ struct ChampSettingsView: View {
                 defer { if access { u.stopAccessingSecurityScopedResource() } }
                 if let d = try? Data(contentsOf: u) { loaded(d) } else { message = tx.chBadFile }
             }
-            .confirmationDialog(pendingQuestion, isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } }), titleVisibility: .visible) {
+            .alert(pendingQuestion, isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } })) {
                 Button(tx.chLoad) { if let p = pending { apply(p) } }
                 Button(tx.cancel, role: .cancel) { pending = nil }
             }
