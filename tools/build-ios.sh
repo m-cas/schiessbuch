@@ -3,8 +3,8 @@
 # Start in Terminal with:  bash ~/Documents/Development/Schiessbuch/build-ios.sh
 # A build that was already uploaded is not built again; to build it anyway:  bash build-ios.sh --force
 set -e
-VERSION="2.0.18"   # shown in TestFlight
-BUILD="18"         # must be higher than the last TestFlight build
+VERSION="2.0.19"   # shown in TestFlight
+BUILD="19"         # must be higher than the last TestFlight build
 HERE="$(cd "$(dirname "$0")" && pwd)"
 FORCE=0; [ "$1" = "--force" ] && FORCE=1
 
