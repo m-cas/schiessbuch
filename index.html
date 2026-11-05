@@ -237,7 +237,7 @@ button { cursor: pointer; }
 .shot { font-variant-numeric: tabular-nums; }
 body.typing .keypad { display: none; }
 .series .lock { margin: 0; font-size: 13px; color: var(--muted); }
-.champ { display: grid; gap: 14px; }
+.champ { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); min-width: 0; }
 .help { display: grid; gap: 10px; }
 .help-sec { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 12px 14px; }
 .help-sec summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 16px; }
@@ -262,11 +262,14 @@ a.btn { text-decoration: none; color: inherit; }
 .ch-btn.plus { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .ch-btn.x { color: var(--danger); font-size: 17px; }
 .ch-top { display: flex; align-items: center; gap: 10px; }
-.ch-top .ch-head { flex: 1; }
+.ch-top .ch-head { flex: 1; min-width: 0; }
 .ch-top h2 { margin: 0; }
 .ch-cog { flex: none; width: 42px; height: 42px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; }
 .ch-settings-h { margin: 0; font-size: 20px; }
 .ch-txt { display: grid; gap: 2px; min-width: 0; }
+.ch-prog { margin: 4px 0 0; }
+.ch-fit { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ch-head > div { flex: 1; min-width: 0; }
 .ch-check { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font-size: 14px; font-weight: 700; }
 .ch-item.done { background: transparent; }
 .ch-item.done .ch-txt strong, .ch-item.done .ch-txt > .note { opacity: .55; }
@@ -908,7 +911,7 @@ function render() {
     $("#app").innerHTML = champLoader();
   } else if (S.view === "champ") {
     bar.innerHTML = `<button class="btn" data-act="champback">${t("back")}</button>`;
-    $("#app").innerHTML = champView();
+    $("#app").innerHTML = champView(); fitChampTitles();
   } else if (S.view === "settings") {
     bar.innerHTML = `<button class="btn" data-act="closesettings">${t("exitSettings")}</button>`;
     $("#app").innerHTML = settingsView();
@@ -1519,7 +1522,7 @@ function champItemView(item) {
   return `<li class="ch-item${active ? " done" : ""}">
     <div class="ch-main">
       <span class="ch-check" aria-hidden="true">${active ? "✓" : ""}</span>
-      <div class="ch-txt"><strong>${esc(item.title)}</strong><span class="note">${esc(what)}</span>${meta ? `<span class="note">${esc(meta)}</span>` : ""}${item.notes ? `<span class="note">${esc(item.notes)}</span>` : ""}
+      <div class="ch-txt"><strong class="ch-fit">${esc(item.title)}</strong><span class="note">${esc(what)}</span>${meta ? `<span class="note">${esc(meta)}</span>` : ""}${item.notes ? `<span class="note">${esc(item.notes)}</span>` : ""}
         ${x ? `<button class="ch-res" data-act="chopen" data-id="${esc(x.id)}"><span class="num">${esc(champResult(x))}</span> · ${esc(fmtDateShort(x.date))} ›</button>` : ""}</div>
       ${tool}
     </div>${ask}</li>`;
@@ -1538,14 +1541,25 @@ function champLoader() {
       ${cur ? `<p class="note">${t("chLoadedInfo", cur.year, cur.items.length)}</p>` : ""}
       <p class="note">${t("chOnlyOne")}</p></section></div>`;
 }
+// championship titles stay on one line: the font shrinks step by step (down to 11 px) until the title fits
+function fitChampTitles() {
+  for (const el of document.querySelectorAll(".ch-fit")) {
+    el.style.fontSize = "";
+    const r = document.createRange(); r.selectNodeContents(el);
+    const full = () => r.getBoundingClientRect().width;   // width of the whole text, also when it is cut off
+    let px = parseFloat(getComputedStyle(el).fontSize);
+    while (full() > el.clientWidth + 0.5 && px > 11) { px -= 0.5; el.style.fontSize = px + "px"; }
+  }
+}
+window.addEventListener("resize", () => { if (S.view === "champ") fitChampTitles(); });
 function champView() {
   const cur = S.champ.current;
   const cog = `<button class="ch-cog" data-act="champset" aria-label="${t("chSettings")}" title="${t("chSettings")}"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.3 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L4.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1L9 21h4l.3-2.9a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg></button>`;
   if (!cur) return `<div class="champ"><div class="ch-top">${cog}<h2>${t("chTitle")}</h2></div>
     <div class="empty"><h2>${t("chEmptyH")}</h2><p>${t("chEmptyCog")}</p><button class="btn primary" data-act="champset">${t("chSettings")}</button></div></div>`;
   const done = cur.items.filter((x) => champSession(x)).length;
-  return `<div class="champ"><div class="ch-top">${cog}<div class="ch-head"><div><span class="eyebrow">${t("chTitle")} ${cur.year}</span><h2>${esc(cur.name)}</h2></div><span class="note num">${t("chProgress", done, cur.items.length)}</span></div></div>
-    <div class="ch-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${cur.items.length}" aria-valuenow="${done}"><span style="width:${cur.items.length ? (done / cur.items.length) * 100 : 0}%"></span></div>
+  return `<div class="champ"><div class="ch-top">${cog}<div class="ch-head"><div><span class="eyebrow">${t("chTitle")} ${cur.year}</span><h2 class="ch-fit">${esc(cur.name)}</h2></div></div></div>
+    <div class="ch-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${cur.items.length}" aria-valuenow="${done}"><span style="width:${cur.items.length ? (done / cur.items.length) * 100 : 0}%"></span></div><p class="note num ch-prog">${t("chProgress", done, cur.items.length)}</p>
     <ul class="ch-list">${cur.items.map(champItemView).join("")}</ul></div>`;
 }
 

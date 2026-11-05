@@ -69,6 +69,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -114,7 +115,7 @@ fun ChampScreen(store: Store, tx: Tx, nav: Nav) {
                 item {
                     Column(Modifier.padding(bottom = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("${tx.chTitle} ${cur.year}".uppercase(tx.locale), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(cur.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        FitText(cur.name, MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), min = 13)
                         LinearProgressIndicator(progress = { if (cur.items.isEmpty()) 0f else done.toFloat() / cur.items.size }, modifier = Modifier.fillMaxWidth())
                         Text(tx.chProgress(done, cur.items.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -261,7 +262,7 @@ private fun ChampRow(item: ChampItem, session: Session?, tx: Tx, onActivate: () 
             )
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 val fade = Modifier.alpha(if (active) 0.6f else 1f)
-                Text(item.title, fontWeight = FontWeight.SemiBold, modifier = fade)
+                FitText(item.title, MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold), min = 11, modifier = fade)
                 Text(what, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = fade)
                 if (meta.isNotEmpty()) Text(meta, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = fade)
                 if (!item.notes.isNullOrEmpty()) Text(item.notes, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = fade)
@@ -280,4 +281,17 @@ private fun ChampRow(item: ChampItem, session: Session?, tx: Tx, onActivate: () 
             }
         }
     }
+}
+
+/** One-line text that shrinks (down to [min] sp) instead of wrapping. */
+@Composable
+private fun FitText(text: String, style: androidx.compose.ui.text.TextStyle, min: Int, modifier: Modifier = Modifier) {
+    androidx.compose.foundation.text.BasicText(
+        text, modifier,
+        style = style.copy(color = if (style.color == androidx.compose.ui.graphics.Color.Unspecified) MaterialTheme.colorScheme.onSurface else style.color),
+        maxLines = 1,
+        softWrap = false,
+        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+        autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = min.sp, maxFontSize = style.fontSize, stepSize = 0.5.sp),
+    )
 }

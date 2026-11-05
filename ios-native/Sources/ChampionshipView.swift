@@ -23,7 +23,7 @@ struct ChampionshipView: View {
                     Section {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("\(tx.chTitle) \(String(cur.year))").font(.caption).foregroundStyle(.secondary).textCase(.uppercase)
-                            Text(cur.name).font(.title3.weight(.bold))
+                            Text(cur.name).font(.title3.weight(.bold)).lineLimit(1).minimumScaleFactor(0.6)
                             ProgressView(value: Double(done), total: Double(max(cur.items.count, 1)))
                             Text(tx.chProgress(done, cur.items.count)).font(.footnote).foregroundStyle(.secondary).monospacedDigit()
                         }
@@ -78,7 +78,7 @@ struct ChampionshipView: View {
             VStack(alignment: .leading, spacing: 3) {
                 // only the description fades on a completed item; result and button stay fully visible
                 Group {
-                    Text(item.title).fontWeight(.semibold)
+                    Text(item.title).fontWeight(.semibold).lineLimit(1).minimumScaleFactor(0.7)
                     Text(what).font(.caption).foregroundStyle(.secondary)
                     if !meta.isEmpty { Text(meta).font(.caption).foregroundStyle(.secondary) }
                     if let n = item.notes, !n.isEmpty { Text(n).font(.caption).foregroundStyle(.secondary) }
