@@ -233,23 +233,16 @@ class ChampStore(private val file: File, private val store: Store) {
 
     fun sessionFor(item: ChampItem): Session? = item.sessionId?.let(store::session)
 
-    /** Makes a loaded file the current championship; the previous year moves to the history, activated items of the same year stay. */
+    /** Makes a loaded file the current championship. Only one is kept: a file of another year replaces it
+     *  (recorded sessions stay); the same year loaded again keeps the activated items. */
     fun apply(new: Championship) {
         var p = new
-        fun keep(from: Championship?) {
-            if (from == null) return
-            val m = from.items.filter { it.sessionId != null }.associate { it.id to it.sessionId }
+        val cur = state.current
+        if (cur != null && cur.year == p.year) {
+            val m = cur.items.filter { it.sessionId != null }.associate { it.id to it.sessionId }
             p = p.copy(items = p.items.map { if (it.sessionId == null && m[it.id] != null) it.copy(sessionId = m[it.id]) else it })
         }
-        val cur = state.current
-        var history = state.history
-        if (cur != null && cur.year == p.year) keep(cur)
-        else {
-            if (cur != null) history = history.filter { it.year != cur.year } + cur
-            keep(history.firstOrNull { it.year == p.year })
-            history = history.filter { it.year != p.year }.sortedByDescending { it.year }
-        }
-        set(state.copy(current = p, history = history))
+        set(state.copy(current = p, history = emptyList()))
     }
 
     private fun updateItem(id: String, f: (ChampItem) -> ChampItem) {
@@ -281,7 +274,6 @@ class ChampStore(private val file: File, private val store: Store) {
         updateItem(id) { it.copy(sessionId = null) }
     }
 
-    fun dropHistory(year: Int) = set(state.copy(history = state.history.filter { it.year != year }))
 
     /** Sample championship for the test screenshots. */
     fun seedDemo(tx: Tx) {

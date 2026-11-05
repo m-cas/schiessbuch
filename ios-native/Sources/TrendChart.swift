@@ -6,6 +6,7 @@ import Charts
 struct TrendChart: View {
     let sessions: [Session]
     let tx: Tx
+    var showTitle = true
 
     private struct Point: Identifiable { let id = UUID(); let year: String; let date: Date; let value: Double }
     private struct Bar: Identifiable { let id = UUID(); let date: Date; let values: [Double] }
@@ -35,7 +36,7 @@ struct TrendChart: View {
         let lo = max(0, ((all.min() ?? 0) - 3).rounded(.down)), hi = min(100, ((all.max() ?? 100) + 2).rounded(.up))
 
         VStack(alignment: .leading, spacing: 8) {
-            Text(tx.trendYears).font(.caption).foregroundStyle(.secondary).textCase(.uppercase)
+            if showTitle { Text(tx.trendYears).font(.caption).foregroundStyle(.secondary).textCase(.uppercase) }
             Chart {
                 ForEach(bars) { b in
                     RuleMark(x: .value("Datum", b.date), yStart: .value("Min", b.values.min() ?? 0), yEnd: .value("Max", b.values.max() ?? 0))

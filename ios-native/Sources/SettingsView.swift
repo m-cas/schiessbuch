@@ -5,7 +5,6 @@ struct SettingsView: View {
     @Environment(Store.self) private var store
     @Environment(\.dismiss) private var dismiss
     @AppStorage("lang") private var lang: String = "de"
-    @AppStorage("clubLogo") private var clubLogo = false
 
     @State private var shared: SharedFile? = nil
     @State private var mail: OutgoingMail? = nil
@@ -31,19 +30,6 @@ struct SettingsView: View {
                     .pickerStyle(.segmented)
                     .labelsHidden()
                 }
-
-                Section {
-                    Toggle(isOn: $clubLogo) {
-                        HStack(spacing: 12) {
-                            Image("ClubLogo").resizable().scaledToFit().frame(width: 36, height: 36)
-                                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(tx.clubLogo)
-                                Text(tx.clubLogoNote).font(.footnote).foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                } header: { Text(tx.logo) }
 
                 Section {
                     Button { run { shared = SharedFile(url: try store.csvFile(tx)) } } label: {

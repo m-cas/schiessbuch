@@ -44,6 +44,7 @@ class Prefs(context: Context) {
     private var _clubLogo by mutableStateOf(sp.getBoolean("clubLogo", false))
     var lang: String get() = _lang; set(v) { _lang = v; sp.edit().putString("lang", v).apply() }
     var clubLogo: Boolean get() = _clubLogo; set(v) { _clubLogo = v; sp.edit().putBoolean("clubLogo", v).apply() }
+    var chartOpen: Boolean get() = sp.getBoolean("chartOpen", true); set(v) { sp.edit().putBoolean("chartOpen", v).apply() }
     var filterDiscipline: String get() = sp.getString("filterDiscipline", "all") ?: "all"; set(v) { sp.edit().putString("filterDiscipline", v).apply() }
     var filterCategories: Set<String>
         get() = sp.getStringSet("filterCategories", null) ?: Category.entries.map { it.key }.toSet()
@@ -56,6 +57,7 @@ sealed class Screen {
     data class Editor(val session: Session, val isNew: Boolean) : Screen()
     data object Settings : Screen()
     data object Champ : Screen()
+    data object ChampSettings : Screen()
     data object Help : Screen()
 }
 
@@ -75,6 +77,7 @@ fun App(store: Store, prefs: Prefs, startScreen: String?) {
         when (startScreen) {
             "settings" -> nav.push(Screen.Settings)
             "champ" -> nav.push(Screen.Champ)
+            "champset" -> { nav.push(Screen.Champ); nav.push(Screen.ChampSettings) }
             "help" -> { nav.push(Screen.Settings); nav.push(Screen.Help) }
             "detail" -> store.sessions.firstOrNull()?.let { nav.push(Screen.Detail(it.id)) }
             "editor" -> {
@@ -91,6 +94,7 @@ fun App(store: Store, prefs: Prefs, startScreen: String?) {
         is Screen.Editor -> EditorScreen(store, tx, nav, s.session, s.isNew)
         Screen.Settings -> SettingsScreen(store, prefs, tx, nav)
         Screen.Champ -> ChampScreen(store, tx, nav)
+        Screen.ChampSettings -> ChampSettingsScreen(store, tx, nav)
         Screen.Help -> HelpScreen(tx, nav)
     }
 }

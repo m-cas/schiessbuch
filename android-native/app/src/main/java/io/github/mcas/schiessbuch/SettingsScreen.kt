@@ -137,19 +137,6 @@ fun SettingsScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                         }
                     }
                 }
-                item { SectionLabel(tx.logo) }
-                item {
-                    Card(Modifier.fillMaxWidth()) {
-                        ListItem(
-                            modifier = Modifier.clickable { prefs.clubLogo = !prefs.clubLogo },
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            leadingContent = { Image(painterResource(R.drawable.club_logo), null, Modifier.size(40.dp).clip(RoundedCornerShape(8.dp))) },
-                            headlineContent = { Text(tx.clubLogo) },
-                            supportingContent = { Text(tx.clubLogoNote) },
-                            trailingContent = { Switch(checked = prefs.clubLogo, onCheckedChange = { prefs.clubLogo = it }) },
-                        )
-                    }
-                }
                 item { SectionLabel(tx.export) }
                 item {
                     Card(Modifier.fillMaxWidth()) {

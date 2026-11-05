@@ -25,6 +25,14 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -65,27 +73,94 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** The championship page: load the club's CSV file, activate the items one by one, keep earlier years in a history. */
+/** The championship page: the items of the loaded championship, activated with + and reset with ✕.
+ *  The cog at the top left opens the championship settings, where the club's CSV file is loaded. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChampScreen(store: Store, tx: Tx, nav: Nav) {
+    val cs = store.champ
+    val st = cs.state
+    var resetItem by remember { mutableStateOf<ChampItem?>(null) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(tx.chTitle) },
+                navigationIcon = {
+                    Row {
+                        IconButton(onClick = { nav.pop() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, tx.back) }
+                        IconButton(onClick = { nav.push(Screen.ChampSettings) }) { Icon(Icons.Outlined.Settings, tx.chSettings) }
+                    }
+                },
+            )
+        },
+    ) { pad ->
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = pad.calculateTopPadding() + 4.dp, bottom = pad.calculateBottomPadding() + 24.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            val cur = st.current
+            if (cur == null) item {
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(tx.chEmptyH, style = MaterialTheme.typography.titleMedium)
+                        Text(tx.chEmptyCog, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Button(onClick = { nav.push(Screen.ChampSettings) }) { Text(tx.chSettings) }
+                    }
+                }
+            } else {
+                val done = cur.items.count { cs.sessionFor(it) != null }
+                item {
+                    Column(Modifier.padding(bottom = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("${tx.chTitle} ${cur.year}".uppercase(tx.locale), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(cur.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        LinearProgressIndicator(progress = { if (cur.items.isEmpty()) 0f else done.toFloat() / cur.items.size }, modifier = Modifier.fillMaxWidth())
+                        Text(tx.chProgress(done, cur.items.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                items(cur.items, key = { "c" + it.id }) { item ->
+                    ChampRow(item, cs.sessionFor(item), tx = tx,
+                        onActivate = { cs.activate(item.id)?.let { nav.push(Screen.Editor(it, false)) } },
+                        onReset = { resetItem = item },
+                        onOpen = { nav.push(Screen.Detail(it)) })
+                }
+            }
+        }
+    }
+
+    resetItem?.let { item ->
+        AlertDialog(
+            onDismissRequest = { resetItem = null },
+            text = { Text(tx.chResetAsk) },
+            confirmButton = {
+                Column(horizontalAlignment = Alignment.End) {
+                    TextButton(onClick = { cs.reset(item.id, false); resetItem = null }) { Text(tx.chKeep) }
+                    TextButton(onClick = { cs.reset(item.id, true); resetItem = null }) { Text(tx.chDelete, color = MaterialTheme.colorScheme.error) }
+                    TextButton(onClick = { resetItem = null }) { Text(tx.cancel) }
+                }
+            },
+        )
+    }
+}
+
+/** Championship settings: address of the club's CSV file, load or reload it, or pick a file. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChampSettingsScreen(store: Store, tx: Tx, nav: Nav) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val cs = store.champ
     val st = cs.state
-    var tab by rememberSaveable { mutableStateOf(0) }
     var url by rememberSaveable { mutableStateOf(st.url) }
     var busy by remember { mutableStateOf(false) }
     var pending by remember { mutableStateOf<ChampParser.Result?>(null) }
     var warnings by remember { mutableStateOf(listOf<String>()) }
     var showWarnings by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
-    var resetItem by remember { mutableStateOf<ChampItem?>(null) }
-    var dropYear by remember { mutableStateOf<Int?>(null) }
-    var openYears by remember { mutableStateOf(setOf<Int>()) }
 
     fun apply(r: ChampParser.Result) {
-        cs.apply(r.champ); warnings = r.warnings; pending = null; tab = 0
+        cs.apply(r.champ); warnings = r.warnings; pending = null
         message = tx.chLoaded(r.champ.items.size, r.champ.year) + if (r.warnings.isEmpty()) "" else " · " + tx.chWarnN(r.warnings.size)
     }
     fun loaded(text: String) {
@@ -108,106 +183,49 @@ fun ChampScreen(store: Store, tx: Tx, nav: Nav) {
         if (uri != null) scope.launch {
             val text = withContext(Dispatchers.IO) { runCatching { context.contentResolver.openInputStream(uri)!!.use { it.readBytes() } }.getOrNull() }
             if (text == null) message = tx.chBadFile
-            else loaded(String(text, Charsets.UTF_8).takeIf { !it.contains('�') } ?: String(text, Charsets.ISO_8859_1))
+            else loaded(String(text, Charsets.UTF_8).takeIf { !it.contains('\uFFFD') } ?: String(text, Charsets.ISO_8859_1))
         }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(tx.chTitle) },
+                title = { Text(tx.chSettings) },
                 navigationIcon = { IconButton(onClick = { nav.pop() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, tx.back) } },
             )
         },
     ) { pad ->
-        LazyColumn(
-            Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = pad.calculateTopPadding() + 4.dp, bottom = pad.calculateBottomPadding() + 24.dp),
+        Column(
+            Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, top = pad.calculateTopPadding() + 4.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            item {
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                    listOf(tx.chCurrent, if (st.history.isEmpty()) tx.chHistory else "${tx.chHistory} (${st.history.size})").forEachIndexed { i, l ->
-                        SegmentedButton(selected = tab == i, onClick = { tab = i }, shape = SegmentedButtonDefaults.itemShape(i, 2)) { Text(l) }
-                    }
+            OutlinedTextField(
+                value = url, onValueChange = { url = it }, label = { Text(tx.chUrl) }, singleLine = true,
+                placeholder = { Text("https://…/meisterschaft.csv") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Go),
+                keyboardActions = KeyboardActions(onGo = { fetch() }),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { fetch() }, enabled = !busy, modifier = Modifier.weight(1f)) {
+                    if (busy) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Outlined.Download, null)
+                    Spacer(Modifier.width(8.dp)); Text(if (st.current == null) tx.chLoad else tx.chReload)
+                }
+                OutlinedButton(onClick = { openFile.launch(arrayOf("text/*", "application/octet-stream", "*/*")) }, modifier = Modifier.weight(1f)) {
+                    Icon(Icons.Outlined.FolderOpen, null); Spacer(Modifier.width(8.dp)); Text(tx.chFromFile, maxLines = 1)
                 }
             }
-            if (tab == 0) {
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            value = url, onValueChange = { url = it }, label = { Text(tx.chUrl) }, singleLine = true,
-                            placeholder = { Text("https://…/meisterschaft.csv") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Go),
-                            keyboardActions = KeyboardActions(onGo = { fetch() }),
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { fetch() }, enabled = !busy, modifier = Modifier.weight(1f)) {
-                                if (busy) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp) else Icon(Icons.Outlined.Download, null)
-                                Spacer(Modifier.width(8.dp)); Text(if (st.current == null) tx.chLoad else tx.chReload)
-                            }
-                            OutlinedButton(onClick = { openFile.launch(arrayOf("text/*", "application/octet-stream", "*/*")) }, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Outlined.FolderOpen, null); Spacer(Modifier.width(8.dp)); Text(tx.chFromFile, maxLines = 1)
-                            }
-                        }
-                        if (warnings.isNotEmpty()) TextButton(onClick = { showWarnings = !showWarnings }) {
-                            Icon(Icons.Filled.Warning, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(6.dp)); Text(tx.chWarnN(warnings.size), color = MaterialTheme.colorScheme.error)
-                        }
-                        if (showWarnings) warnings.forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
-                    }
-                }
-                val cur = st.current
-                if (cur == null) item {
-                    Card(Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(tx.chEmptyH, style = MaterialTheme.typography.titleMedium)
-                            Text(tx.chEmptyP, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("id;jahr;titel;disziplin;serien;datum;schiessstand;notizen", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
-                        }
-                    }
-                } else {
-                    val done = cur.items.count { cs.sessionFor(it) != null }
-                    item {
-                        Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("${tx.chTitle} ${cur.year}".uppercase(tx.locale), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(cur.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                            LinearProgressIndicator(progress = { if (cur.items.isEmpty()) 0f else done.toFloat() / cur.items.size }, modifier = Modifier.fillMaxWidth())
-                            Text(tx.chProgress(done, cur.items.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                    items(cur.items, key = { "c" + it.id }) { item ->
-                        ChampRow(item, cs.sessionFor(item), live = true, tx = tx,
-                            onActivate = { cs.activate(item.id)?.let { nav.push(Screen.Editor(it, false)) } },
-                            onReset = { resetItem = item },
-                            onOpen = { nav.push(Screen.Detail(it)) })
-                    }
-                }
-            } else {
-                if (st.history.isEmpty()) item { Text(tx.chNoHistory, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(8.dp)) }
-                st.history.forEach { h ->
-                    val open = h.year in openYears
-                    val done = h.items.count { cs.sessionFor(it) != null }
-                    item(key = "h${h.year}") {
-                        Card(modifier = Modifier.fillMaxWidth(), onClick = { openYears = if (open) openYears - h.year else openYears + h.year }) {
-                            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Column(Modifier.weight(1f)) {
-                                    Text("${h.year} · ${h.name}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                                    Text(tx.chProgress(done, h.items.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                                Icon(Icons.Filled.ExpandMore, null, Modifier.rotate(if (open) 180f else 0f))
-                            }
-                        }
-                    }
-                    if (open) {
-                        items(h.items, key = { "h${h.year}-" + it.id }) { item ->
-                            ChampRow(item, cs.sessionFor(item), live = false, tx = tx, onActivate = {}, onReset = {}, onOpen = { nav.push(Screen.Detail(it)) })
-                        }
-                        item(key = "hd${h.year}") {
-                            TextButton(onClick = { dropYear = h.year }) { Text(tx.chHistDel, color = MaterialTheme.colorScheme.error) }
-                        }
-                    }
+            if (warnings.isNotEmpty()) TextButton(onClick = { showWarnings = !showWarnings }) {
+                Icon(Icons.Filled.Warning, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp)); Text(tx.chWarnN(warnings.size), color = MaterialTheme.colorScheme.error)
+            }
+            if (showWarnings) warnings.forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+            st.current?.let { Text(tx.chLoadedInfo(it.year, it.items.size), style = MaterialTheme.typography.bodyMedium) }
+            Text(tx.chOnlyOne, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(tx.chEmptyP, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("id;jahr;titel;disziplin;serien;datum;schiessstand;notizen", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
                 }
             }
         }
@@ -222,41 +240,27 @@ fun ChampScreen(store: Store, tx: Tx, nav: Nav) {
             dismissButton = { TextButton(onClick = { pending = null }) { Text(tx.cancel) } },
         )
     }
-    resetItem?.let { item ->
-        AlertDialog(
-            onDismissRequest = { resetItem = null },
-            text = { Text(tx.chResetAsk) },
-            confirmButton = {
-                Column(horizontalAlignment = Alignment.End) {
-                    TextButton(onClick = { cs.reset(item.id, false); resetItem = null }) { Text(tx.chKeep) }
-                    TextButton(onClick = { cs.reset(item.id, true); resetItem = null }) { Text(tx.chDelete, color = MaterialTheme.colorScheme.error) }
-                    TextButton(onClick = { resetItem = null }) { Text(tx.cancel) }
-                }
-            },
-        )
-    }
-    dropYear?.let { y ->
-        ConfirmDialog("${tx.chHistDel}: $y?", tx.chHistDel, tx.cancel, onConfirm = { cs.dropHistory(y) }, onDismiss = { dropYear = null })
-    }
     message?.let { MessageDialog(it, tx.ok) { message = null } }
 }
 
+/** One item: description on the left, the round + or ✕ button at the bottom right. */
 @Composable
-private fun ChampRow(item: ChampItem, session: Session?, live: Boolean, tx: Tx, onActivate: () -> Unit, onReset: () -> Unit, onOpen: (String) -> Unit) {
+private fun ChampRow(item: ChampItem, session: Session?, tx: Tx, onActivate: () -> Unit, onReset: () -> Unit, onOpen: (String) -> Unit) {
     val active = session != null
     val what = tx.disciplineName(item.discipline) + " · " + item.series.joinToString(" | ") { it.groupText(tx) }
     val meta = listOfNotNull(item.day?.let(tx::longDate), item.location).filter { it.isNotEmpty() }.joinToString(" · ")
     Card(
         Modifier.fillMaxWidth(),
-        colors = if (active && live) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)) else CardDefaults.cardColors(),
+        colors = if (active) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)) else CardDefaults.cardColors(),
     ) {
-        Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.padding(start = 14.dp, top = 12.dp, end = 10.dp, bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Bottom) {
             Icon(
                 if (active) Icons.Filled.CheckCircle else Icons.Outlined.Circle, null,
                 tint = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                modifier = Modifier.align(Alignment.Top),
             )
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                val fade = Modifier.alpha(if (active && live) 0.6f else 1f)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                val fade = Modifier.alpha(if (active) 0.6f else 1f)
                 Text(item.title, fontWeight = FontWeight.SemiBold, modifier = fade)
                 Text(what, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = fade)
                 if (meta.isNotEmpty()) Text(meta, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = fade)
@@ -267,11 +271,12 @@ private fun ChampRow(item: ChampItem, session: Session?, live: Boolean, tx: Tx, 
                     TextButton(onClick = { onOpen(session.id) }, contentPadding = PaddingValues(0.dp)) {
                         Text("$res · ${tx.shortDate(session.day)} ›", fontWeight = FontWeight.SemiBold)
                     }
-                } else if (!live) Text(tx.chNotShot, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (live) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                    if (active) OutlinedButton(onClick = onReset) { Text(tx.chReset) }
-                    else Button(onClick = onActivate) { Text(tx.chActivate) }
                 }
+            }
+            if (active) FilledTonalIconButton(onClick = onReset, modifier = Modifier.size(40.dp)) {
+                Icon(Icons.Filled.Close, tx.chReset, tint = MaterialTheme.colorScheme.error)
+            } else FilledIconButton(onClick = onActivate, modifier = Modifier.size(40.dp)) {
+                Icon(Icons.Filled.Add, tx.chActivate)
             }
         }
     }

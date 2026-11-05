@@ -87,11 +87,24 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.material.icons.outlined.Print
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var chartOpen by remember { mutableStateOf(prefs.chartOpen) }
     var filter by rememberSaveable { mutableStateOf(prefs.filterDiscipline) }
     var cats by remember { mutableStateOf(prefs.filterCategories) }
     var openYears by remember { mutableStateOf<Set<String>?>(null) }
@@ -119,14 +132,35 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
             TopAppBar(
                 title = { Text(if (selecting) tx.selected(selection.size) else tx.appName, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = { nav.push(Screen.Settings) }) {
-                        Box {
-                            Image(
-                                painterResource(if (prefs.clubLogo) R.drawable.club_logo else R.drawable.app_logo), tx.settings,
-                                Modifier.size(34.dp).clip(RoundedCornerShape(8.dp)),
-                            )
-                            if (tooBig) Box(Modifier.align(Alignment.TopEnd).offset(3.dp, (-3).dp).size(10.dp).background(Color(0xFFD32F2F), CircleShape))
-                        }
+                    // tap: settings; hold for 10 seconds: switch between the app logo and the SG Muttenz logo (launcher icon too)
+                    Box(
+                        Modifier.padding(start = 6.dp).size(48.dp)
+                            .semantics { role = Role.Button; contentDescription = tx.settings; onClick { nav.push(Screen.Settings); true } }
+                            .pointerInput(Unit) {
+                                var held = false
+                                detectTapGestures(
+                                    onPress = {
+                                        held = false
+                                        val timer = scope.launch {
+                                            delay(10_000)
+                                            held = true
+                                            prefs.clubLogo = !prefs.clubLogo
+                                            context.applyLauncherIcon(prefs.clubLogo)
+                                            android.widget.Toast.makeText(context, if (prefs.clubLogo) tx.logoClubOn else tx.logoClubOff, android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                        tryAwaitRelease()
+                                        timer.cancel()
+                                    },
+                                    onTap = { if (!held) nav.push(Screen.Settings) },
+                                )
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Image(
+                            painterResource(if (prefs.clubLogo) R.drawable.club_logo else R.drawable.app_logo), null,
+                            Modifier.size(34.dp).clip(RoundedCornerShape(8.dp)),
+                        )
+                        if (tooBig) Box(Modifier.align(Alignment.TopEnd).offset((-4).dp, 4.dp).size(10.dp).background(Color(0xFFD32F2F), CircleShape))
                     }
                 },
             )
@@ -148,6 +182,9 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                 Spacer(Modifier.weight(1f))
                 Text(tx.selected(selection.size), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.weight(1f))
+                IconButton(onClick = { SessionPrinter.print(context, store, store.sessions.filter { it.id in selection }, tx) }, enabled = selection.isNotEmpty()) {
+                    Icon(Icons.Outlined.Print, tx.print)
+                }
                 IconButton(onClick = { context.mailSessions(store, store.sessions.filter { it.id in selection }, tx) }, enabled = selection.isNotEmpty()) {
                     Icon(Icons.Outlined.Email, tx.email)
                 }
@@ -219,7 +256,17 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         StatsRow(rows, tx)
-                        if (rows.isNotEmpty()) TrendChart(rows, tx)
+                        if (rows.isNotEmpty()) {
+                            // the chart can be folded away; the choice is remembered
+                            Row(
+                                Modifier.fillMaxWidth().clickable { chartOpen = !chartOpen; prefs.chartOpen = chartOpen }.semantics { contentDescription = tx.chartToggle },
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(tx.trendYears.uppercase(tx.locale), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                                Icon(Icons.Filled.ExpandMore, null, Modifier.size(20.dp).rotate(if (chartOpen) 180f else 0f), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            if (chartOpen) TrendChart(rows, tx, showTitle = false)
+                        }
                     }
                 }
                 Text(tx.normCaption, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, top = 6.dp, bottom = 10.dp))

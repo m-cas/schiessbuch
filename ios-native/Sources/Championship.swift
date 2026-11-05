@@ -215,21 +215,15 @@ extension Store {
         try? JSONEncoder().encode(champ).write(to: champURL, options: .atomic)
     }
 
-    /// Makes a loaded file the current championship. The previous one of another year moves to the history;
-    /// activated items keep their session when the same year is loaded again.
+    /// Makes a loaded file the current championship. Only one championship is kept: a file of another year
+    /// replaces it (the recorded sessions stay); the same year loaded again keeps the activated items.
     func applyChamp(_ new: Championship) {
         var p = new
-        func keep(_ from: Championship?) {
-            guard let from else { return }
-            let m = Dictionary(from.items.compactMap { i in i.sessionId.map { (i.id, $0) } }, uniquingKeysWith: { a, _ in a })
+        if let cur = champ.current, cur.year == p.year {
+            let m = Dictionary(cur.items.compactMap { i in i.sessionId.map { (i.id, $0) } }, uniquingKeysWith: { a, _ in a })
             for i in p.items.indices where p.items[i].sessionId == nil { p.items[i].sessionId = m[p.items[i].id] }
         }
-        if let cur = champ.current, cur.year == p.year { keep(cur) }
-        else {
-            if let cur = champ.current { champ.history = champ.history.filter { $0.year != cur.year } + [cur] }
-            keep(champ.history.first { $0.year == p.year })
-            champ.history = champ.history.filter { $0.year != p.year }.sorted { $0.year > $1.year }
-        }
+        champ.history = []
         champ.current = p
         saveChamp()
     }
@@ -283,10 +277,5 @@ extension Store {
         guard let r = try? ChampParser.parse(csv, tx: Tx("de")) else { return }
         champ.current = r.champ
         if let s = sessions.first(where: { $0.categoryValue == .championship }) { champ.current?.items[0].sessionId = s.id }
-    }
-
-    func dropHistory(_ year: Int) {
-        champ.history.removeAll { $0.year == year }
-        saveChamp()
     }
 }

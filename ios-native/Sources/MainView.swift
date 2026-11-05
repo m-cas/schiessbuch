@@ -4,6 +4,7 @@ struct MainView: View {
     @Environment(Store.self) private var store
     @Environment(\.lang) private var lang
     @AppStorage("clubLogo") private var clubLogo = false
+    @AppStorage("chartOpen") private var chartOpen = true
     @AppStorage("filterDiscipline") private var filterRaw = "all"
     @AppStorage("filterCategories") private var categoriesRaw = "training,championship,other"
 
@@ -82,7 +83,21 @@ struct MainView: View {
             Section { filters }
             Section {
                 stats
-                if !rows.isEmpty { TrendChart(sessions: rows, tx: tx).padding(.vertical, 6) }
+                if !rows.isEmpty {
+                    // the chart can be folded away; the choice is remembered
+                    Button { withAnimation { chartOpen.toggle() } } label: {
+                        HStack {
+                            Text(tx.trendYears).font(.caption).foregroundStyle(.secondary).textCase(.uppercase)
+                            Spacer()
+                            Image(systemName: "chevron.down").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                                .rotationEffect(.degrees(chartOpen ? 180 : 0))
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(tx.chartToggle)
+                    if chartOpen { TrendChart(sessions: rows, tx: tx, showTitle: false).padding(.bottom, 6) }
+                }
             } footer: { Text(tx.normCaption) }
 
             if rows.isEmpty {
@@ -206,6 +221,10 @@ struct MainView: View {
                 Spacer()
                 Text(tx.selected(selection.count)).font(.footnote).foregroundStyle(.secondary)
                 Spacer()
+                Button { SessionPrinter.shared.print(store.sessions.filter { selection.contains($0.id) }, store: store, tx: tx) } label: { Image(systemName: "printer") }
+                    .disabled(selection.isEmpty)
+                    .accessibilityLabel(tx.print)
+                Spacer().frame(width: 18)
                 Button { mail = outgoing(for: selection) } label: { Image(systemName: "envelope") }
                     .disabled(selection.isEmpty)
                     .accessibilityLabel(tx.email)
@@ -218,16 +237,20 @@ struct MainView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
-                Button { showSettings = true } label: {
-                    Image(clubLogo ? "ClubLogo" : "AppLogo")
-                        .resizable().scaledToFit().frame(width: 40, height: 40)
-                        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-                        .overlay(alignment: .topTrailing) {
-                            if backupTooBig { Circle().fill(.red).frame(width: 10, height: 10).offset(x: 3, y: -3) }
-                        }
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(tx.settings)
+                // tap: settings; hold for 10 seconds: switch between the app logo and the SG Muttenz logo (app icon too)
+                Image(clubLogo ? "ClubLogo" : "AppLogo")
+                    .resizable().scaledToFit().frame(width: 40, height: 40)
+                    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                    .overlay(alignment: .topTrailing) {
+                        if backupTooBig { Circle().fill(.red).frame(width: 10, height: 10).offset(x: 3, y: -3) }
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture { showSettings = true }
+                    .onLongPressGesture(minimumDuration: 10) { toggleClubLogo() }
+                    .accessibilityElement()
+                    .accessibilityLabel(tx.settings)
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction { showSettings = true }
                 Text(isSelecting ? tx.selected(selection.count) : tx.appName)
                     .font(.title2.weight(.bold)).lineLimit(1).minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
@@ -286,6 +309,15 @@ struct MainView: View {
             s.series[0].shots = [.value(8), .value(9), .value(10), .value(9), .value(9)]
             editing = s
         default: break
+        }
+    }
+    /// Switches the in-app logo and the home-screen icon (alternate icon "AppIconClub") together.
+    private func toggleClubLogo() {
+        clubLogo.toggle()
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        let name: String? = clubLogo ? "AppIconClub" : nil
+        if UIApplication.shared.supportsAlternateIcons, UIApplication.shared.alternateIconName != name {
+            UIApplication.shared.setAlternateIconName(name) { _ in }
         }
     }
     private func refreshStorage() { backupTooBig = store.storageInfo().backupBytes > Store.mailLimit }

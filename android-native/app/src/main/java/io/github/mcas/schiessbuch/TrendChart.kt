@@ -40,7 +40,7 @@ import kotlin.math.floor
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun TrendChart(sessions: List<Session>, tx: Tx) {
+fun TrendChart(sessions: List<Session>, tx: Tx, showTitle: Boolean = true) {
     val primary = MaterialTheme.colorScheme.primary
     val palette = listOf(primary, Color(0xFFD64545), Color(0xFF3B78D8), Color(0xFFE08A1E), Color(0xFF8A56C2), Color(0xFF1E9C9C))
     val grid = MaterialTheme.colorScheme.outlineVariant
@@ -66,7 +66,7 @@ fun TrendChart(sessions: List<Session>, tx: Tx) {
     val months = (1..12).map { java.time.Month.of(it).getDisplayName(DateTextStyle.NARROW, tx.locale) }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(tx.trendYears.uppercase(tx.locale), style = MaterialTheme.typography.labelSmall, color = label)
+        if (showTitle) Text(tx.trendYears.uppercase(tx.locale), style = MaterialTheme.typography.labelSmall, color = label)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             years.forEachIndexed { i, y ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {

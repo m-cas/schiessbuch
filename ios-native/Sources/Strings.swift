@@ -190,6 +190,17 @@ struct Tx {
     var helpH: String { p("Hilfe", "Help") }
     var helpOpen: String { p("Anleitung zur App", "How to use the app") }
     func groupN(_ n: Int) -> String { p("Gruppe \(n)", "Group \(n)") }
+    // printing
+    var print: String { p("Drucken", "Print") }
+    var printTitle: String { p("Schiessresultate", "Shooting results") }
+    var printTotal: String { "Total" }
+    var seriesFormat: String { p("Serienformat", "Series format") }
+    var shotsH: String { p("Schüsse", "Shots") }
+    var scoreH: String { p("Resultat", "Score") }
+    // club logo (hold the logo for 10 seconds)
+    var logoClubOn: String { p("SG-Muttenz-Logo und App-Symbol aktiv", "SG Muttenz logo and app icon on") }
+    var logoClubOff: String { p("Standard-Logo und App-Symbol aktiv", "Standard logo and app icon on") }
+    var chartToggle: String { p("Grafik ein- oder ausblenden", "Show or hide the chart") }
     var chTitleShort: String { p("Meistersch.", "Champ") }
     var newSessionShort: String { p("Neue Üb.", "New Sess.") }
     var chTitle: String { p("Meisterschaft", "Championship") }
@@ -200,6 +211,10 @@ struct Tx {
     var chReload: String { p("Neu laden", "Reload") }
     var chFromFile: String { p("Datei wählen", "Choose file") }
     var chActivate: String { p("Aktivieren", "Activate") }
+    var chSettings: String { p("Meisterschaft einrichten", "Championship settings") }
+    var chEmptyCog: String { p("Lade die Datei des Vereins unter «Meisterschaft einrichten» (Zahnrad oben links).", "Load the club's file under Championship settings (cog at the top left).") }
+    var chOnlyOne: String { p("Es wird nur eine Meisterschaft gespeichert. Eine Datei eines anderen Jahres ersetzt sie; erfasste Übungen bleiben.", "Only one championship is kept. A file for another year replaces it; recorded sessions stay.") }
+    func chLoadedInfo(_ y: Int, _ n: Int) -> String { p("Geladen: Meisterschaft \(y) mit \(n) Einträgen.", "Loaded: championship \(y) with \(n) items.") }
     var chReset: String { p("Zurücksetzen", "Reset") }
     var chResetAsk: String { p("Eintrag wieder freigeben. Die bereits erfasste Übung behalten oder löschen?", "Make this item available again. Keep the session already recorded, or delete it?") }
     var chKeep: String { p("Übung behalten", "Keep session") }
@@ -208,7 +223,7 @@ struct Tx {
     var chNoResult: String { p("noch kein Resultat", "no result yet") }
     var chNotShot: String { p("nicht geschossen", "not shot") }
     func chAskSame(_ y: Int) -> String { p("Meisterschaft \(y) neu laden? Aktivierte Einträge und ihre Übungen bleiben erhalten.", "Reload championship \(y)? Activated items and their sessions stay as they are.") }
-    func chAskNew(_ y: Int, _ old: Int) -> String { p("Meisterschaft \(y) laden? Sie ersetzt \(old); diese kommt in den Verlauf. Alle erfassten Übungen bleiben.", "Load championship \(y)? It replaces \(old), which moves to History. All recorded sessions stay.") }
+    func chAskNew(_ y: Int, _ old: Int) -> String { p("Meisterschaft \(y) laden? Sie ersetzt \(old). Alle erfassten Übungen bleiben.", "Load championship \(y)? It replaces \(old). All recorded sessions stay.") }
     func chLoaded(_ n: Int, _ y: Int) -> String { p("\(n) Einträge für \(y) geladen", "\(n) items loaded for \(y)") }
     func chWarnN(_ n: Int) -> String { de ? "\(n) \(n == 1 ? "Zeile" : "Zeilen") mit Problemen" : "\(n) \(n == 1 ? "line" : "lines") with problems" }
     var chNoRows: String { p("Die Datei enthält keine Einträge.", "The file contains no items.") }
