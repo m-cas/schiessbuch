@@ -78,6 +78,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -105,8 +114,10 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
     Scaffold(
         modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(if (selecting) tx.selected(selection.size) else tx.appName, fontWeight = FontWeight.SemiBold) },
+          // settings icon and title, then three equal buttons below, like the web version
+          Column(Modifier.background(MaterialTheme.colorScheme.surface)) {
+            TopAppBar(
+                title = { Text(if (selecting) tx.selected(selection.size) else tx.appName, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { nav.push(Screen.Settings) }) {
                         Box {
@@ -118,14 +129,16 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                         }
                     }
                 },
-                actions = {
-                    if (!selecting) IconButton(onClick = { nav.push(Screen.Champ) }) { Icon(Icons.Outlined.EmojiEvents, tx.chTitle) }
-                    if (store.sessions.isNotEmpty()) TextButton(onClick = { if (selecting) endSelection() else selecting = true }) {
-                        Text(if (selecting) tx.done else tx.select)
-                    }
-                },
-                scrollBehavior = scroll,
             )
+            Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TopButton(tx.chTitle, tx.chTitleShort, prominent = false, modifier = Modifier.weight(1f)) { nav.push(Screen.Champ) }
+                TopButton(if (selecting) tx.done else tx.select, if (selecting) tx.done else tx.select, prominent = false,
+                    enabled = store.sessions.isNotEmpty(), modifier = Modifier.weight(1f)) { if (selecting) endSelection() else selecting = true }
+                TopButton(tx.newSession, tx.newSessionShort, prominent = true, enabled = !selecting, modifier = Modifier.weight(1f)) {
+                    nav.push(Screen.Editor(newSession(store), true))
+                }
+            }
+          }
         },
         bottomBar = {
             if (selecting) BottomAppBar {
@@ -140,13 +153,6 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                 }
             }
         },
-        floatingActionButton = {
-            if (!selecting && store.sessions.isNotEmpty()) ExtendedFloatingActionButton(
-                onClick = { nav.push(Screen.Editor(newSession(store), true)) },
-                icon = { Icon(Icons.Filled.Add, null) },
-                text = { Text(tx.newSession) },
-            )
-        },
     ) { pad ->
         if (store.sessions.isEmpty()) {
             EmptyState(tx, Modifier.padding(pad)) { nav.push(Screen.Editor(newSession(store), true)) }
@@ -154,7 +160,7 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
         }
         LazyColumn(
             Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = pad.calculateTopPadding() + 4.dp, bottom = pad.calculateBottomPadding() + 96.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = pad.calculateTopPadding() + 4.dp, bottom = pad.calculateBottomPadding() + 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item {
@@ -363,4 +369,26 @@ private fun SessionCard(store: Store, s: Session, tx: Tx, onOpen: () -> Unit) {
             }
         }
     }
+}
+
+/**
+ * A button like the web version: 42 dp high, 15 sp semibold, rounded. Shows the full label when it fits at
+ * that size, otherwise the short one ("Meistersch." / "Champ", "Neue Üb." / "New Sess.").
+ */
+@Composable
+private fun TopButton(full: String, short: String, prominent: Boolean, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
+    val style = MaterialTheme.typography.labelLarge.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+    val measurer = rememberTextMeasurer()
+    val shape = RoundedCornerShape(10.dp)
+    val colors = if (prominent) ButtonDefaults.buttonColors() else ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface)
+    val content: @Composable RowScope.() -> Unit = {
+        BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            val fits = measurer.measure(full, style).size.width <= constraints.maxWidth
+            Text(if (fits) full else short, style = style, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
+        }
+    }
+    val pad = PaddingValues(horizontal = 6.dp)
+    if (prominent) Button(onClick, modifier.heightIn(min = 42.dp), enabled = enabled, shape = shape, colors = colors, contentPadding = pad, content = content)
+    else OutlinedButton(onClick, modifier.heightIn(min = 42.dp), enabled = enabled, shape = shape, colors = colors, contentPadding = pad,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), content = content)
 }

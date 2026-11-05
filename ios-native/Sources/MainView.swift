@@ -48,6 +48,8 @@ struct MainView: View {
             .listStyle(.insetGrouped)
             .environment(\.editMode, $editMode)
             .navigationTitle(tx.appName)
+            .navigationBarTitleDisplayMode(.inline)
+            .safeAreaInset(edge: .top, spacing: 0) { actionButtons }
             .navigationDestination(for: String.self) { id in SessionDetailView(id: id) }
             .toolbar { toolbar }
             .sheet(isPresented: $showSettings, onDismiss: refreshStorage) { SettingsView() }
@@ -210,24 +212,11 @@ struct MainView: View {
             }
             .accessibilityLabel(tx.settings)
         }
+        // title next to the settings icon, like the web version
         ToolbarItem(placement: .topBarLeading) {
-            Button { showChamp = true } label: { Image(systemName: "trophy") }
-                .accessibilityLabel(tx.chTitle)
+            Text(tx.appName).font(.title3.weight(.bold)).fixedSize()
         }
-        if !store.sessions.isEmpty {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(isSelecting ? tx.done : tx.select) {
-                    withAnimation { editMode = isSelecting ? .inactive : .active; selection = [] }
-                }
-            }
-        }
-        if !isSelecting {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { editing = newSession() } label: { Text(tx.newSession).fontWeight(.semibold) }
-                    .buttonStyle(.borderedProminent)
-                    .buttonBorderShape(.capsule)
-            }
-        }
+        ToolbarItem(placement: .principal) { EmptyView() }
         if isSelecting {
             ToolbarItemGroup(placement: .bottomBar) {
                 Button(role: .destructive) { confirmDelete = true } label: { Image(systemName: "trash") }
@@ -241,6 +230,27 @@ struct MainView: View {
                     .accessibilityLabel(tx.email)
             }
         }
+    }
+
+    /// Three equal buttons under the title, as in the web version. Each shows its full label at 15 pt when it fits,
+    /// otherwise the short one ("Meistersch." / "Champ", "Neue Üb." / "New Sess.").
+    private var actionButtons: some View {
+        HStack(spacing: 8) {
+            Button { showChamp = true } label: { FitLabel(full: tx.chTitle, short: tx.chTitleShort) }
+                .buttonStyle(TopButtonStyle(prominent: false))
+            Button {
+                withAnimation { editMode = isSelecting ? .inactive : .active; selection = [] }
+            } label: { FitLabel(full: isSelecting ? tx.done : tx.select, short: isSelecting ? tx.done : tx.select) }
+                .buttonStyle(TopButtonStyle(prominent: false))
+                .disabled(store.sessions.isEmpty)
+            Button { editing = newSession() } label: { FitLabel(full: tx.newSession, short: tx.newSessionShort) }
+                .buttonStyle(TopButtonStyle(prominent: true))
+                .disabled(isSelecting)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 4)
+        .padding(.bottom, 8)
+        .background(.bar)
     }
 
     // MARK: actions
@@ -348,5 +358,37 @@ enum SessionMail {
             }
         }
         return OutgoingMail(subject: text.subject, body: text.body, attachments: attachments, shareItems: urls)
+    }
+}
+
+/// Full label at 15 pt semibold when it fits, otherwise the short label (shrinking a little only as a last resort).
+struct FitLabel: View {
+    let full: String
+    let short: String
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            Text(full).lineLimit(1).fixedSize()
+            Text(short).lineLimit(1).fixedSize()
+            Text(short).lineLimit(1).minimumScaleFactor(0.8)
+        }
+        .font(.system(size: 15, weight: .semibold))
+        .frame(maxWidth: .infinity)
+    }
+}
+
+/// Rounded button like the web version: 42 pt high, outlined, or filled in the accent colour.
+struct TopButtonStyle: ButtonStyle {
+    let prominent: Bool
+    @Environment(\.isEnabled) private var enabled
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(.horizontal, 8)
+            .frame(maxWidth: .infinity, minHeight: 42)
+            .foregroundStyle(prominent ? Color(.systemBackground) : Color.primary)   // readable on the green in light and dark mode
+            .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(prominent ? Color.accentColor : Color(.secondarySystemGroupedBackground)))
+            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(prominent ? Color.clear : Color(.separator), lineWidth: 1))
+            .opacity(enabled ? (configuration.isPressed ? 0.7 : 1) : 0.45)
     }
 }

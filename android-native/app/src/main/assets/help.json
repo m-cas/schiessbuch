@@ -3,7 +3,7 @@
   {
    "t": "Erste Schritte",
    "p": [
-    "Tippe auf «Neue Übung». Wähle Datum, Disziplin und Kategorie (Training, Meisterschaft oder Andere). Beschreibung, Schiessstand, Waffe und Bedingungen sind freiwillig.",
+    "Oben stehen drei Schaltflächen: Meisterschaft, Auswählen und Neue Übung (auf schmalen Telefonen gekürzt). Tippe auf «Neue Übung». Wähle Datum, Disziplin und Kategorie (Training, Meisterschaft oder Andere). Beschreibung, Schiessstand, Waffe und Bedingungen sind freiwillig.",
     "Die Disziplin bestimmt, welche Serienformate es gibt: Gewehr 300m (G300), Pistole 25m (P25), Pistole 50m (P50), Luftpistole 10m (LP10), Luftgewehr 10m (LG10) und Andere.",
     "Eine neue Übung übernimmt Disziplin, Kategorie, Schiessstand und Waffe der letzten Übung."
    ]
@@ -50,7 +50,7 @@
   {
    "t": "Meisterschaft",
    "p": [
-    "Die Seite Meisterschaft (🏆) lädt eine CSV-Datei des Vereins mit allen Übungen eines Jahres: Adresse eingeben und «Laden», oder «Datei wählen».",
+    "Die Schaltfläche «Meisterschaft» oben öffnet die Seite Meisterschaft. Sie lädt eine CSV-Datei des Vereins mit allen Übungen eines Jahres: Adresse eingeben und «Laden», oder «Datei wählen».",
     "«Aktivieren» legt die Übung mit Disziplin, Serien, Beschreibung und Kategorie Meisterschaft an und öffnet sie. Der Eintrag wird danach grau mit Häkchen und Resultat angezeigt.",
     "«Zurücksetzen» gibt einen Eintrag wieder frei; du wählst, ob die erfasste Übung bleibt oder gelöscht wird.",
     "Eine Datei eines neuen Jahres ersetzt die aktuelle Meisterschaft; die alte kommt in den «Verlauf». Erfasste Übungen bleiben immer erhalten. Beim Neuladen desselben Jahres bleiben aktivierte Einträge aktiviert.",
@@ -79,7 +79,7 @@
   {
    "t": "Getting started",
    "p": [
-    "Tap New Session. Choose the date, discipline and category (Training, Championship or Other). Description, range, weapon and conditions are optional.",
+    "Three buttons sit at the top: Championship, Select and New Session (shortened on narrow phones). Tap New Session. Choose the date, discipline and category (Training, Championship or Other). Description, range, weapon and conditions are optional.",
     "The discipline decides which series formats are offered: Rifle 300m (G300), Pistol 25m (P25), Pistol 50m (P50), Air Pistol 10m (LP10), Air Rifle 10m (LG10) and Other.",
     "A new session takes the discipline, category, range and weapon of your last session."
    ]
@@ -126,7 +126,7 @@
   {
    "t": "Championship",
    "p": [
-    "The Championship page (🏆) loads the club's CSV file with all sessions of a year: enter its address and tap Load, or use Choose file.",
+    "The Championship button at the top opens the Championship page. It loads the club's CSV file with all sessions of a year: enter its address and tap Load, or use Choose file.",
     "Activate creates the session with discipline, series, description and category Championship, and opens it. The item then shows greyed out with a tick and its result.",
     "Reset makes an item available again; you choose whether the recorded session is kept or deleted.",
     "A file for a new year replaces the current championship; the old one moves to History. Recorded sessions always stay. Reloading the same year keeps activated items activated.",

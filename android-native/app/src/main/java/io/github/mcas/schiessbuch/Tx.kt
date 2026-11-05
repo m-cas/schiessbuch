@@ -175,6 +175,8 @@ class Tx(lang: String) {
 
     // championship
     val chTitle get() = p("Meisterschaft", "Championship")
+    val chTitleShort get() = p("Meistersch.", "Champ")
+    val newSessionShort get() = p("Neue Üb.", "New Sess.")
     val chCurrent get() = p("Aktuell", "Current")
     val chHistory get() = p("Verlauf", "History")
     val chUrl get() = p("Adresse der CSV-Datei", "Address of the CSV file")

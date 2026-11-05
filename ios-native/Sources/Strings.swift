@@ -190,6 +190,8 @@ struct Tx {
     var helpH: String { p("Hilfe", "Help") }
     var helpOpen: String { p("Anleitung zur App", "How to use the app") }
     func groupN(_ n: Int) -> String { p("Gruppe \(n)", "Group \(n)") }
+    var chTitleShort: String { p("Meistersch.", "Champ") }
+    var newSessionShort: String { p("Neue Üb.", "New Sess.") }
     var chTitle: String { p("Meisterschaft", "Championship") }
     var chCurrent: String { p("Aktuell", "Current") }
     var chHistory: String { p("Verlauf", "History") }
