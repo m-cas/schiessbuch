@@ -48,8 +48,9 @@ struct MainView: View {
             .listStyle(.insetGrouped)
             .environment(\.editMode, $editMode)
             .navigationTitle(tx.appName)
-            .navigationBarTitleDisplayMode(.inline)
-            .safeAreaInset(edge: .top, spacing: 0) { actionButtons }
+            // own header like the web version (logo + title, three buttons) instead of the system bar
+            .toolbar(.hidden, for: .navigationBar)
+            .safeAreaInset(edge: .top, spacing: 0) { header }
             .navigationDestination(for: String.self) { id in SessionDetailView(id: id) }
             .toolbar { toolbar }
             .sheet(isPresented: $showSettings, onDismiss: refreshStorage) { SettingsView() }
@@ -135,12 +136,7 @@ struct MainView: View {
     private var filters: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(tx.discipline).font(.caption.weight(.semibold)).foregroundStyle(.secondary).textCase(.uppercase)
-            Picker(tx.discipline, selection: $filterRaw) {
-                Text(tx.all).tag("all")
-                ForEach(Discipline.allCases) { d in Text(tx.disciplineShort(d)).tag(d.rawValue) }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
+            DisciplineBar(selection: $filterRaw, items: [("all", tx.all)] + Discipline.allCases.map { ($0.rawValue, tx.disciplineShort($0)) })
             Divider().padding(.vertical, 4)
             Text(tx.category).font(.caption.weight(.semibold)).foregroundStyle(.secondary).textCase(.uppercase)
             HStack(spacing: 8) {
@@ -201,22 +197,7 @@ struct MainView: View {
     }
 
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) {
-            Button { showSettings = true } label: {
-                Image(clubLogo ? "ClubLogo" : "AppLogo")
-                    .resizable().scaledToFit().frame(width: 34, height: 34)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(alignment: .topTrailing) {
-                        if backupTooBig { Circle().fill(.red).frame(width: 10, height: 10).offset(x: 3, y: -3) }
-                    }
-            }
-            .accessibilityLabel(tx.settings)
-        }
-        // title next to the settings icon, like the web version
-        ToolbarItem(placement: .topBarLeading) {
-            Text(tx.appName).font(.title3.weight(.bold)).fixedSize()
-        }
-        ToolbarItem(placement: .principal) { EmptyView() }
+
         if isSelecting {
             ToolbarItemGroup(placement: .bottomBar) {
                 Button(role: .destructive) { confirmDelete = true } label: { Image(systemName: "trash") }
@@ -234,6 +215,31 @@ struct MainView: View {
 
     /// Three equal buttons under the title, as in the web version. Each shows its full label at 15 pt when it fits,
     /// otherwise the short one ("Meistersch." / "Champ", "Neue Üb." / "New Sess.").
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                Button { showSettings = true } label: {
+                    Image(clubLogo ? "ClubLogo" : "AppLogo")
+                        .resizable().scaledToFit().frame(width: 40, height: 40)
+                        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                        .overlay(alignment: .topTrailing) {
+                            if backupTooBig { Circle().fill(.red).frame(width: 10, height: 10).offset(x: 3, y: -3) }
+                        }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(tx.settings)
+                Text(isSelecting ? tx.selected(selection.count) : tx.appName)
+                    .font(.title2.weight(.bold)).lineLimit(1).minimumScaleFactor(0.8)
+                Spacer(minLength: 0)
+            }
+            actionButtons
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
+        .padding(.bottom, 10)
+        .background(.bar)
+    }
+
     private var actionButtons: some View {
         HStack(spacing: 8) {
             Button { showChamp = true } label: { FitLabel(full: tx.chTitle, short: tx.chTitleShort) }
@@ -247,10 +253,6 @@ struct MainView: View {
                 .buttonStyle(TopButtonStyle(prominent: true))
                 .disabled(isSelecting)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 4)
-        .padding(.bottom, 8)
-        .background(.bar)
     }
 
     // MARK: actions
@@ -408,5 +410,32 @@ struct TopButtonStyle: ButtonStyle {
             .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .strokeBorder(prominent ? Color.clear : Color(.separator), lineWidth: 1))
             .opacity(enabled ? (configuration.isPressed ? 0.7 : 1) : 0.45)
+    }
+}
+
+/// One joined bar with a segment per discipline; exactly one is chosen. Labels shrink slightly rather than being cut off.
+struct DisciplineBar: View {
+    @Binding var selection: String
+    let items: [(String, String)]
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.offset) { i, item in
+                let on = selection == item.0
+                Button { selection = item.0 } label: {
+                    Text(item.1)
+                        .font(.system(size: 14, weight: on ? .bold : .medium))
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                        .frame(maxWidth: .infinity, minHeight: 34)
+                        .foregroundStyle(on ? Color(.systemBackground) : Color.primary)
+                        .background(on ? Color.primary : Color.clear)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(on ? .isSelected : [])
+                if i < items.count - 1 { Divider().frame(height: 34) }
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).strokeBorder(Color(.separator), lineWidth: 1))
     }
 }
