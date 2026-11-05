@@ -14,8 +14,8 @@ import java.io.ByteArrayOutputStream
 object SessionPrinter {
     private var web: WebView? = null   // kept until the print job has taken the page
 
-    fun print(context: Context, store: Store, list: List<Session>, tx: Tx) {
-        val html = html(list.sortedBy { it.date }, store, tx)
+    fun print(context: Context, store: Store, list: List<Session>, tx: Tx, photos: Boolean = true) {
+        val html = html(list.sortedBy { it.date }, store, tx, photos)
         val w = WebView(context)
         web = w
         w.webViewClient = object : WebViewClient() {
@@ -42,7 +42,7 @@ object SessionPrinter {
         return "<img src=\"data:image/jpeg;base64,${Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)}\">"
     }
 
-    fun html(xs: List<Session>, store: Store, tx: Tx): String {
+    fun html(xs: List<Session>, store: Store, tx: Tx, photos: Boolean = true): String {
         val range = if (xs.size > 1) "${tx.longDate(xs.first().day)} – ${tx.longDate(xs.last().day)}" else xs.firstOrNull()?.let { tx.longDate(it.day) } ?: ""
         val blocks = xs.joinToString("") { s ->
             var total = 0.0; var max = 0
@@ -59,7 +59,7 @@ object SessionPrinter {
                 "<tr><td class=c>${i + 1}</td><td>${esc(tx.seriesLabel(r, s.discipline))}</td><td>${esc(shots)}${if (groups.isEmpty()) "" else "<br><b>${esc(groups)}</b>"}</td>" +
                     "<td class=c>${if (st.x > 0) st.x else ""}</td><td class=c>${r.tief ?: ""}</td><td class=r><b>${tx.score(st.total)}</b> / ${st.max}</td></tr>"
             }.joinToString("")
-            val pics = s.photos.take(4).mapNotNull { photo(store, it) }.joinToString("")
+            val pics = (if (photos) s.photos.take(4) else emptyList()).mapNotNull { photo(store, it) }.joinToString("")
             "<div class=s><div class=h><span>${esc(tx.longDate(s.day))} · ${esc(tx.categoryName(s.categoryValue))} · ${esc(tx.disciplineName(s.discipline))}</span>" +
                 (if (max > 0) "<span>${tx.printTotal} ${tx.score(total)} / $max</span>" else "") + "</div>" +
                 (if (s.descText.isEmpty()) "" else "<p class=d>${esc(s.descText)}</p>") +

@@ -194,6 +194,9 @@ struct Tx {
     var print: String { p("Drucken", "Print") }
     var printTitle: String { p("Schiessresultate", "Shooting results") }
     var printTotal: String { "Total" }
+    func printAsk(_ n: Int) -> String { p("Mit den Scheibenfotos (\(n)) drucken?", "Print with the target photos (\(n))?") }
+    var printPhotos: String { p("Mit Fotos", "With photos") }
+    var printNoPhotos: String { p("Ohne Fotos", "Without photos") }
     var seriesFormat: String { p("Serienformat", "Series format") }
     var shotsH: String { p("Schüsse", "Shots") }
     var scoreH: String { p("Resultat", "Score") }

@@ -20,6 +20,7 @@ struct MainView: View {
     @State private var editing: Session? = nil
     @State private var mail: OutgoingMail? = nil
     @State private var confirmDelete = false
+    @State private var askPrintPhotos = false
     @State private var backupTooBig = false
     @State private var path: [String] = []
 
@@ -50,6 +51,11 @@ struct MainView: View {
             .environment(\.editMode, $editMode)
             .navigationTitle(tx.appName)
             // own header like the web version (logo + title, three buttons) instead of the system bar
+            .alert(tx.printAsk(photoCount(selection)), isPresented: $askPrintPhotos) {
+                Button(tx.printPhotos) { printSelection(photos: true) }
+                Button(tx.printNoPhotos) { printSelection(photos: false) }
+                Button(tx.cancel, role: .cancel) {}
+            }
             .toolbar(.hidden, for: .navigationBar)
             .safeAreaInset(edge: .top, spacing: 0) { header }
             .navigationDestination(for: String.self) { id in SessionDetailView(id: id) }
@@ -221,7 +227,7 @@ struct MainView: View {
                 Spacer()
                 Text(tx.selected(selection.count)).font(.footnote).foregroundStyle(.secondary)
                 Spacer()
-                Button { SessionPrinter.shared.print(store.sessions.filter { selection.contains($0.id) }, store: store, tx: tx) } label: { Image(systemName: "printer") }
+                Button { if photoCount(selection) > 0 { askPrintPhotos = true } else { printSelection(photos: false) } } label: { Image(systemName: "printer") }
                     .disabled(selection.isEmpty)
                     .accessibilityLabel(tx.print)
                 Spacer().frame(width: 18)
@@ -290,6 +296,9 @@ struct MainView: View {
         }
         s.series = [Series(format: s.discipline.defaultFormat)]
         return s
+    }
+    private func printSelection(photos: Bool) {
+        SessionPrinter.shared.print(store.sessions.filter { selection.contains($0.id) }, store: store, tx: tx, photos: photos)
     }
     private func photoCount(_ ids: Set<String>) -> Int { store.sessions.filter { ids.contains($0.id) }.reduce(0) { $0 + $1.photos.count } }
     private func outgoing(for ids: Set<String>) -> OutgoingMail {

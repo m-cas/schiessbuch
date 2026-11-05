@@ -192,6 +192,9 @@ class Tx(lang: String) {
     val print get() = p("Drucken", "Print")
     val printTitle get() = p("Schiessresultate", "Shooting results")
     val printTotal = "Total"
+    fun printAsk(n: Int) = p("Mit den Scheibenfotos ($n) drucken?", "Print with the target photos ($n)?")
+    val printPhotos get() = p("Mit Fotos", "With photos")
+    val printNoPhotos get() = p("Ohne Fotos", "Without photos")
     val seriesFormat get() = p("Serienformat", "Series format")
     val shotsH get() = p("Schüsse", "Shots")
     val scoreH get() = p("Resultat", "Score")

@@ -9,8 +9,8 @@ final class SessionPrinter: NSObject, WKNavigationDelegate {
     private var web: WKWebView?
     private var jobName = ""
 
-    func print(_ list: [Session], store: Store, tx: Tx) {
-        let html = Self.html(list.sorted { $0.date < $1.date }, store: store, tx: tx)
+    func print(_ list: [Session], store: Store, tx: Tx, photos: Bool = true) {
+        let html = Self.html(list.sorted { $0.date < $1.date }, store: store, tx: tx, photos: photos)
         jobName = "\(tx.appName) – \(tx.printTitle)"
         let w = WKWebView(frame: CGRect(x: 0, y: 0, width: 595, height: 842))
         w.navigationDelegate = self
@@ -32,7 +32,7 @@ final class SessionPrinter: NSObject, WKNavigationDelegate {
         s.replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "<", with: "&lt;").replacingOccurrences(of: ">", with: "&gt;").replacingOccurrences(of: "\"", with: "&quot;")
     }
 
-    static func html(_ xs: [Session], store: Store, tx: Tx) -> String {
+    static func html(_ xs: [Session], store: Store, tx: Tx, photos: Bool = true) -> String {
         let range = xs.count > 1 ? "\(tx.longDate(xs[0].day)) – \(tx.longDate(xs[xs.count - 1].day))" : xs.first.map { tx.longDate($0.day) } ?? ""
         let blocks = xs.map { s -> String in
             var total = 0.0, max = 0
@@ -45,7 +45,7 @@ final class SessionPrinter: NSObject, WKNavigationDelegate {
                 let shots = r.shots.isEmpty ? (st.manual ? tx.totalOnly : "—") : r.shotsText
                 return "<tr><td class=c>\(i + 1)</td><td>\(esc(tx.seriesLabel(r, discipline: s.discipline)))</td><td>\(esc(shots))\(groups.isEmpty ? "" : "<br><b>\(esc(groups))</b>")</td><td class=c>\(st.x > 0 ? String(st.x) : "")</td><td class=c>\(r.tief.map(String.init) ?? "")</td><td class=r><b>\(tx.score(st.total))</b> / \(st.max)</td></tr>"
             }.joined()
-            let pics = s.photos.prefix(4).compactMap { id -> String? in
+            let pics = (photos ? Array(s.photos.prefix(4)) : []).compactMap { id -> String? in
                 guard let img = store.image(id) else { return nil }
                 let scale = min(1, 600 / Swift.max(img.size.width, img.size.height))
                 let size = CGSize(width: img.size.width * scale, height: img.size.height * scale)

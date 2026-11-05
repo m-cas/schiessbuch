@@ -111,6 +111,7 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
     var selecting by rememberSaveable { mutableStateOf(false) }
     var selection by remember { mutableStateOf(setOf<String>()) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var askPrintPhotos by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(setOf<String>()) }
     // phone turned sideways (or a large screen): more on each row
     val wide = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600
@@ -182,7 +183,10 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                 Spacer(Modifier.weight(1f))
                 Text(tx.selected(selection.size), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.weight(1f))
-                IconButton(onClick = { SessionPrinter.print(context, store, store.sessions.filter { it.id in selection }, tx) }, enabled = selection.isNotEmpty()) {
+                IconButton(onClick = {
+                    val chosen = store.sessions.filter { it.id in selection }
+                    if (chosen.any { it.photos.isNotEmpty() }) askPrintPhotos = true else SessionPrinter.print(context, store, chosen, tx, photos = false)
+                }, enabled = selection.isNotEmpty()) {
                     Icon(Icons.Outlined.Print, tx.print)
                 }
                 IconButton(onClick = { context.mailSessions(store, store.sessions.filter { it.id in selection }, tx) }, enabled = selection.isNotEmpty()) {
@@ -301,6 +305,20 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
     if (confirmDelete) {
         val photos = store.sessions.filter { it.id in selection }.sumOf { it.photos.size }
         ConfirmDialog(tx.confirmDelete(selection.size, photos), tx.delete, tx.keep, onConfirm = { store.delete(selection); endSelection() }, onDismiss = { confirmDelete = false })
+    }
+    if (askPrintPhotos) {
+        val chosen = store.sessions.filter { it.id in selection }
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { askPrintPhotos = false },
+            text = { Text(tx.printAsk(chosen.sumOf { it.photos.size })) },
+            confirmButton = {
+                Column(horizontalAlignment = Alignment.End) {
+                    TextButton(onClick = { askPrintPhotos = false; SessionPrinter.print(context, store, chosen, tx, photos = true) }) { Text(tx.printPhotos) }
+                    TextButton(onClick = { askPrintPhotos = false; SessionPrinter.print(context, store, chosen, tx, photos = false) }) { Text(tx.printNoPhotos) }
+                    TextButton(onClick = { askPrintPhotos = false }) { Text(tx.cancel) }
+                }
+            },
+        )
     }
     androidx.activity.compose.BackHandler(enabled = selecting) { endSelection() }
 }
