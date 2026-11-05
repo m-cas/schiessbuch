@@ -1,31 +1,35 @@
 #!/bin/bash
 # Builds the MySchiessbuch iPhone app with this Mac's Xcode and uploads it to TestFlight.
 # Start in Terminal with:  bash ~/Documents/Development/Schiessbuch/build-ios.sh
-# A build that was already uploaded is not built again; to build it anyway:  bash build-ios.sh --force
+# The build number is picked automatically: one higher than the last build in uploaded-builds.txt,
+# version 2.0.<build>. When the iPhone app has not changed since the last upload, nothing is built;
+# to build anyway (with the next number):  bash build-ios.sh --force
 set -e
-VERSION="2.0.20"   # shown in TestFlight
-BUILD="20"         # must be higher than the last TestFlight build
 HERE="$(cd "$(dirname "$0")" && pwd)"
 FORCE=0; [ "$1" = "--force" ] && FORCE=1
 
-# Builds already sent to TestFlight (from this Mac and from GitHub), one "version (build)" per line.
+# Builds already sent to TestFlight, one "version (build) commit" per line (older lines have no commit).
 LOG="$HERE/uploaded-builds.txt"
 touch "$LOG"
-if grep -qx "$VERSION ($BUILD)" "$LOG" && [ "$FORCE" = 0 ]; then
-  echo "Version $VERSION ($BUILD) has already been uploaded (see $(basename "$LOG"))."
-  echo "For a new version, raise VERSION and BUILD at the top of this script, or use --force to build anyway."
-  exit 0
-fi
-if awk -v b="$BUILD" -F'[()]' '$2+0 >= b+0 {found=1} END {exit !found}' "$LOG" && [ "$FORCE" = 0 ]; then
-  echo "Build $BUILD is not higher than a build already uploaded:"; sed 's/^/  /' "$LOG"
-  echo "Apple only accepts higher build numbers. Raise BUILD at the top of this script, or use --force to build anyway."
-  exit 1
-fi
 cd "$HERE/schiessbuch"
 
 echo "== 1/5 Getting the latest code"
 git checkout -q main
 git pull -q --ff-only
+HEAD_COMMIT=$(git rev-parse --short HEAD)
+
+# Last uploaded build and the commit it was made from
+LAST=$(awk -F'[()]' '$2+0 > m {m = $2+0} END {print m+0}' "$LOG")
+LAST_COMMIT=$(awk -F'[()]' -v b="$LAST" '$2+0 == b {split($3, a, " "); c = a[1]} END {print c}' "$LOG")
+if [ "$LAST" -gt 0 ] && [ -n "$LAST_COMMIT" ] && [ "$FORCE" = 0 ] \
+   && git cat-file -e "$LAST_COMMIT^{commit}" 2>/dev/null && git diff --quiet "$LAST_COMMIT" HEAD -- ios-native; then
+  echo "The iPhone app has not changed since version 2.0.$LAST ($LAST) was uploaded. Nothing to build."
+  echo "To build it anyway with the next number:  bash $(basename "$0") --force"
+  exit 0
+fi
+BUILD=$((LAST + 1))
+VERSION="2.0.$BUILD"
+echo "Last uploaded build: ${LAST}. Building version $VERSION ($BUILD) from commit $HEAD_COMMIT."
 
 echo "== 2/5 Checking tools"
 if ! command -v xcodegen >/dev/null; then
@@ -71,6 +75,6 @@ PLIST
 xcodebuild -exportArchive -archivePath "$OUT/MySchiessbuch.xcarchive" -exportOptionsPlist "$OUT/ExportOptions.plist" \
   -exportPath "$OUT/export" -allowProvisioningUpdates -quiet
 
-grep -qx "$VERSION ($BUILD)" "$LOG" || echo "$VERSION ($BUILD)" >> "$LOG"
+echo "$VERSION ($BUILD) $HEAD_COMMIT" >> "$LOG"
 echo ""
 echo "Done: version $VERSION ($BUILD) is uploaded. It appears in TestFlight after 5–30 minutes."
