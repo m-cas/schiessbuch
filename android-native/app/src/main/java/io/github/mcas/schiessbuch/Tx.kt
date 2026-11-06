@@ -216,7 +216,7 @@ class Tx(lang0: String) {
     val scanFail get() = p("Das Foto konnte nicht gelesen werden.", "The photo could not be read.")
     val scanCheck get() = p("Bitte die gelesenen Werte prüfen:", "Please check the values read from the photo:")
     val scanOk get() = p("Aus dem Foto gelesen: alle gedruckten Totale stimmen. Bitte vor dem Speichern kontrollieren.", "Read from the photo: all printed totals match. Please check before saving.")
-    fun scanNote(x: String) = p("Aus Foto gelesen", "Read from photo") + (if (x.isEmpty()) "" else ": $x")
+    fun scanNote(x: String) = p("Automatisch aus dem angehängten Foto gelesen", "Read automatically from the attached photo") + (if (x.isEmpty()) "" else " ($x)") + "."
     val scanTarget get() = p("Scheibe", "Target")
     fun scanWSeries(s: Int, pr: String, c: String) = p("Serie $s: gedruckt $pr, die Schüsse ergeben $c.", "Series $s: printed $pr, shots add up to $c.")
     fun scanWSeriesH(s: Int, pr: Int, c: Int) = p("Serie $s: gedrucktes 100er-Total $pr, die Schüsse ergeben $c.", "Series $s: printed 100-total $pr, shots add up to $c.")

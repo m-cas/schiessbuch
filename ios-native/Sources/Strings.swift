@@ -210,7 +210,7 @@ struct Tx {
     var scanFail: String { p("Das Foto konnte nicht gelesen werden.", "The photo could not be read.") }
     var scanCheck: String { p("Bitte die gelesenen Werte prüfen:", "Please check the values read from the photo:") }
     var scanOk: String { p("Aus dem Foto gelesen: alle gedruckten Totale stimmen. Bitte vor dem Speichern kontrollieren.", "Read from the photo: all printed totals match. Please check before saving.") }
-    func scanNote(_ x: String) -> String { p("Aus Foto gelesen", "Read from photo") + (x.isEmpty ? "" : ": " + x) }
+    func scanNote(_ x: String) -> String { p("Automatisch aus dem angehängten Foto gelesen", "Read automatically from the attached photo") + (x.isEmpty ? "" : " (\(x))") + "." }
     var scanTarget: String { p("Scheibe", "Target") }
     func scanWSeries(_ s: Int, _ pr: String, _ c: String) -> String { p("Serie \(s): gedruckt \(pr), die Schüsse ergeben \(c).", "Series \(s): printed \(pr), shots add up to \(c).") }
     func scanWSeriesH(_ s: Int, _ pr: Int, _ c: Int) -> String { p("Serie \(s): gedrucktes 100er-Total \(pr), die Schüsse ergeben \(c).", "Series \(s): printed 100-total \(pr), shots add up to \(c).") }
