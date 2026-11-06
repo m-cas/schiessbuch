@@ -109,7 +109,7 @@ struct StripParser: Sendable {
             }
             if row.hasWords || row.nums.isEmpty { return }
 
-            let nums = row.nums
+            var nums = row.nums
             if row.isSighter {
                 if nums.count >= 2, let made = makeShot(number: nums[0].value, values: Array(nums.dropFirst())) {
                     sighters.append(made.shot)
@@ -128,6 +128,11 @@ struct StripParser: Sendable {
                 }
                 lastIndex = 0
             }
+            // a stray character in front of the shot number (dash of the line above, dirt, a piece of a cut-off copy):
+            // "6 20 + 7 89", "36 10 > 3 36"
+            if nums.count >= 3, nums[0].value != lastIndex + 1, nums[0].value != lastIndex, nums[1].value == lastIndex + 1 {
+                nums.removeFirst()
+            }
             let expected = lastIndex + 1
             let first = nums[0]
 
@@ -142,6 +147,9 @@ struct StripParser: Sendable {
                           first.text.count > String(expected).count,
                           first.text.hasPrefix(String(expected)) {
                     index = expected                           // arrow read as a digit and glued on: "1↗" → "17"
+                } else if expected >= 10, first.text.count < String(expected).count,
+                          String(expected).hasSuffix(first.text), nums.count <= 3 {
+                    index = expected                           // the underlined "10" of the last row read as "0"
                 }
                 if let index, commitShot(number: index, values: Array(nums.dropFirst())) {
                     if index > expected { missing += Array(expected..<index) }
@@ -158,6 +166,11 @@ struct StripParser: Sendable {
             if layout == .rings, nums.count <= 2, first.value <= 10,
                StripParser.nextShotNumber(after: i, in: rows) == expected + 1,
                commitShot(number: expected, values: nums) {
+                return
+            }
+            // 3b. Shot number lost (smudge), but the arrow and one value are there, right after the previous shot: "> 7"
+            if nums.count == 1, row.raw.range(of: #"^\s*[>+↑↓←→↖↗↘↙]"#, options: .regularExpression) != nil,
+               first.value <= (layout == .hundreds ? 100 : 10), commitShot(number: expected, values: nums) {
                 return
             }
             // 4. Otherwise: the total line ("86  86")

@@ -102,6 +102,14 @@ eq("groups from 1", [r.sighters.length, r.series.map((x) => x.printedTotal), P.t
 r = one(["Pg220 5/0016", "1 → 7", "2 → 8 15", "1 ↓ 9", "2 ↓ 9 18", "3 ↗ 9", "4 → 8", "5 → 7 24", "6 ↓ 7", "7 ↓ 5", "8 ↓ 6 18", "60 60", "T/P 2 86", "T/P 3 83", "T/P 6 66"]);
 eq("sighters with sum", [r.sighters.map((x) => x.value), P.shots(r).length, P.total(r), P.verified(r)], [[7, 8], 8, 60, true]);
 
+// misread last rows: underlined "10" read as "0", a piece of a cut-off copy in front, the number lost in a smudge
+r = one(["Pg191 21/0004", "1 + 90", "2 > 92", "3 > 89", "4 + 99", "5 > 81", "6 + 97", "7 > 77", "8 + 100", "9 > 87", "0 90 902", "902 902"]);
+eq("underlined 10 read as 0", [P.shots(r).length, P.total(r), P.verified(r)], [10, 902, true]);
+r = one(["Pg191 21/0003", "1 > 4", "2 > 4", "3 > 3", "4 > 3", "5 > 4", "6 + 3", "7 > 4", "8 > 4", "9 > 4", "36 10 > 3 36", "36 36 36"]);
+eq("piece of the other copy in front", [P.shots(r).length, P.total(r), P.verified(r)], [10, 36, true]);
+r = one(["Pg31 23/0001", "1 > 5", "2 > 7", "3 > 4", "4 > 5", "5 > 5", "6 > 6", "7 > 9", "8 + 10", "9 > 7", "> 7"]);
+eq("number lost in a smudge", P.shots(r).map((x) => x.value), [5, 7, 4, 5, 5, 6, 9, 10, 7, 7]);
+
 // generic sheet
 r = one(["Serie 1  10.5 10.2 9.8 10.1 10.4 9.9 10.0 10.3 10.6 9.7 = 101.5"]);
 eq("generic", [r.scoringMode, P.shots(r).length, r.series[0].printedTotal, P.verified(r)], ["decimal", 10, 101.5, true]);

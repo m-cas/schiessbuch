@@ -328,13 +328,16 @@
       }
       const expected0 = st.last + 1;
       // a stray character in front of the shot number (dash of the line above, dirt): "6 20 + 7 89"
-      if (nums.length >= 3 && nums[0].value !== expected0 && nums[1].value === expected0 && nums[0].text.length === 1) nums.shift();
+      // also a piece of a cut-off copy next to it ("36 10 > 3 36")
+      if (nums.length >= 3 && nums[0].value !== expected0 && nums[0].value !== expected0 - 1 && nums[1].value === expected0) nums.shift();
       const expected = expected0, first = nums[0];
       if (nums.length >= 2) {
         let index = null;
         if (first.value === expected) index = expected;
         else if (first.value > expected && first.value <= expected + 3) index = first.value;
         else if (first.value > expected && nums.length <= 4 && first.text.length > String(expected).length && first.text.startsWith(String(expected))) index = expected;
+        // the underlined "10" of the last row read as "0": the end of the expected number, with a value after it
+        else if (expected >= 10 && first.text.length < String(expected).length && String(expected).endsWith(first.text) && nums.length >= 2 && nums.length <= 3) index = expected;
         if (index != null && commit(index, nums.slice(1))) {
           for (let k = expected; k < index; k++) st.missing.push(k);
           return;
@@ -343,6 +346,8 @@
       if (st.last === 0) return;
       if (layout === "rh" && first.value <= st.last && nums.length >= 3) { close(); return; }
       if (layout === "r" && nums.length <= 2 && first.value <= 10 && nextShotNumber(i, rows) === expected + 1 && commit(expected, nums)) return;
+      // shot number lost (smudge), but the arrow and one value are there, right after the previous shot: "> 7"
+      if (nums.length === 1 && /^\s*[>+↑↓←→↖↗↘↙]/.test(row.raw) && first.value <= (layout === "h" ? 100 : 10) && commit(expected, nums)) return;
       close(); setTotals(nums.map((n) => n.value));
     });
     close();

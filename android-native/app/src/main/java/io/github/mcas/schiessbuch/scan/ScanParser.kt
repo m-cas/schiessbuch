@@ -367,7 +367,7 @@ object Scan {
             if (SUBTOTAL_WORDS.any { row.lower.contains(it) }) { close(row.nums.map { it.value }); return@forEachIndexed }
             if (TOTAL_WORDS.any { row.lower.contains(it) }) { close(); setTotals(row.nums.map { it.value }); return@forEachIndexed }
             if (row.hasWords || row.nums.isEmpty()) return@forEachIndexed
-            val nums = row.nums
+            var nums = row.nums
             if (row.isSighter) {
                 if (nums.size >= 2) makeShot(nums[0].value, nums.drop(1))?.let { sighters += it.shot }
                 return@forEachIndexed
@@ -380,12 +380,17 @@ object Scan {
                 else close()
                 last = 0
             }
+            // a stray character in front of the shot number (dash of the line above, dirt, a piece of a cut-off copy):
+            // "6 20 + 7 89", "36 10 > 3 36"
+            if (nums.size >= 3 && nums[0].value != last + 1 && nums[0].value != last && nums[1].value == last + 1) nums = nums.drop(1)
             val expected = last + 1; val first = nums[0]
             if (nums.size >= 2) {
                 val index = when {
                     first.value == expected -> expected
                     first.value > expected && first.value <= expected + 3 -> first.value
                     first.value > expected && nums.size <= 4 && first.text.length > expected.toString().length && first.text.startsWith(expected.toString()) -> expected
+                    // the underlined "10" of the last row read as "0": the end of the expected number, with a value after it
+                    expected >= 10 && first.text.length < expected.toString().length && expected.toString().endsWith(first.text) && nums.size <= 3 -> expected
                     else -> null
                 }
                 if (index != null && commit(index, nums.drop(1))) { for (k in expected until index) missing += k; return@forEachIndexed }
@@ -393,6 +398,8 @@ object Scan {
             if (last == 0) return@forEachIndexed
             if (layout == Layout.RH && first.value <= last && nums.size >= 3) { close(); return@forEachIndexed }
             if (layout == Layout.R && nums.size <= 2 && first.value <= 10 && nextShotNumber(i) == expected + 1 && commit(expected, nums)) return@forEachIndexed
+            // shot number lost (smudge), but the arrow and one value are there, right after the previous shot: "> 7"
+            if (nums.size == 1 && Regex("""^\s*[>+↑↓←→↖↗↘↙]""").containsMatchIn(row.raw) && first.value <= (if (layout == Layout.H) 100 else 10) && commit(expected, nums)) return@forEachIndexed
             close(); setTotals(nums.map { it.value })
         }
         close()
