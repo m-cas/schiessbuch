@@ -15,14 +15,14 @@ import java.io.File
 object ScanLab {
     fun run(context: Context) {
         val dir = context.getExternalFilesDir("scanlab") ?: return
-        val reader = ScanImport.reader(context)
+        val reader = ScanOcr.reader(context)
         val out = JSONArray()
         for (f in dir.listFiles().orEmpty().filter { it.name.endsWith(".jpg") }.sortedBy { it.name }) {
             val page = JSONObject().put("file", f.name)
             try {
                 val bmp = BitmapFactory.decodeFile(f.path)
                 val t0 = System.currentTimeMillis()
-                val words = reader?.read(ScanImport.gray(bmp), bmp.width, bmp.height).orEmpty()
+                val words = reader?.read(ScanOcr.gray(bmp), bmp.width, bmp.height).orEmpty()
                 page.put("ms", System.currentTimeMillis() - t0)
                 page.put("words", JSONArray(words.map { JSONObject().put("t", it.text).put("x", it.x).put("y", it.y).put("w", it.w).put("h", it.h) }))
             } catch (e: Throwable) { page.put("error", e.toString()) }
