@@ -64,6 +64,25 @@ eq("columns", [cols.length, cols[0].join("|") === cols[1].join("|"), cols[0][0],
 const merged = P.mergeCopies(cols.flatMap((c) => P.parseAll(c)));
 eq("merged", [merged.length, merged[0].copiesRead, merged[0].copiesAgree, P.total(merged[0]), P.verified(merged[0])], [1, 2, true, 93, true]);
 
+// two copies, header of the left one misread ("Pg1i91", "21/00044"): found by the repeating rows,
+// the left copy's misread total is outvoted by the right copy
+{
+  const rows2 = [[["Pg1i91", .20], ["21/00044", .30]], [["1", .21], [">", .24], ["9", .30]], [["2", .21], [">", .24], ["7", .30]], [["3", .21], [">", .24], ["8", .30]],
+    [["4", .21], [">", .24], ["9", .30]], [["5", .21], [">", .24], ["9", .30]], [["6", .21], [">", .24], ["10", .30]], [["7", .21], [">", .24], ["9", .30]],
+    [["8", .21], [">", .24], ["9", .30]], [["9", .21], [">", .24], ["9", .30]], [["10", .20], ["+", .24], ["10", .30], ["89", .40]], [["89", .30], ["89", .40]]];
+  const w2 = [];
+  rows2.forEach((row, i) => { const y = 0.9 - i * 0.03; for (const [t, x] of row) for (const off of [0, 0.33]) w2.push({ text: off && t === "Pg1i91" ? "Pg191" : off && t === "21/00044" ? "21/0004" : t, x: x + off, y, w: 0.015 * t.length, h: 0.02 }); });
+  const c2 = P.columns(w2);
+  const m2 = P.mergeCopies(c2.flatMap((c) => P.parseAll(c)));
+  eq("copies without header", [c2.length, m2.length, m2[0].targetLabel, P.shots(m2[0]).length, P.total(m2[0]), P.verified(m2[0])], [2, 1, "21/0004", 10, 89, true]);
+  // a single copy where a value equals its shot number is not split
+  const w3 = [];
+  [[["1", .21], [">", .24], ["1", .30]], [["2", .21], [">", .24], ["9", .30]], [["3", .21], [">", .24], ["3", .30]], [["4", .21], [">", .24], ["9", .30]],
+   [["5", .21], [">", .24], ["9", .30]], [["6", .21], [">", .24], ["9", .30]], [["7", .21], [">", .24], ["9", .30]], [["8", .21], [">", .24], ["8", .30]],
+   [["9", .21], [">", .24], ["9", .30]], [["10", .20], [">", .24], ["10", .30]]].forEach((row, i) => { for (const [t, x] of row) w3.push({ text: t, x, y: 0.9 - i * 0.03, w: 0.015 * t.length, h: 0.02 }); });
+  eq("single copy stays one", P.columns(w3).length, 1);
+}
+
 // generic sheet
 r = one(["Serie 1  10.5 10.2 9.8 10.1 10.4 9.9 10.0 10.3 10.6 9.7 = 101.5"]);
 eq("generic", [r.scoringMode, P.shots(r).length, r.series[0].printedTotal, P.verified(r)], ["decimal", 10, 101.5, true]);

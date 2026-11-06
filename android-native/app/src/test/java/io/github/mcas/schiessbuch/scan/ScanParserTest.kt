@@ -90,4 +90,19 @@ class ScanParserTest {
         assertEquals(1, merged.size); assertEquals(2, merged[0].copiesRead); assertEquals(true, merged[0].copiesAgree)
         assertEquals(93.0, merged[0].total, 0.0); assertTrue(merged[0].isVerified)
     }
+
+    @Test fun copiesFoundWithoutHeader() {
+        val rows = listOf(listOf("Pg1i91" to .20, "21/00044" to .30), listOf("1" to .21, ">" to .24, "9" to .30), listOf("2" to .21, ">" to .24, "7" to .30),
+            listOf("3" to .21, ">" to .24, "8" to .30), listOf("4" to .21, ">" to .24, "9" to .30), listOf("5" to .21, ">" to .24, "9" to .30),
+            listOf("6" to .21, ">" to .24, "10" to .30), listOf("7" to .21, ">" to .24, "9" to .30), listOf("8" to .21, ">" to .24, "9" to .30),
+            listOf("9" to .21, ">" to .24, "9" to .30), listOf("10" to .20, "+" to .24, "10" to .30, "89" to .40), listOf("89" to .30, "89" to .40))
+        val words = rows.flatMapIndexed { i, row -> row.flatMap { (t, x) -> listOf(0.0, 0.33).map { off ->
+            val text = if (off > 0 && t == "Pg1i91") "Pg191" else if (off > 0 && t == "21/00044") "21/0004" else t
+            Word(text, x + off, 0.9 - i * 0.03, 0.015 * t.length, 0.02) } } }
+        val cols = Scan.columns(words)
+        assertEquals(2, cols.size)
+        val merged = Scan.mergeCopies(cols.flatMap { Scan.parseAll(it) })
+        assertEquals(1, merged.size); assertEquals("21/0004", merged[0].targetLabel)
+        assertEquals(10, merged[0].shots.size); assertEquals(89.0, merged[0].total, 0.0); assertTrue(merged[0].isVerified)
+    }
 }

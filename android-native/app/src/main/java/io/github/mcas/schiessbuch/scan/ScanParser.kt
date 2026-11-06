@@ -463,28 +463,104 @@ object Scan {
         return words.any { v -> v.x > w.maxX && v.x - w.maxX < 0.35 && abs(v.midY - w.midY) < w.h && Regex("""^\d{1,3}/\d{2,4}$""").matches(v.text) }
     }
 
+    /**
+     * Copies printed side by side repeat every row at the same horizontal distance (same text, same height).
+     * Returns the x where the right copy starts, or null. Needs that pattern in at least half the rows, so a
+     * value equal to its shot number ("9 > 9") in a single copy doesn't count. Same rules as scan.js.
+     */
+    private fun copySplit(words: List<Word>): Double? {
+        if (words.size < 8) return null
+        val pairs = mutableListOf<Triple<Word, Word, Double>>()
+        for (a in words) for (b in words) {
+            if (b === a || b.x <= a.x || a.text != b.text) continue
+            if (abs(a.midY - b.midY) < 0.5 * minOf(a.h, b.h)) pairs += Triple(a, b, b.x - a.x)
+        }
+        if (pairs.size < 4) return null
+        val bins = HashMap<Long, Int>()
+        for ((_, _, dx) in pairs) { val k = Math.round(dx / 0.01); for (j in k - 1..k + 1) bins[j] = (bins[j] ?: 0) + 1 }
+        val best = bins.maxBy { it.value }.key
+        val near = pairs.filter { abs(it.third - best * 0.01) <= 0.015 }
+        val dx = near.sumOf { it.third } / near.size
+        val rowCount = rows(words).size
+        val rowMids = near.map { Math.round(it.first.midY / maxOf(0.004, it.first.h * 0.8)) }.toSet()
+        if (near.size < 4 || rowMids.size < maxOf(4.0, 0.5 * rowCount)) return null
+        val left = near.minOf { it.first.x }
+        // split in the middle of the widest empty strip just before where the right copy lines up
+        val lo = left + dx - 0.15; val hi = left + dx + 0.01
+        val iv = words.filter { it.maxX > lo && it.x < hi }.map { maxOf(lo, it.x) to minOf(hi, it.maxX) }.sortedBy { it.first }
+        var bestX = hi - 0.01; var bestW = 0.0; var cur = lo
+        for ((x0, x1) in iv) { if (x0 - cur > bestW) { bestX = (cur + x0) / 2; bestW = x0 - cur }; cur = maxOf(cur, x1) }
+        if (hi - cur > bestW) bestX = (cur + hi) / 2
+        return bestX
+    }
+
     fun columns(words: List<Word>): List<List<String>> {
         if (words.isEmpty()) return emptyList()
         val anchors = words.filter { isAnchor(it, words) }.map { it.x }.sorted()
         val clusters = mutableListOf<Double>()
         for (x in anchors) if (clusters.isEmpty() || x - clusters.last() >= 0.06) clusters += x
         val starts = if (clusters.size > 1) clusters.map { maxOf(0.0, it - 0.03) }.toMutableList().also { it[0] = 0.0 } else mutableListOf(0.0)
-        val buckets = starts.map { mutableListOf<Word>() }
-        for (w in words) buckets[starts.indexOfLast { w.x >= it }.coerceAtLeast(0)] += w
+        var buckets: List<List<Word>> = starts.map { mutableListOf<Word>() }.also { b -> for (w in words) b[starts.indexOfLast { w.x >= it }.coerceAtLeast(0)] += w }
+        // a copy whose header was misread is still found by its repeating rows
+        repeat(6) {
+            var changed = false
+            buckets = buckets.flatMap { b ->
+                val x = copySplit(b) ?: return@flatMap listOf(b)
+                val l = b.filter { it.x < x }; val r = b.filter { it.x >= x }
+                if (l.isEmpty() || r.isEmpty()) listOf(b) else { changed = true; listOf(l, r) }
+            }
+            if (!changed) return buckets.map(::rows).filter { it.isNotEmpty() }
+        }
         return buckets.map(::rows).filter { it.isNotEmpty() }
     }
 
     // ---------- copies printed side by side ----------
+    private fun lev(a: String, b: String): Int {
+        val d = IntArray(b.length + 1) { it }
+        for (i in 1..a.length) {
+            var p = d[0]; d[0] = i
+            for (j in 1..b.length) { val t = d[j]; d[j] = minOf(d[j] + 1, d[j - 1] + 1, p + if (a[i - 1] != b[j - 1]) 1 else 0); p = t }
+        }
+        return d[b.length]
+    }
+
+    /** Two readings of the same printout: same target (a misread character or two allowed), or mostly the same shots. */
+    private fun sameCopy(a: ScanResult, b: ScanResult): Boolean {
+        val ta = a.targetLabel; val tb = b.targetLabel
+        if (ta != null && tb != null) return lev(ta, tb) <= 2 && lev(ta, tb) < minOf(ta.length, tb.length) / 2.0
+        val x = a.shots.map { it.value }; val y = b.shots.map { it.value }
+        if (x.size < 4 || x.size != y.size) return false
+        return x.indices.count { x[it] == y[it] } >= 0.7 * x.size
+    }
+
+    /** Neither copy adds up: take each series from the copy whose series matches its printed subtotal. */
+    private fun combineCopies(copies: List<ScanResult>): ScanResult? {
+        val base = copies[0]
+        if (!copies.all { c -> c.series.size == base.series.size && c.series.indices.all { c.series[it].shots.size == base.series[it].shots.size } }) return null
+        val r = ScanResult(base.scoringMode, base.recognizedLines)
+        r.sighters = base.sighters; r.deepShots = base.deepShots; r.printedHundredTotal = base.printedHundredTotal
+        r.program = base.program; r.targetLabel = base.targetLabel; r.date = base.date; r.time = base.time
+        r.series = base.series.indices.map { i -> copies.map { it.series[i] }.firstOrNull { it.isConsistent == true } ?: base.series[i] }
+        r.printedTotal = copies.mapNotNull { it.printedTotal }.firstOrNull { abs(it - r.computedTotal) < TOL } ?: base.printedTotal
+        r.warnings = validate(r, emptyList()).toMutableList()
+        return if (r.isVerified) r else null
+    }
+
     fun mergeCopies(results: List<ScanResult>): List<ScanResult> {
-        val groups = mutableListOf<MutableList<ScanResult>>(); val idx = mutableMapOf<String, Int>()
+        val groups = mutableListOf<MutableList<ScanResult>>()
         for (r in results) {
-            val key = r.targetLabel?.let { "${r.program ?: ""}|$it" }
-            if (key != null && key in idx) groups[idx[key]!!] += r
-            else { if (key != null) idx[key] = groups.size; groups += mutableListOf(r) }
+            val g = groups.firstOrNull { gr -> gr.any { c -> sameCopy(c, r) && (c.program == null || r.program == null || c.program == r.program || lev(c.program!!, r.program!!) <= 1) } }
+            if (g != null) g += r else groups += mutableListOf(r)
         }
         return groups.map { copies ->
             if (copies.size == 1) return@map copies[0]
-            val best = copies.sortedWith(compareBy<ScanResult>({ if (it.isVerified) 0 else 1 }, { it.warnings.size }, { -it.shots.size })).first()
+            var best = copies.sortedWith(compareBy<ScanResult>({ if (it.isVerified) 0 else 1 }, { it.warnings.size }, { -it.shots.size })).first()
+            if (!best.isVerified) best = combineCopies(copies) ?: best
+            // the label as printed: the form the copies agree on, else the one shaped like "21/0004"
+            val labels = copies.mapNotNull { it.targetLabel }
+            val shaped = labels.filter { Regex("""^\d{1,3}/\d{1,4}$""").matches(it) && !Regex("""^\d{3}/\d{4}$""").matches(it) }
+            val common = labels.firstOrNull { l -> labels.count { it == l } > 1 }
+            best.targetLabel = common ?: shaped.firstOrNull { Regex("""^\d{2}/\d{4}$""").matches(it) } ?: shaped.firstOrNull() ?: best.targetLabel
             val agree = copies.map { c -> c.shots.map { it.value } }.toSet().size == 1
             best.copiesRead = copies.size; best.copiesAgree = agree
             if (!agree && !best.isVerified) best.warnings += ScanWarning.Copies

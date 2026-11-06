@@ -59,16 +59,55 @@ enum ResultAssembler {
     /// program + label are merged; the copy whose totals check out wins.
     static func mergeCopies(_ results: [ShootingResult]) -> [ShootingResult] {
         var groups: [[ShootingResult]] = []
-        var groupIndex: [String: Int] = [:]
         for result in results {
-            if let key = result.copyKey, let i = groupIndex[key] {
+            if let i = groups.firstIndex(where: { g in g.contains { c in
+                sameCopy(c, result) && (c.program == nil || result.program == nil || c.program == result.program
+                                        || lev(c.program!, result.program!) <= 1) } }) {
                 groups[i].append(result)
             } else {
-                if let key = result.copyKey { groupIndex[key] = groups.count }
                 groups.append([result])
             }
         }
         return groups.map(mergeGroup)
+    }
+
+    static func lev(_ a: String, _ b: String) -> Int {
+        let a = Array(a), b = Array(b)
+        var d = Array(0...b.count)
+        guard !a.isEmpty else { return b.count }
+        for i in 1...a.count {
+            var p = d[0]; d[0] = i
+            if b.isEmpty { continue }
+            for j in 1...b.count {
+                let t = d[j]
+                d[j] = min(d[j] + 1, d[j - 1] + 1, p + (a[i - 1] != b[j - 1] ? 1 : 0))
+                p = t
+            }
+        }
+        return d[b.count]
+    }
+
+    /// Two readings of the same printout: same target (a misread character or two allowed), or mostly the same shots.
+    static func sameCopy(_ a: ShootingResult, _ b: ShootingResult) -> Bool {
+        if let ta = a.targetLabel, let tb = b.targetLabel {
+            let d = lev(ta, tb)
+            return d <= 2 && Double(d) < Double(min(ta.count, tb.count)) / 2
+        }
+        let x = a.shots.map(\.value), y = b.shots.map(\.value)
+        guard x.count >= 4, x.count == y.count else { return false }
+        return Double(zip(x, y).filter { $0 == $1 }.count) >= 0.7 * Double(x.count)
+    }
+
+    /// Neither copy adds up: take each series from the copy whose series matches its printed subtotal.
+    static func combineCopies(_ copies: [ShootingResult]) -> ShootingResult? {
+        let base = copies[0]
+        guard copies.allSatisfy({ c in c.series.count == base.series.count
+            && zip(c.series, base.series).allSatisfy { $0.shots.count == $1.shots.count } }) else { return nil }
+        var r = base
+        r.series = base.series.indices.map { i in copies.map { $0.series[i] }.first { $0.isConsistent == true } ?? base.series[i] }
+        r.printedTotal = copies.compactMap(\.printedTotal).first { abs($0 - r.computedTotal) < ScoreMath.tolerance } ?? base.printedTotal
+        r.warnings = StripParser.validate(r, missing: [])
+        return r.isVerified ? r : nil
     }
 
     private static func mergeGroup(_ copies: [ShootingResult]) -> ShootingResult {
@@ -77,6 +116,13 @@ enum ResultAssembler {
             (r.isVerified ? 0 : 1, r.warnings.count, -r.shots.count)
         }
         var best = copies.min { rank($0) < rank($1) }!
+        if !best.isVerified, let combined = combineCopies(copies) { best = combined }
+        // the label as printed: the form the copies agree on, else the one shaped like "21/0004"
+        let labels = copies.compactMap(\.targetLabel)
+        func matches(_ s: String, _ re: String) -> Bool { s.range(of: re, options: .regularExpression) != nil }
+        let shaped = labels.filter { matches($0, #"^\d{1,3}/\d{1,4}$"#) && !matches($0, #"^\d{3}/\d{4}$"#) }
+        let common = labels.first { l in labels.filter { $0 == l }.count > 1 }
+        best.targetLabel = common ?? shaped.first { matches($0, #"^\d{2}/\d{4}$"#) } ?? shaped.first ?? best.targetLabel
         let agree = Set(copies.map { $0.shots.map(\.value) }).count == 1
         best.copiesRead = copies.count
         best.copiesAgree = agree

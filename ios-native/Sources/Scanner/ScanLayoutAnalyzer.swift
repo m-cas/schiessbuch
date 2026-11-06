@@ -32,7 +32,59 @@ enum LayoutAnalyzer {
             let i = starts.lastIndex { word.box.minX >= $0 } ?? 0
             buckets[i].append(word)
         }
+        // a copy whose header was misread is still found by its repeating rows
+        for _ in 0..<6 {
+            var changed = false
+            buckets = buckets.flatMap { b -> [[TextFragment]] in
+                guard let x = copySplit(b) else { return [b] }
+                let l = b.filter { $0.box.minX < x }, r = b.filter { $0.box.minX >= x }
+                if l.isEmpty || r.isEmpty { return [b] }
+                changed = true
+                return [l, r]
+            }
+            if !changed { break }
+        }
         return buckets.map(rows).filter { !$0.isEmpty }
+    }
+
+    /// Copies printed side by side repeat every row at the same horizontal distance (same text, same height).
+    /// Returns the x where the right copy starts, or nil. Needs that pattern in at least half the rows, so a
+    /// value equal to its shot number ("9 > 9") in a single copy doesn't count. Same rules as scan.js.
+    static func copySplit(_ words: [TextFragment]) -> CGFloat? {
+        guard words.count >= 8 else { return nil }
+        var pairs: [(a: TextFragment, dx: CGFloat)] = []
+        for a in words {
+            for b in words where b.box.minX > a.box.minX && a.text == b.text {
+                if abs(a.box.midY - b.box.midY) < 0.5 * min(a.box.height, b.box.height) {
+                    pairs.append((a, b.box.minX - a.box.minX))
+                }
+            }
+        }
+        guard pairs.count >= 4 else { return nil }
+        var bins: [Int: Int] = [:]
+        for p in pairs {
+            let k = Int((p.dx / 0.01).rounded())
+            for j in (k - 1)...(k + 1) { bins[j, default: 0] += 1 }
+        }
+        guard let best = bins.max(by: { $0.value < $1.value })?.key else { return nil }
+        let near = pairs.filter { abs($0.dx - CGFloat(best) * 0.01) <= 0.015 }
+        guard !near.isEmpty else { return nil }
+        let dx = near.map(\.dx).reduce(0, +) / CGFloat(near.count)
+        let rowCount = rows(words).filter { !$0.isEmpty }.count
+        let rowMids = Set(near.map { Int(($0.a.box.midY / max(0.004, $0.a.box.height * 0.8)).rounded()) })
+        guard near.count >= 4, Double(rowMids.count) >= max(4, 0.5 * Double(rowCount)) else { return nil }
+        let left = near.map(\.a.box.minX).min()!
+        // split in the middle of the widest empty strip just before where the right copy lines up
+        let lo = left + dx - 0.15, hi = left + dx + 0.01
+        let iv = words.filter { $0.box.maxX > lo && $0.box.minX < hi }
+            .map { (max(lo, $0.box.minX), min(hi, $0.box.maxX)) }.sorted { $0.0 < $1.0 }
+        var bestX = hi - 0.01, bestW: CGFloat = 0, cur = lo
+        for (x0, x1) in iv {
+            if x0 - cur > bestW { bestX = (cur + x0) / 2; bestW = x0 - cur }
+            cur = max(cur, x1)
+        }
+        if hi - cur > bestW { bestX = (cur + hi) / 2 }
+        return bestX
     }
 
     /// Lines in reading order (for the sideways header pass, where Vision lines are enough).
