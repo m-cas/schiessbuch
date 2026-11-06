@@ -36,8 +36,12 @@ HEADER = ["Benutzer", "Datum", "Kategorie", "Disziplin", "Beschreibung", "Schies
 WIDTHS = [14, 11, 13, 16, 26, 14, 12, 18, 6, 34, 60, 9, 9, 12, 10, 10, 10, 30, 6, 17]
 
 MONTHS = {"jan": 1, "feb": 2, "mär": 3, "mar": 3, "apr": 4, "mai": 5, "may": 5, "jun": 6, "jul": 7,
-          "aug": 8, "sep": 9, "okt": 10, "oct": 10, "nov": 11, "dez": 12, "dec": 12}
-CATEGORIES = {"training", "meisterschaft", "andere", "championship", "other"}
+          "aug": 8, "sep": 9, "okt": 10, "oct": 10, "nov": 11, "dez": 12, "dec": 12,
+          # French and Italian
+          "fév": 2, "avr": 4, "juin": 6, "juil": 7, "aoû": 8, "déc": 12,
+          "gen": 1, "mag": 5, "giu": 6, "lug": 7, "ago": 8, "set": 9, "ott": 10, "dic": 12}
+CATEGORIES = {"training", "meisterschaft", "andere", "championship", "other",
+              "entraînement", "championnat", "autre", "allenamento", "campionato", "altro"}
 # Field lines of a session, German and English
 FIELDS = {
     "disziplin": "discipline", "discipline": "discipline",
@@ -47,9 +51,13 @@ FIELDS = {
     "bedingungen": "conditions", "conditions": "conditions",
     "notizen": "notes", "notes": "notes",
     "scheibenfotos": "photos", "target photos": "photos",
+    # French and Italian
+    "disciplina": "discipline", "descrizione": "description", "stand": "range", "stand de tir": "range",
+    "arme": "weapon", "arma": "weapon", "condizioni": "conditions", "note": "notes",
+    "photos de cibles": "photos", "foto dei bersagli": "photos",
 }
 DATE_LINE = re.compile(r"^(?P<date>.+?\d{4})\s+[—–-]\s+(?P<cat>.+)$")
-SERIES_LINE = re.compile(r"^\s*(?:Serie|Series)\s+(?P<n>\d+)\s+\[(?P<fmt>.*?)\]:\s*(?P<rest>.*)$")
+SERIES_LINE = re.compile(r"^\s*(?:Serie|Series|Série)\s+(?P<n>\d+)\s+\[(?P<fmt>.*?)\]:\s*(?P<rest>.*)$")
 
 
 def parse_date(text):
@@ -61,9 +69,10 @@ def parse_date(text):
     m = re.search(r"(\d{1,2})[./](\d{1,2})[./](\d{4})", t)
     if m:
         return dt.date(int(m[3]), int(m[2]), int(m[1]))
-    m = re.search(r"(\d{1,2})\.?\s+([A-Za-zÄÖÜäöü]+)\.?\s+(\d{4})", t)
+    m = re.search(r"(\d{1,2})\.?\s+([^\W\d_]+)\.?\s+(\d{4})", t)
     if m:
-        mon = MONTHS.get(m[2].lower()[:3].replace("ae", "ä"))
+        name = m[2].lower()
+        mon = MONTHS.get(name[:4]) or MONTHS.get(name[:3].replace("ae", "ä"))
         if mon:
             return dt.date(int(m[3]), mon, int(m[1]))
     return None
@@ -90,8 +99,8 @@ def parse_series(line):
         return None
     tail = score[3]
     xs = re.search(r"(\d+)\s*X\b", tail)
-    tief = re.search(r"Tiefschuss\s+(\d+)", tail)
-    prac = re.search(r"\((?:Probe|practice)\s+(\d+)", tail)
+    tief = re.search(r"(?:Tiefschuss|Coup profond|Colpo profondo)\s+(\d+)", tail)
+    prac = re.search(r"\((?:Probe|practice|essai|prova)\s+(\d+)", tail)
     total, mx = number(score[1]), int(score[2])
     shots = left.strip()
     if shots in ("—", "-"):

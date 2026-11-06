@@ -1,13 +1,18 @@
 import SwiftUI
 
-/// App texts in German and English. The language is chosen in Settings (like the web app),
-/// independent of the phone's language.
+/// App texts in German, English, French and Italian. The language is chosen in Settings (like the web app),
+/// independent of the phone's language. French and Italian come from i18n.json (translated from the English text).
 struct Tx {
-    let de: Bool
-    init(_ lang: String) { de = lang == "de" }
-    private func p(_ d: String, _ e: String) -> String { de ? d : e }
+    let lang: String
+    var de: Bool { lang == "de" }
+    var fr: Bool { lang == "fr" }
+    var it: Bool { lang == "it" }
+    init(_ lang: String) { self.lang = ["de", "fr", "it"].contains(lang) ? lang : "en" }
+    private func p(_ d: String, _ e: String) -> String { de ? d : (fr || it) ? I18n.tr(e, lang) : e }
+    /// Texts with plural logic, written out per language.
+    private func q(_ d: String, _ e: String, _ f: String, _ i: String) -> String { de ? d : fr ? f : it ? i : e }
 
-    var locale: Locale { Locale(identifier: de ? "de_CH" : "en_GB") }
+    var locale: Locale { Locale(identifier: de ? "de_CH" : fr ? "fr_CH" : it ? "it_CH" : "en_GB") }
     var appName: String { "CHSchiessbuch" }
 
     // main
@@ -29,11 +34,11 @@ struct Tx {
     var discipline: String { p("Disziplin", "Discipline") }
     var category: String { p("Kategorie", "Category") }
     var filter: String { p("Filter", "Filter") }
-    func sessionsN(_ n: Int) -> String { de ? "\(n) \(n == 1 ? "Übung" : "Übungen")" : "\(n) \(n == 1 ? "session" : "sessions")" }
-    func seriesN(_ n: Int) -> String { de ? "\(n) \(n == 1 ? "Serie" : "Serien")" : "\(n) series" }
-    func shotsN(_ n: Int) -> String { de ? "\(n) \(n == 1 ? "Schuss" : "Schüsse")" : "\(n) \(n == 1 ? "shot" : "shots")" }
-    func photosN(_ n: Int) -> String { de ? "\(n) \(n == 1 ? "Foto" : "Fotos")" : "\(n) \(n == 1 ? "photo" : "photos")" }
-    func selected(_ n: Int) -> String { de ? "\(n) ausgewählt" : "\(n) selected" }
+    func sessionsN(_ n: Int) -> String { "\(n) " + (n == 1 ? q("Übung", "session", "exercice", "esercizio") : q("Übungen", "sessions", "exercices", "esercizi")) }
+    func seriesN(_ n: Int) -> String { "\(n) " + (n == 1 ? q("Serie", "series", "série", "serie") : q("Serien", "series", "séries", "serie")) }
+    func shotsN(_ n: Int) -> String { "\(n) " + (n == 1 ? q("Schuss", "shot", "coup", "colpo") : q("Schüsse", "shots", "coups", "colpi")) }
+    func photosN(_ n: Int) -> String { "\(n) " + (n == 1 ? q("Foto", "photo", "photo", "foto") : q("Fotos", "photos", "photos", "foto")) }
+    func selected(_ n: Int) -> String { "\(n) " + q("ausgewählt", "selected", n == 1 ? "sélectionné" : "sélectionnés", n == 1 ? "selezionato" : "selezionati") }
     func yearAvg(_ a: String, _ n: Int) -> String { "Ø \(a) · " + sessionsN(n) }
 
     func disciplineName(_ d: Discipline) -> String {
@@ -73,7 +78,7 @@ struct Tx {
         if s.isComposite, let parts = s.parts { return groupingText(parts, practice: chPrac) }
         guard s.format == .custom else { return formatName(s.format, discipline: discipline) }
         let st = s.stats
-        let pr = st.practiceCount > 0 ? (de ? "\(st.practiceCount) Probe + " : "\(st.practiceCount) practice + ") : ""
+        let pr = st.practiceCount > 0 ? "\(st.practiceCount) " + q("Probe", "practice", "d'essai", "di prova") + " + " : ""
         return p("Eigene", "Custom") + " · " + pr + shotsN(st.counted) + " · " + s.targetValue.rawValue
     }
     func segmentName(_ k: SegmentKind, count: Int) -> String {
@@ -126,8 +131,9 @@ struct Tx {
     var discardChanges: String { p("Änderungen verwerfen?", "Discard changes?") }
     var discard: String { p("Verwerfen", "Discard") }
     func confirmDelete(_ n: Int, photos: Int) -> String {
-        de ? "\(sessionsN(n))\(photos > 0 ? " und \(photosN(photos))" : "") löschen? Das kann nicht rückgängig gemacht werden."
-           : "Delete \(sessionsN(n))\(photos > 0 ? " and \(photosN(photos))" : "")? This can't be undone."
+        let ph = photos > 0 ? " " + q("und", "and", "et", "e") + " " + photosN(photos) : ""
+        return q("\(sessionsN(n))\(ph) löschen? Das kann nicht rückgängig gemacht werden.", "Delete \(sessionsN(n))\(ph)? This can't be undone.",
+                 "Supprimer \(sessionsN(n))\(ph) ? Cette action est définitive.", "Eliminare \(sessionsN(n))\(ph)? L'operazione non può essere annullata.")
     }
     var shot: String { p("Schuss", "Shot") }
     var practiceShot: String { p("Probeschuss", "Practice shot") }
@@ -234,7 +240,7 @@ struct Tx {
     var chFromFile: String { p("Datei wählen", "Choose file") }
     var chActivate: String { p("Aktivieren", "Activate") }
     var chSettings: String { p("Meisterschaft einrichten", "Championship settings") }
-    func chSoon(_ d: Int) -> String { d == 0 ? p("Heute", "Today") : de ? "In \(d) \(d == 1 ? "Tag" : "Tagen")" : "In \(d) \(d == 1 ? "day" : "days")" }
+    func chSoon(_ d: Int) -> String { d == 0 ? p("Heute", "Today") : q("In \(d) \(d == 1 ? "Tag" : "Tagen")", "In \(d) \(d == 1 ? "day" : "days")", "Dans \(d) \(d == 1 ? "jour" : "jours")", "Tra \(d) \(d == 1 ? "giorno" : "giorni")") }
     var chPast: String { p("Überfällig", "Overdue") }
     var chLateAsk: String { p("Diese Übung ist überfällig und wird mit einem Abzug bestraft. Möchtest du fortfahren?", "This activity is overdue and will incur a penalty. Do you want to continue?") }
     var chLateGo: String { p("Fortfahren", "Continue") }
@@ -251,7 +257,7 @@ struct Tx {
     func chAskSame(_ y: Int) -> String { p("Meisterschaft \(y) neu laden? Aktivierte Einträge und ihre Übungen bleiben erhalten.", "Reload championship \(y)? Activated items and their sessions stay as they are.") }
     func chAskNew(_ y: Int, _ old: Int) -> String { p("Meisterschaft \(y) laden? Sie ersetzt \(old). Alle erfassten Übungen bleiben.", "Load championship \(y)? It replaces \(old). All recorded sessions stay.") }
     func chLoaded(_ n: Int, _ y: Int) -> String { p("\(n) Einträge für \(y) geladen", "\(n) items loaded for \(y)") }
-    func chWarnN(_ n: Int) -> String { de ? "\(n) \(n == 1 ? "Zeile" : "Zeilen") mit Problemen" : "\(n) \(n == 1 ? "line" : "lines") with problems" }
+    func chWarnN(_ n: Int) -> String { q("\(n) \(n == 1 ? "Zeile" : "Zeilen") mit Problemen", "\(n) \(n == 1 ? "line" : "lines") with problems", "\(n) \(n == 1 ? "ligne" : "lignes") avec des problèmes", "\(n) \(n == 1 ? "riga" : "righe") con problemi") }
     var chNoRows: String { p("Die Datei enthält keine Einträge.", "The file contains no items.") }
     var chNeedCols: String { p("Die Datei braucht mindestens die Spalten titel und disziplin.", "The file needs at least the columns titel and disziplin.") }
     var chNoYear: String { p("Die Datei braucht ein Jahr (Spalte jahr).", "The file needs a year (column jahr).") }

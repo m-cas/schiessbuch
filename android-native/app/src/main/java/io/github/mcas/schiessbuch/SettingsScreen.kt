@@ -132,8 +132,9 @@ fun SettingsScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                 item { SectionLabel(tx.language) }
                 item {
                     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                        listOf("de" to "Deutsch", "en" to "English").forEachIndexed { i, (k, l) ->
-                            SegmentedButton(selected = prefs.lang == k, onClick = { prefs.lang = k }, shape = SegmentedButtonDefaults.itemShape(i, 2)) { Text(l) }
+                        listOf("de" to "Deutsch", "fr" to "Français", "it" to "Italiano", "en" to "English").forEachIndexed { i, (k, l) ->
+                            SegmentedButton(selected = prefs.lang == k, onClick = { prefs.lang = k }, shape = SegmentedButtonDefaults.itemShape(i, 4),
+                                icon = {}) { Text(l, maxLines = 1, softWrap = false, style = MaterialTheme.typography.labelMedium) }
                         }
                     }
                 }

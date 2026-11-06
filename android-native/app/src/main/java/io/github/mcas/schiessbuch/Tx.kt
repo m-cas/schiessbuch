@@ -5,11 +5,19 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 
-/** App texts in German and English; the language is chosen in Settings, like the web app. */
-class Tx(lang: String) {
+/**
+ * App texts in German, English, French and Italian; the language is chosen in Settings, like the web app.
+ * French and Italian come from assets/i18n.json (translated from the English text, see I18n).
+ */
+class Tx(lang0: String) {
+    val lang = if (lang0 in listOf("de", "fr", "it")) lang0 else "en"
     val de = lang == "de"
-    private fun p(d: String, e: String) = if (de) d else e
-    val locale: Locale = if (de) Locale.forLanguageTag("de-CH") else Locale.UK
+    val fr = lang == "fr"
+    val itLang = lang == "it"
+    private fun p(d: String, e: String) = if (de) d else if (fr || itLang) I18n.tr(e, lang) else e
+    /** Texts with plural logic, written out per language. */
+    private fun q(d: String, e: String, f: String, i: String) = if (de) d else if (fr) f else if (itLang) i else e
+    val locale: Locale = when (lang) { "de" -> Locale.forLanguageTag("de-CH"); "fr" -> Locale.forLanguageTag("fr-CH"); "it" -> Locale.forLanguageTag("it-CH"); else -> Locale.UK }
 
     val appName = "CHSchiessbuch"
     val sessions get() = p("Übungen", "Sessions")
@@ -27,11 +35,11 @@ class Tx(lang: String) {
     val noMatch get() = p("Keine Übungen für diese Auswahl.", "No sessions for this selection.")
     val discipline get() = p("Disziplin", "Discipline")
     val category get() = p("Kategorie", "Category")
-    fun sessionsN(n: Int) = if (de) "$n ${if (n == 1) "Übung" else "Übungen"}" else "$n ${if (n == 1) "session" else "sessions"}"
-    fun seriesN(n: Int) = if (de) "$n ${if (n == 1) "Serie" else "Serien"}" else "$n series"
-    fun shotsN(n: Int) = if (de) "$n ${if (n == 1) "Schuss" else "Schüsse"}" else "$n ${if (n == 1) "shot" else "shots"}"
-    fun photosN(n: Int) = if (de) "$n ${if (n == 1) "Foto" else "Fotos"}" else "$n ${if (n == 1) "photo" else "photos"}"
-    fun selected(n: Int) = if (de) "$n ausgewählt" else "$n selected"
+    fun sessionsN(n: Int) = "$n " + if (n == 1) q("Übung", "session", "exercice", "esercizio") else q("Übungen", "sessions", "exercices", "esercizi")
+    fun seriesN(n: Int) = "$n " + if (n == 1) q("Serie", "series", "série", "serie") else q("Serien", "series", "séries", "serie")
+    fun shotsN(n: Int) = "$n " + if (n == 1) q("Schuss", "shot", "coup", "colpo") else q("Schüsse", "shots", "coups", "colpi")
+    fun photosN(n: Int) = "$n " + if (n == 1) q("Foto", "photo", "photo", "foto") else q("Fotos", "photos", "photos", "foto")
+    fun selected(n: Int) = "$n " + q("ausgewählt", "selected", if (n == 1) "sélectionné" else "sélectionnés", if (n == 1) "selezionato" else "selezionati")
     fun yearAvg(a: String, n: Int) = "Ø $a · " + sessionsN(n)
 
     fun disciplineName(d: Discipline) = when (d) {
@@ -67,7 +75,7 @@ class Tx(lang: String) {
         if (s.isComposite) return groupingText(s.parts!!, ::chPrac)
         if (s.format != SeriesFormat.CUSTOM) return formatName(s.format, d)
         val st = s.stats
-        val pr = if (st.practiceCount > 0) (if (de) "${st.practiceCount} Probe + " else "${st.practiceCount} practice + ") else ""
+        val pr = if (st.practiceCount > 0) "${st.practiceCount} " + q("Probe", "practice", "d'essai", "di prova") + " + " else ""
         return p("Eigene", "Custom") + " · " + pr + shotsN(st.counted) + " · " + s.targetValue.key
     }
     fun segmentName(k: SegmentKind, count: Int) = when (k) {
@@ -119,9 +127,11 @@ class Tx(lang: String) {
     val editSessionTitle get() = p("Übung bearbeiten", "Edit Session")
     val discardChanges get() = p("Änderungen verwerfen?", "Discard changes?")
     val discard get() = p("Verwerfen", "Discard")
-    fun confirmDelete(n: Int, photos: Int) =
-        if (de) "${sessionsN(n)}${if (photos > 0) " und ${photosN(photos)}" else ""} löschen? Das kann nicht rückgängig gemacht werden."
-        else "Delete ${sessionsN(n)}${if (photos > 0) " and ${photosN(photos)}" else ""}? This can't be undone."
+    fun confirmDelete(n: Int, photos: Int): String {
+        val ph = if (photos > 0) " " + q("und", "and", "et", "e") + " " + photosN(photos) else ""
+        return q("${sessionsN(n)}$ph löschen? Das kann nicht rückgängig gemacht werden.", "Delete ${sessionsN(n)}$ph? This can't be undone.",
+            "Supprimer ${sessionsN(n)}$ph ? Cette action est définitive.", "Eliminare ${sessionsN(n)}$ph? L'operazione non può essere annullata.")
+    }
     val shot get() = p("Schuss", "Shot")
     val practiceShot get() = p("Probeschuss", "Practice shot")
     val complete get() = p("vollständig", "complete")
@@ -185,7 +195,7 @@ class Tx(lang: String) {
     val chFromFile get() = p("Datei wählen", "Choose file")
     val chActivate get() = p("Aktivieren", "Activate")
     val chSettings get() = p("Meisterschaft einrichten", "Championship settings")
-    fun chSoon(d: Int) = if (d == 0) p("Heute", "Today") else if (de) "In $d ${if (d == 1) "Tag" else "Tagen"}" else "In $d ${if (d == 1) "day" else "days"}"
+    fun chSoon(d: Int) = if (d == 0) p("Heute", "Today") else q("In $d ${if (d == 1) "Tag" else "Tagen"}", "In $d ${if (d == 1) "day" else "days"}", "Dans $d ${if (d == 1) "jour" else "jours"}", "Tra $d ${if (d == 1) "giorno" else "giorni"}")
     val chPast get() = p("Überfällig", "Overdue")
     val chLateAsk get() = p("Diese Übung ist überfällig und wird mit einem Abzug bestraft. Möchtest du fortfahren?", "This activity is overdue and will incur a penalty. Do you want to continue?")
     val chLateGo get() = p("Fortfahren", "Continue")
@@ -235,7 +245,7 @@ class Tx(lang: String) {
     fun chAskSame(y: Int) = p("Meisterschaft $y neu laden? Aktivierte Einträge und ihre Übungen bleiben erhalten.", "Reload championship $y? Activated items and their sessions stay as they are.")
     fun chAskNew(y: Int, old: Int) = p("Meisterschaft $y laden? Sie ersetzt $old. Alle erfassten Übungen bleiben.", "Load championship $y? It replaces $old. All recorded sessions stay.")
     fun chLoaded(n: Int, y: Int) = p("$n Einträge für $y geladen", "$n items loaded for $y")
-    fun chWarnN(n: Int) = if (de) "$n ${if (n == 1) "Zeile" else "Zeilen"} mit Problemen" else "$n ${if (n == 1) "line" else "lines"} with problems"
+    fun chWarnN(n: Int) = q("$n ${if (n == 1) "Zeile" else "Zeilen"} mit Problemen", "$n ${if (n == 1) "line" else "lines"} with problems", "$n ${if (n == 1) "ligne" else "lignes"} avec des problèmes", "$n ${if (n == 1) "riga" else "righe"} con problemi")
     val chNoRows get() = p("Die Datei enthält keine Einträge.", "The file contains no items.")
     val chNeedCols get() = p("Die Datei braucht mindestens die Spalten titel und disziplin.", "The file needs at least the columns titel and disziplin.")
     val chNoYear get() = p("Die Datei braucht ein Jahr (Spalte jahr).", "The file needs a year (column jahr).")
@@ -253,7 +263,7 @@ class Tx(lang: String) {
     fun chCustom(n: Int, tg: String, pr: Int) = p("Eigene · ", "Custom · ") + (if (pr > 0) p("$pr Probe + ", "$pr practice + ") else "") + shotsN(n) + " · " + tg
 
     fun longDate(d: LocalDate): String = d.format(DateTimeFormatter.ofPattern(if (de) "EEE, d. MMM yyyy" else "EEE d MMM yyyy", locale))
-    fun shortDate(d: LocalDate): String = d.format(DateTimeFormatter.ofPattern(if (de) "dd.MM.yyyy" else "dd/MM/yyyy", locale))
+    fun shortDate(d: LocalDate): String = d.format(DateTimeFormatter.ofPattern(if (de || fr || itLang) "dd.MM.yyyy" else "dd/MM/yyyy", locale))
     fun score(v: Double): String {
         val r = (v * 10).roundToInt() / 10.0
         return if (r == r.toLong().toDouble()) r.toLong().toString() else String.format(locale, "%.1f", r)

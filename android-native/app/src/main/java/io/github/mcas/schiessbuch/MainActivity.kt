@@ -30,6 +30,7 @@ class MainActivity : ComponentActivity() {
         val demo = intent.getBooleanExtra("demo", false)
         val store = Store(applicationContext, demo)
         val prefs = Prefs(this)
+        I18n.load(applicationContext)
         intent.getStringExtra("lang")?.let { prefs.lang = it }
         val startScreen = intent.getStringExtra("screen")
         if (demo) store.champ.seedDemo(Tx(prefs.lang))
@@ -40,7 +41,7 @@ class MainActivity : ComponentActivity() {
 /** Settings kept on the phone, observable by the UI. */
 class Prefs(context: Context) {
     private val sp = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-    private var _lang by mutableStateOf(sp.getString("lang", null) ?: if (java.util.Locale.getDefault().language == "de") "de" else "en")
+    private var _lang by mutableStateOf(sp.getString("lang", null) ?: java.util.Locale.getDefault().language.let { if (it in listOf("de", "fr", "it")) it else "en" })
     private var _clubLogo by mutableStateOf(sp.getBoolean("clubLogo", false))
     var lang: String get() = _lang; set(v) { _lang = v; sp.edit().putString("lang", v).apply() }
     var clubLogo: Boolean get() = _clubLogo; set(v) { _clubLogo = v; sp.edit().putBoolean("clubLogo", v).apply() }

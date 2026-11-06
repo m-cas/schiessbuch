@@ -1,0 +1,1282 @@
+{
+" This message is long, so some mail apps may cut it off. If that happens, use Copy text below.": [
+" Ce message est long, certaines applications de messagerie peuvent le couper. Dans ce cas, utilise Copier le texte ci-dessous.",
+" Questo messaggio è lungo, alcune app di posta potrebbero tagliarlo. In tal caso usa Copia testo qui sotto."
+],
+" · backup about {}": [
+" · sauvegarde env. {}",
+" · backup circa {}"
+],
+"+ Add series": [
+"+ Ajouter une série",
+"+ Aggiungi serie"
+],
+"10 shots": [
+"10 coups",
+"10 colpi"
+],
+"10 shots · 6 single, 4 in series · A10": [
+"10 coups · 6 coup par coup, 4 en série · A10",
+"10 colpi · 6 colpo per colpo, 4 in serie · A10"
+],
+"10 shots · A10": [
+"10 coups · A10",
+"10 colpi · A10"
+],
+"12 shots · 2 practice, 5 single, series of 2 and 3 · A10": [
+"12 coups · 2 d'essai, 5 coup par coup, séries de 2 et 3 · A10",
+"12 colpi · 2 di prova, 5 colpo per colpo, serie da 2 e 3 · A10"
+],
+"12 shots · 2 practice, 6 single, 4 in series · A10": [
+"12 coups · 2 d'essai, 6 coup par coup, 4 en série · A10",
+"12 colpi · 2 di prova, 6 colpo per colpo, 4 in serie · A10"
+],
+"20 shots": [
+"20 coups",
+"20 colpi"
+],
+"2×10 single shots · A10": [
+"2×10 coups par coup · A10",
+"2×10 colpi singoli · A10"
+],
+"Activate": [
+"Activer",
+"Attiva"
+],
+"Add": [
+"Ajouter",
+"Aggiungi"
+],
+"Add a date first.": [
+"Indique d'abord une date.",
+"Inserisci prima una data."
+],
+"Add series": [
+"Ajouter une série",
+"Aggiungi serie"
+],
+"Address copied. Paste it into Chrome.": [
+"Adresse copiée. Colle-la dans Chrome.",
+"Indirizzo copiato. Incollalo in Chrome."
+],
+"Address of the CSV file": [
+"Adresse du fichier CSV",
+"Indirizzo del file CSV"
+],
+"Air Pistol 10m": [
+"Pistolet à air 10m",
+"Pistola ad aria 10m"
+],
+"Air Rifle 10m": [
+"Carabine à air 10m",
+"Carabina ad aria 10m"
+],
+"All": [
+"Tous",
+"Tutti"
+],
+"All shots of this series are entered. Increase Shots to add more.": [
+"Tous les coups de cette série sont saisis. Augmente le nombre de coups pour en ajouter.",
+"Tutti i colpi di questa serie sono inseriti. Aumenta i colpi per aggiungerne altri."
+],
+"App icon on": [
+"Icône de l'app activée",
+"Icona dell'app attiva"
+],
+"Avg series": [
+"Ø série",
+"Ø serie"
+],
+"Avg · last 10": [
+"Ø · 10 dernières",
+"Ø · ultime 10"
+],
+"Back": [
+"Retour",
+"Indietro"
+],
+"Backup and data": [
+"Sauvegarde et données",
+"Backup e dati"
+],
+"Backup of CHSchiessbuch with all sessions and target photos. To load it: open CHSchiessbuch, tap Restore backup and choose this file.": [
+"Sauvegarde de CHSchiessbuch avec tous les exercices et photos de cibles. Pour la charger : ouvre CHSchiessbuch, touche Restaurer la sauvegarde et choisis ce fichier.",
+"Backup di CHSchiessbuch con tutti gli esercizi e le foto dei bersagli. Per caricarlo: apri CHSchiessbuch, tocca Ripristina backup e scegli questo file."
+],
+"Backup too large for email": [
+"Sauvegarde trop grande pour un e-mail",
+"Backup troppo grande per un'e-mail"
+],
+"Best series": [
+"Meilleure série",
+"Miglior serie"
+],
+"CHSchiessbuch": [
+"CHSchiessbuch",
+"CHSchiessbuch"
+],
+"CHSchiessbuch backup {}": [
+"Sauvegarde CHSchiessbuch {}",
+"Backup CHSchiessbuch {}"
+],
+"CHSchiessbuch is full. Delete old sessions to save new ones.": [
+"CHSchiessbuch est plein. Supprime d'anciens exercices pour en enregistrer de nouveaux.",
+"CHSchiessbuch è pieno. Elimina vecchi esercizi per salvarne di nuovi."
+],
+"Cancel": [
+"Annuler",
+"Annulla"
+],
+"Category": [
+"Catégorie",
+"Categoria"
+],
+"Champ": [
+"Champ.",
+"Camp."
+],
+"Championship": [
+"Championnat",
+"Campionato"
+],
+"Championship settings": [
+"Configurer le championnat",
+"Impostazioni campionato"
+],
+"Championship {}": [
+"Championnat {}",
+"Campionato {}"
+],
+"Choose file": [
+"Choisir un fichier",
+"Scegli file"
+],
+"Close": [
+"Fermer",
+"Chiudi"
+],
+"Conditions": [
+"Conditions",
+"Condizioni"
+],
+"Continue": [
+"Continuer",
+"Continua"
+],
+"Copy address": [
+"Copier l'adresse",
+"Copia indirizzo"
+],
+"Copy text": [
+"Copier le texte",
+"Copia testo"
+],
+"Count X": [
+"Compter les mouches (X)",
+"Conta le mouche (X)"
+],
+"Current": [
+"Actuel",
+"Attuale"
+],
+"Custom": [
+"Libre",
+"Libero"
+],
+"Custom · ": [
+"Libre · ",
+"Libero · "
+],
+"Custom · choose number of shots": [
+"Libre · choisir le nombre de coups",
+"Libero · scegli il numero di colpi"
+],
+"Custom · choose shots and target": [
+"Libre · choisir coups et cible",
+"Libero · scegli colpi e bersaglio"
+],
+"Data on this phone": [
+"Données sur ce téléphone",
+"Dati su questo telefono"
+],
+"Date": [
+"Date",
+"Data"
+],
+"Delete": [
+"Supprimer",
+"Elimina"
+],
+"Delete session": [
+"Supprimer l'exercice",
+"Elimina esercizio"
+],
+"Description": [
+"Description",
+"Descrizione"
+],
+"Details": [
+"Détails",
+"Dettagli"
+],
+"Discard": [
+"Abandonner",
+"Scarta"
+],
+"Discard changes?": [
+"Abandonner les modifications ?",
+"Scartare le modifiche?"
+],
+"Discipline": [
+"Discipline",
+"Disciplina"
+],
+"Done": [
+"Terminé",
+"Fatto"
+],
+"Each series converted to 10 shots on A10 <span style=\"white-space:nowrap\">(0–100)</span>.": [
+"Chaque série convertie en 10 coups sur A10 <span style=\"white-space:nowrap\">(0–100)</span>.",
+"Ogni serie convertita in 10 colpi su A10 <span style=\"white-space:nowrap\">(0–100)</span>."
+],
+"Edit": [
+"Modifier",
+"Modifica"
+],
+"Edit Session": [
+"Modifier l'exercice",
+"Modifica esercizio"
+],
+"Edit session": [
+"Modifier l'exercice",
+"Modifica esercizio"
+],
+"Email": [
+"E-mail",
+"E-mail"
+],
+"Email backup": [
+"Envoyer la sauvegarde par e-mail",
+"Invia backup per e-mail"
+],
+"Email results": [
+"Envoyer les résultats par e-mail",
+"Invia risultati per e-mail"
+],
+"Email text copied": [
+"Texte de l'e-mail copié",
+"Testo dell'e-mail copiato"
+],
+"Enter 0–{}": [
+"Saisir 0–{}",
+"Inserisci 0–{}"
+],
+"Enter a whole number from 0 to {}.": [
+"Saisis un nombre entier de 0 à {}.",
+"Inserisci un numero intero da 0 a {}."
+],
+"Enter manually": [
+"Saisir manuellement",
+"Inserisci manualmente"
+],
+"Enter the address of the CSV file first.": [
+"Saisis d'abord l'adresse du fichier CSV.",
+"Inserisci prima l'indirizzo del file CSV."
+],
+"Example file": [
+"Fichier d'exemple",
+"File di esempio"
+],
+"Exit settings": [
+"Quitter les réglages",
+"Esci dalle impostazioni"
+],
+"Export": [
+"Exporter",
+"Esporta"
+],
+"Export as CSV": [
+"Exporter en CSV",
+"Esporta come CSV"
+],
+"Feldschiessen rifle · 18 shots B4": [
+"Tir en campagne fusil · 18 coups B4",
+"Tiro in campagna fucile · 18 colpi B4"
+],
+"Feldschiessen · 3 single + 5/5/5": [
+"Tir en campagne · 3 coup par coup + 5/5/5",
+"Tiro in campagna · 3 colpo per colpo + 5/5/5"
+],
+"Fewer practice shots": [
+"Moins de coups d'essai",
+"Meno colpi di prova"
+],
+"Fewer shots": [
+"Moins de coups",
+"Meno colpi"
+],
+"File ready": [
+"Fichier prêt",
+"File pronto"
+],
+"Filter": [
+"Filtre",
+"Filtro"
+],
+"Filter by category": [
+"Filtrer par catégorie",
+"Filtra per categoria"
+],
+"Filter by discipline": [
+"Filtrer par discipline",
+"Filtra per disciplina"
+],
+"Format": [
+"Format",
+"Formato"
+],
+"From gallery": [
+"Depuis la galerie",
+"Dalla galleria"
+],
+"From library": [
+"Depuis la photothèque",
+"Dalla libreria"
+],
+"G300": [
+"F300",
+"F300"
+],
+"Group {}": [
+"Groupe {}",
+"Gruppo {}"
+],
+"Hello,\n\nhere are my shooting results.": [
+"Bonjour,\n\nvoici mes résultats de tir.",
+"Ciao,\n\necco i miei risultati di tiro."
+],
+"Help": [
+"Aide",
+"Aiuto"
+],
+"Hide": [
+"Masquer",
+"Nascondi"
+],
+"History": [
+"Historique",
+"Cronologia"
+],
+"How to use the app": [
+"Mode d'emploi de l'app",
+"Istruzioni per l'app"
+],
+"If the mail app didn't open, copy the text and paste it into a new email.": [
+"Si l'application de messagerie ne s'est pas ouverte, copie le texte et colle-le dans un nouvel e-mail.",
+"Se l'app di posta non si è aperta, copia il testo e incollalo in una nuova e-mail."
+],
+"Inner ten (X)": [
+"Mouche (X)",
+"Mouche (X)"
+],
+"Installing on Android? Use Chrome": [
+"Installer sur Android ? Utilise Chrome",
+"Installare su Android? Usa Chrome"
+],
+"Item available again, session deleted": [
+"Entrée de nouveau disponible, exercice supprimé",
+"Voce di nuovo disponibile, esercizio eliminato"
+],
+"Item available again, session kept": [
+"Entrée de nouveau disponible, exercice conservé",
+"Voce di nuovo disponibile, esercizio mantenuto"
+],
+"Keep": [
+"Conserver",
+"Mantieni"
+],
+"Keep it": [
+"Conserver",
+"Mantieni"
+],
+"Keep session": [
+"Conserver l'exercice",
+"Mantieni esercizio"
+],
+"LG10": [
+"C10",
+"C10"
+],
+"LP10": [
+"P10",
+"P10"
+],
+"Language": [
+"Langue",
+"Lingua"
+],
+"Light, wind, temperature": [
+"Lumière, vent, température",
+"Luce, vento, temperatura"
+],
+"Line {}: unknown discipline \"{}\", skipped": [
+"Ligne {} : discipline inconnue « {} », ignorée",
+"Riga {}: disciplina sconosciuta «{}», saltata"
+],
+"Line {}: unknown series \"{}\", ignored": [
+"Ligne {} : série inconnue « {} », ignorée",
+"Riga {}: serie sconosciuta «{}», ignorata"
+],
+"Load": [
+"Charger",
+"Carica"
+],
+"Load championship {}? It replaces {}. All recorded sessions stay.": [
+"Charger le championnat {} ? Il remplace {}. Tous les exercices saisis sont conservés.",
+"Caricare il campionato {}? Sostituisce {}. Tutti gli esercizi registrati restano."
+],
+"Load picture": [
+"Charger une photo",
+"Carica foto"
+],
+"Load the club's CSV file with the sessions to shoot. One line per session:": [
+"Charge le fichier CSV de la société avec les exercices à tirer. Une ligne par exercice :",
+"Carica il file CSV della società con gli esercizi da tirare. Una riga per esercizio:"
+],
+"Load the club's file under Championship settings (cog at the top left).": [
+"Charge le fichier de la société sous Configurer le championnat (roue dentée en haut à gauche).",
+"Carica il file della società in Impostazioni campionato (ingranaggio in alto a sinistra)."
+],
+"Load the club’s file under Championship settings (cog at the top left).": [
+"Charge le fichier de la société sous Configurer le championnat (roue dentée en haut à gauche).",
+"Carica il file della società in Impostazioni campionato (ingranaggio in alto a sinistra)."
+],
+"Loaded: championship {} with {} items.": [
+"Chargé : championnat {} avec {} entrées.",
+"Caricato: campionato {} con {} voci."
+],
+"Loading CHSchiessbuch…": [
+"Chargement de CHSchiessbuch…",
+"Caricamento di CHSchiessbuch…"
+],
+"Loading…": [
+"Chargement…",
+"Caricamento…"
+],
+"Logo": [
+"Logo",
+"Logo"
+],
+"Make this item available again. Keep the session already recorded, or delete it?": [
+"Rendre cette entrée de nouveau disponible. Conserver l'exercice déjà saisi ou le supprimer ?",
+"Rendere di nuovo disponibile questa voce. Mantenere l'esercizio già registrato o eliminarlo?"
+],
+"Max per shot": [
+"Max. par coup",
+"Max. per colpo"
+],
+"Message": [
+"Message",
+"Messaggio"
+],
+"More": [
+"Plus",
+"Altro"
+],
+"More practice shots": [
+"Plus de coups d'essai",
+"Più colpi di prova"
+],
+"More shots": [
+"Plus de coups",
+"Più colpi"
+],
+"New Sess.": [
+"Nouv. ex.",
+"Nuovo es."
+],
+"New Session": [
+"Nouvel exercice",
+"Nuovo esercizio"
+],
+"Next ›": [
+"Suivant ›",
+"Avanti ›"
+],
+"No championship loaded": [
+"Aucun championnat chargé",
+"Nessun campionato caricato"
+],
+"No earlier championships yet.": [
+"Pas encore de championnats précédents.",
+"Nessun campionato precedente."
+],
+"No photos for this session. Edit it to add one.": [
+"Pas de photos pour cet exercice. Modifie-le pour en ajouter.",
+"Nessuna foto per questo esercizio. Modificalo per aggiungerne una."
+],
+"No photos.": [
+"Pas de photos.",
+"Nessuna foto."
+],
+"No sessions for this selection.": [
+"Aucun exercice pour cette sélection.",
+"Nessun esercizio per questa selezione."
+],
+"No sessions yet": [
+"Pas encore d'exercices",
+"Ancora nessun esercizio"
+],
+"No shots found. Lay the strip flat, avoid glare and let the printed area fill the photo.": [
+"Aucun coup trouvé. Pose la bande à plat, évite les reflets et cadre la partie imprimée en grand.",
+"Nessun colpo trovato. Appoggia la striscia in piano, evita i riflessi e inquadra la parte stampata il più grande possibile."
+],
+"No {} sessions yet.": [
+"Pas encore d'exercices {}.",
+"Ancora nessun esercizio {}."
+],
+"None": [
+"Aucun",
+"Nessuno"
+],
+"Not used": [
+"Non utilisé",
+"Non usato"
+],
+"Notes": [
+"Notes",
+"Note"
+],
+"OP · 20 shots A5/B4": [
+"Tir obligatoire · 20 coups A5/B4",
+"Tiro obbligatorio · 20 colpi A5/B4"
+],
+"OP · 5 single + 5/5/5": [
+"Tir obligatoire · 5 coup par coup + 5/5/5",
+"Tiro obbligatorio · 5 colpo per colpo + 5/5/5"
+],
+"One row per series, for Excel or Google Sheets.": [
+"Une ligne par série, pour Excel ou Google Sheets.",
+"Una riga per serie, per Excel o Google Sheets."
+],
+"One row per series, for Excel or Numbers.": [
+"Une ligne par série, pour Excel ou Numbers.",
+"Una riga per serie, per Excel o Numbers."
+],
+"Only one championship is kept. A file for another year replaces it; recorded sessions stay.": [
+"Un seul championnat est conservé. Un fichier d'une autre année le remplace ; les exercices saisis restent.",
+"Viene conservato un solo campionato. Un file di un altro anno lo sostituisce; gli esercizi registrati restano."
+],
+"Open in Chrome": [
+"Ouvrir dans Chrome",
+"Apri in Chrome"
+],
+"Open in mail app": [
+"Ouvrir dans l'app de messagerie",
+"Apri nell'app di posta"
+],
+"Open photo {}": [
+"Ouvrir la photo {}",
+"Apri foto {}"
+],
+"Open settings": [
+"Ouvrir les réglages",
+"Apri impostazioni"
+],
+"Opens a new email with this text filled in, ready to send from your own account.": [
+"Ouvre un nouvel e-mail avec ce texte, prêt à envoyer depuis ton propre compte.",
+"Apre una nuova e-mail con questo testo, pronta da inviare dal tuo account."
+],
+"Opens the share sheet with the text and all target photos attached. Choose Mail and add the recipient.": [
+"Ouvre le menu de partage avec le texte et toutes les photos de cibles. Choisis Mail et ajoute le destinataire.",
+"Apre il menu di condivisione con il testo e tutte le foto dei bersagli. Scegli Mail e aggiungi il destinatario."
+],
+"Opens the share sheet with this text. Choose Mail and add the recipient.": [
+"Ouvre le menu de partage avec ce texte. Choisis Mail et ajoute le destinataire.",
+"Apre il menu di condivisione con questo testo. Scegli Mail e aggiungi il destinatario."
+],
+"Other": [
+"Autre",
+"Altro"
+],
+"Other browsers can show a warning that the app was \"built for an older version of Android\". Open this page in Chrome and tap ⋮ → Install app.": [
+"D'autres navigateurs peuvent afficher un avertissement indiquant que l'app a été « conçue pour une ancienne version d'Android ». Ouvre cette page dans Chrome et touche ⋮ → Installer l'application.",
+"Altri browser possono mostrare un avviso che l'app è stata «creata per una versione precedente di Android». Apri questa pagina in Chrome e tocca ⋮ → Installa app."
+],
+"Overdue": [
+"En retard",
+"In ritardo"
+],
+"P25": [
+"P25",
+"P25"
+],
+"P50": [
+"P50",
+"P50"
+],
+"Photo storage is full. Delete old sessions to make room.": [
+"La mémoire des photos est pleine. Supprime d'anciens exercices pour faire de la place.",
+"La memoria delle foto è piena. Elimina vecchi esercizi per fare spazio."
+],
+"Photos are resized to about 2000 px so they stay sharp enough to read every hole.": [
+"Les photos sont réduites à env. 2000 px, assez nettes pour lire chaque impact.",
+"Le foto vengono ridotte a circa 2000 px, abbastanza nitide per leggere ogni foro."
+],
+"Pistol 25m": [
+"Pistolet 25m",
+"Pistola 25m"
+],
+"Pistol 50m": [
+"Pistolet 50m",
+"Pistola 50m"
+],
+"Please check the values read from the photo:": [
+"Vérifie les valeurs lues sur la photo :",
+"Controlla i valori letti dalla foto:"
+],
+"Practice": [
+"Essai",
+"Prova"
+],
+"Practice shot": [
+"Coup d'essai",
+"Colpo di prova"
+],
+"Practice · not counted": [
+"Essai · ne compte pas",
+"Prova · non conta"
+],
+"Practice, not counted": [
+"Essai, ne compte pas",
+"Prova, non conta"
+],
+"Practice: {} (not in total)": [
+"Essai : {} (pas dans le total)",
+"Prova: {} (non nel totale)"
+],
+"Preparing backup…": [
+"Préparation de la sauvegarde…",
+"Preparazione del backup…"
+],
+"Preparing report…": [
+"Préparation du rapport…",
+"Preparazione del rapporto…"
+],
+"Print": [
+"Imprimer",
+"Stampa"
+],
+"Print with the target photos ({})?": [
+"Imprimer avec les photos des cibles ({}) ?",
+"Stampare con le foto dei bersagli ({})?"
+],
+"Printed 100-total {}, shots add up to {}.": [
+"Total au 100 imprimé {}, les coups donnent {}.",
+"Totale a 100 stampato {}, i colpi danno {}."
+],
+"Printed total {}, series add up to {}.": [
+"Total imprimé {}, les séries donnent {}.",
+"Totale stampato {}, le serie danno {}."
+],
+"Program / match": [
+"Programme / concours",
+"Programma / gara"
+],
+"Protected from automatic deletion by the browser.": [
+"Protégé contre la suppression automatique par le navigateur.",
+"Protetto dalla cancellazione automatica del browser."
+],
+"Range": [
+"Stand",
+"Stand"
+],
+"Read from photo": [
+"Lu sur la photo",
+"Letto dalla foto"
+],
+"Read from the photo: all printed totals match. Please check before saving.": [
+"Lu sur la photo : tous les totaux imprimés concordent. Vérifie avant d'enregistrer.",
+"Letto dalla foto: tutti i totali stampati corrispondono. Controlla prima di salvare."
+],
+"Reading photos needs an internet connection the first time.": [
+"La lecture des photos nécessite une connexion internet la première fois.",
+"La lettura delle foto richiede una connessione internet la prima volta."
+],
+"Reading the printout…": [
+"Lecture de l'impression…",
+"Lettura della stampa…"
+],
+"Recipient": [
+"Destinataire",
+"Destinatario"
+],
+"Record your first range session: pick the discipline, tap in each shot, and photograph the paper target.": [
+"Saisis ton premier exercice : choisis la discipline, tape chaque coup et photographie la cible.",
+"Registra il tuo primo esercizio: scegli la disciplina, inserisci ogni colpo e fotografa il bersaglio."
+],
+"Record your first session: pick the discipline, tap in each shot, and photograph the target.": [
+"Saisis ton premier exercice : choisis la discipline, tape chaque coup et photographie la cible.",
+"Registra il tuo primo esercizio: scegli la disciplina, inserisci ogni colpo e fotografa il bersaglio."
+],
+"Reload": [
+"Recharger",
+"Ricarica"
+],
+"Reload championship {}? Activated items and their sessions stay as they are.": [
+"Recharger le championnat {} ? Les entrées activées et leurs exercices restent inchangés.",
+"Ricaricare il campionato {}? Le voci attivate e i loro esercizi restano invariati."
+],
+"Remove for good": [
+"Supprimer définitivement",
+"Rimuovi definitivamente"
+],
+"Remove from history": [
+"Retirer de l'historique",
+"Rimuovi dalla cronologia"
+],
+"Remove last shot": [
+"Effacer le dernier coup",
+"Rimuovi ultimo colpo"
+],
+"Remove photo {}": [
+"Retirer la photo {}",
+"Rimuovi foto {}"
+],
+"Remove series": [
+"Supprimer la série",
+"Rimuovi serie"
+],
+"Remove series {}": [
+"Supprimer la série {}",
+"Rimuovi serie {}"
+],
+"Replaces the app icon at the top left.": [
+"Remplace l'icône de l'app en haut à gauche.",
+"Sostituisce l'icona dell'app in alto a sinistra."
+],
+"Reset": [
+"Réinitialiser",
+"Reimposta"
+],
+"Restore backup": [
+"Restaurer la sauvegarde",
+"Ripristina backup"
+],
+"Rifle 300m": [
+"Fusil 300m",
+"Fucile 300m"
+],
+"SG Muttenz logo and app icon on": [
+"Logo et icône SG Muttenz activés",
+"Logo e icona SG Muttenz attivi"
+],
+"SG Muttenz logo on": [
+"Logo SG Muttenz activé",
+"Logo SG Muttenz attivo"
+],
+"Save": [
+"Enregistrer",
+"Salva"
+],
+"Save backup": [
+"Enregistrer la sauvegarde",
+"Salva backup"
+],
+"Save report with photos": [
+"Enregistrer le rapport avec photos",
+"Salva rapporto con foto"
+],
+"Save session": [
+"Enregistrer l'exercice",
+"Salva esercizio"
+],
+"Saved": [
+"Enregistré",
+"Salvato"
+],
+"Saves one file with the results and all {} target photos, to attach to an email or keep.": [
+"Enregistre un fichier avec les résultats et les {} photos de cibles, à joindre à un e-mail ou à conserver.",
+"Salva un file con i risultati e tutte le {} foto dei bersagli, da allegare a un'e-mail o da conservare."
+],
+"Saving…": [
+"Enregistrement…",
+"Salvataggio…"
+],
+"Score": [
+"Résultat",
+"Risultato"
+],
+"Score % · last {} sessions": [
+"Résultat % · {} derniers exercices",
+"Risultato % · ultimi {} esercizi"
+],
+"Score by year": [
+"Résultat par année",
+"Risultato per anno"
+],
+"Score percentage trend": [
+"Évolution du résultat en pour cent",
+"Andamento del risultato in percentuale"
+],
+"Score trend": [
+"Évolution du résultat",
+"Andamento del risultato"
+],
+"Score · last {} sessions": [
+"Résultat · {} derniers exercices",
+"Risultato · ultimi {} esercizi"
+],
+"Scoring": [
+"Notation",
+"Punteggio"
+],
+"Select": [
+"Sélectionner",
+"Seleziona"
+],
+"Series": [
+"Séries",
+"Serie"
+],
+"Series format": [
+"Format de série",
+"Formato serie"
+],
+"Series of {}": [
+"Série de {}",
+"Serie da {}"
+],
+"Series scores converted to 10 shots on A10 (0–100).": [
+"Résultats de série convertis en 10 coups sur A10 (0–100).",
+"Risultati delle serie convertiti in 10 colpi su A10 (0–100)."
+],
+"Series {}": [
+"Série {}",
+"Serie {}"
+],
+"Series {}: printed 100-total {}, shots add up to {}.": [
+"Série {} : total au 100 imprimé {}, les coups donnent {}.",
+"Serie {}: totale a 100 stampato {}, i colpi danno {}."
+],
+"Series {}: printed {}, shots add up to {}.": [
+"Série {} : imprimé {}, les coups donnent {}.",
+"Serie {}: stampato {}, i colpi danno {}."
+],
+"Session average": [
+"Moyenne de l'exercice",
+"Media dell'esercizio"
+],
+"Session deleted": [
+"Exercice supprimé",
+"Esercizio eliminato"
+],
+"Session saved": [
+"Exercice enregistré",
+"Esercizio salvato"
+],
+"Sessions": [
+"Exercices",
+"Esercizi"
+],
+"Sessions and photos are stored only on this device. Nothing is uploaded. Save a backup now and then, and before changing phones.": [
+"Les exercices et photos sont enregistrés uniquement sur cet appareil. Rien n'est envoyé. Fais une sauvegarde de temps en temps et avant de changer de téléphone.",
+"Esercizi e foto sono salvati solo su questo dispositivo. Nulla viene caricato. Fai un backup ogni tanto e prima di cambiare telefono."
+],
+"Settings": [
+"Réglages",
+"Impostazioni"
+],
+"Share": [
+"Partager",
+"Condividi"
+],
+"Share with photos": [
+"Partager avec photos",
+"Condividi con foto"
+],
+"Shooting range": [
+"Stand de tir",
+"Stand di tiro"
+],
+"Shooting results": [
+"Résultats de tir",
+"Risultati di tiro"
+],
+"Shooting results {}": [
+"Résultats de tir {}",
+"Risultati di tiro {}"
+],
+"Shooting results: {} sessions, {} – {}": [
+"Résultats de tir : {} exercices, {} – {}",
+"Risultati di tiro: {} esercizi, {} – {}"
+],
+"Shot": [
+"Coup",
+"Colpo"
+],
+"Shot value, 0 to {}": [
+"Valeur du coup, 0 à {}",
+"Valore del colpo, da 0 a {}"
+],
+"Shot {}: ring {} does not fit the 100-value {}.": [
+"Coup {} : la valeur {} ne correspond pas à la valeur au 100 {}.",
+"Colpo {}: il valore {} non corrisponde al valore a 100 {}."
+],
+"Shot(s) {} could not be read.": [
+"Coup(s) {} illisible(s).",
+"Colpo/i {} non leggibile/i."
+],
+"Shots": [
+"Coups",
+"Colpi"
+],
+"Show SG Muttenz logo": [
+"Afficher le logo SG Muttenz",
+"Mostra logo SG Muttenz"
+],
+"Show or hide the chart": [
+"Afficher ou masquer le graphique",
+"Mostra o nascondi il grafico"
+],
+"Sight adjustments, what went well, what to work on": [
+"Corrections de visée, ce qui a bien marché, ce qu'il faut travailler",
+"Correzioni di mira, cosa è andato bene, su cosa lavorare"
+],
+"Single series": [
+"Séries individuelles",
+"Serie singole"
+],
+"Single shots": [
+"Coup par coup",
+"Colpo per colpo"
+],
+"Standard logo and app icon on": [
+"Logo et icône standard activés",
+"Logo e icona standard attivi"
+],
+"Standard · 5/5/5": [
+"Standard · 5/5/5",
+"Standard · 5/5/5"
+],
+"Still connecting. What you see may be out of date.": [
+"Connexion en cours. Les données affichées peuvent être obsolètes.",
+"Connessione in corso. I dati visualizzati potrebbero non essere aggiornati."
+],
+"Storage isn't available": [
+"Mémoire non disponible",
+"Memoria non disponibile"
+],
+"Storage used: {} · {} free": [
+"Mémoire utilisée : {} · {} libre",
+"Memoria usata: {} · {} libera"
+],
+"Subject": [
+"Objet",
+"Oggetto"
+],
+"TS": [
+"CP",
+"CP"
+],
+"Take photo": [
+"Prendre une photo",
+"Scatta foto"
+],
+"Take picture": [
+"Prendre une photo",
+"Scatta foto"
+],
+"Tap a scored shot to remove it": [
+"Touche un coup saisi pour l'effacer",
+"Tocca un colpo inserito per rimuoverlo"
+],
+"Tap to remove": [
+"Toucher pour effacer",
+"Tocca per rimuovere"
+],
+"Target": [
+"Cible",
+"Bersaglio"
+],
+"Target photo {}": [
+"Photo de cible {}",
+"Foto bersaglio {}"
+],
+"Target photos": [
+"Photos de cibles",
+"Foto dei bersagli"
+],
+"Targets": [
+"Cibles",
+"Bersagli"
+],
+"Text selected. Use Copy from your keyboard menu.": [
+"Texte sélectionné. Utilise Copier dans le menu du clavier.",
+"Testo selezionato. Usa Copia dal menu della tastiera."
+],
+"That didn't work.": [
+"Cela n'a pas fonctionné.",
+"Non ha funzionato."
+],
+"That photo is too large. Try a smaller one.": [
+"Cette photo est trop grande. Essaie avec une plus petite.",
+"Questa foto è troppo grande. Prova con una più piccola."
+],
+"The backup couldn't be restored.": [
+"La sauvegarde n'a pas pu être restaurée.",
+"Il backup non è stato ripristinato."
+],
+"The copies on the strip were read differently.": [
+"Les copies sur la bande ont été lues différemment.",
+"Le copie sulla striscia sono state lette in modo diverso."
+],
+"The export couldn't be saved.": [
+"L'export n'a pas pu être enregistré.",
+"L'esportazione non è stata salvata."
+],
+"The file contains no items.": [
+"Le fichier ne contient aucune entrée.",
+"Il file non contiene voci."
+],
+"The file couldn't be loaded. Check the address or use Choose file.": [
+"Le fichier n'a pas pu être chargé. Vérifie l'adresse ou utilise Choisir un fichier.",
+"Il file non è stato caricato. Controlla l'indirizzo o usa Scegli file."
+],
+"The file couldn't be loaded. Check the address, or download the file and use Choose file.": [
+"Le fichier n'a pas pu être chargé. Vérifie l'adresse, ou télécharge le fichier et utilise Choisir un fichier.",
+"Il file non è stato caricato. Controlla l'indirizzo, oppure scarica il file e usa Scegli file."
+],
+"The file needs a year (column jahr).": [
+"Le fichier doit contenir une année (colonne jahr).",
+"Il file deve contenere un anno (colonna jahr)."
+],
+"The file needs at least the columns titel and disziplin.": [
+"Le fichier doit contenir au moins les colonnes titel et disziplin.",
+"Il file deve contenere almeno le colonne titel e disziplin."
+],
+"The photo could not be read.": [
+"La photo n'a pas pu être lue.",
+"La foto non è stata letta."
+],
+"The photo couldn't be saved. Try again.": [
+"La photo n'a pas pu être enregistrée. Réessaie.",
+"La foto non è stata salvata. Riprova."
+],
+"The report couldn't be saved. Try again.": [
+"Le rapport n'a pas pu être enregistré. Réessaie.",
+"Il rapporto non è stato salvato. Riprova."
+],
+"The session couldn't be deleted. Try again.": [
+"L'exercice n'a pas pu être supprimé. Réessaie.",
+"L'esercizio non è stato eliminato. Riprova."
+],
+"The session couldn't be saved. Check your connection and try again.": [
+"L'exercice n'a pas pu être enregistré. Vérifie ta connexion et réessaie.",
+"L'esercizio non è stato salvato. Controlla la connessione e riprova."
+],
+"These sessions use different targets, so the average mixes scales. Pick a discipline above for a fair comparison.": [
+"Ces exercices utilisent des cibles différentes, la moyenne mélange donc les échelles. Choisis une discipline ci-dessus pour une comparaison équitable.",
+"Questi esercizi usano bersagli diversi, quindi la media mescola le scale. Scegli una disciplina qui sopra per un confronto corretto."
+],
+"This activity is overdue and will incur a penalty. Do you want to continue?": [
+"Cet exercice est en retard et entraînera une pénalité. Veux-tu continuer ?",
+"Questo esercizio è in ritardo e comporterà una penalità. Vuoi continuare?"
+],
+"This backup is about {}, too large for most email services (about 20–25 MB). Use Save backup and keep it in Dropbox or Files.": [
+"Cette sauvegarde fait env. {}, trop pour la plupart des services e-mail (env. 20–25 Mo). Utilise Enregistrer la sauvegarde et garde-la dans Dropbox ou Fichiers.",
+"Questo backup è di circa {}, troppo per la maggior parte dei servizi e-mail (circa 20–25 MB). Usa Salva backup e conservalo in Dropbox o File."
+],
+"This backup is about {}, too large for most email services (about 20–25 MB). Use Save backup and keep it in e.g. Google Drive or Dropbox.": [
+"Cette sauvegarde fait env. {}, trop pour la plupart des services e-mail (env. 20–25 Mo). Utilise Enregistrer la sauvegarde et garde-la par ex. dans Google Drive ou Dropbox.",
+"Questo backup è di circa {}, troppo per la maggior parte dei servizi e-mail (circa 20–25 MB). Usa Salva backup e conservalo ad es. in Google Drive o Dropbox."
+],
+"This backup is about {}, too large for most email services (about 20–25 MB). Use Save backup and keep the file in Dropbox or Files instead.": [
+"Cette sauvegarde fait env. {}, trop pour la plupart des services e-mail (env. 20–25 Mo). Utilise plutôt Enregistrer la sauvegarde et garde le fichier dans Dropbox ou Fichiers.",
+"Questo backup è di circa {}, troppo per la maggior parte dei servizi e-mail (circa 20–25 MB). Usa invece Salva backup e conserva il file in Dropbox o File."
+],
+"This browser can't attach files to an email, so the backup was saved instead. Attach it from Files or Downloads.": [
+"Ce navigateur ne peut pas joindre de fichiers à un e-mail, la sauvegarde a donc été enregistrée. Joins-la depuis Fichiers ou Téléchargements.",
+"Questo browser non può allegare file a un'e-mail, quindi il backup è stato salvato. Allegalo da File o Download."
+],
+"This browser doesn't allow saving data on this device. Turn off private browsing and open the app again.": [
+"Ce navigateur n'autorise pas l'enregistrement de données sur cet appareil. Désactive la navigation privée et rouvre l'app.",
+"Questo browser non consente di salvare dati su questo dispositivo. Disattiva la navigazione privata e riapri l'app."
+],
+"This browser may delete stored data if the app isn't installed. Add it to your home screen to keep your data safe.": [
+"Ce navigateur peut effacer les données si l'app n'est pas installée. Ajoute-la à l'écran d'accueil pour protéger tes données.",
+"Questo browser può cancellare i dati se l'app non è installata. Aggiungila alla schermata Home per proteggere i tuoi dati."
+],
+"This file couldn't be read.": [
+"Ce fichier n'a pas pu être lu.",
+"Questo file non è stato letto."
+],
+"This file isn't a CHSchiessbuch backup.": [
+"Ce fichier n'est pas une sauvegarde CHSchiessbuch.",
+"Questo file non è un backup di CHSchiessbuch."
+],
+"This series is complete.": [
+"Cette série est complète.",
+"Questa serie è completa."
+],
+"This series is complete. Add a series for more shots.": [
+"Cette série est complète. Ajoute une série pour plus de coups.",
+"Questa serie è completa. Aggiungi una serie per altri colpi."
+],
+"Tiefschuss": [
+"Coup profond",
+"Colpo profondo"
+],
+"Tiefschuss in series {} must be a whole number from 0 to 100.": [
+"Le coup profond de la série {} doit être un nombre entier de 0 à 100.",
+"Il colpo profondo della serie {} deve essere un numero intero da 0 a 100."
+],
+"To": [
+"À",
+"A"
+],
+"Today": [
+"Aujourd'hui",
+"Oggi"
+],
+"Total": [
+"Total",
+"Totale"
+],
+"Total entered. Clear it to tap in single shots.": [
+"Total saisi. Efface-le pour taper les coups un par un.",
+"Totale inserito. Cancellalo per inserire i colpi singoli."
+],
+"Training": [
+"Entraînement",
+"Allenamento"
+],
+"Type 0–{}, then Add": [
+"Tape 0–{}, puis Ajouter",
+"Digita 0–{}, poi Aggiungi"
+],
+"Uploading photo…": [
+"Envoi de la photo…",
+"Caricamento foto…"
+],
+"Version": [
+"Version",
+"Versione"
+],
+"Weapon": [
+"Arme",
+"Arma"
+],
+"With photos": [
+"Avec photos",
+"Con foto"
+],
+"Without photos": [
+"Sans photos",
+"Senza foto"
+],
+"Your sessions can't be loaded right now ({}). Reload the page to try again.": [
+"Tes exercices ne peuvent pas être chargés pour le moment ({}). Recharge la page pour réessayer.",
+"I tuoi esercizi non possono essere caricati al momento ({}). Ricarica la pagina per riprovare."
+],
+"chschiessbuch": [
+"chschiessbuch",
+"chschiessbuch"
+],
+"chschiessbuch-backup": [
+"chschiessbuch-sauvegarde",
+"chschiessbuch-backup"
+],
+"coach@example.ch (optional)": [
+"coach@exemple.ch (facultatif)",
+"coach@esempio.ch (facoltativo)"
+],
+"complete": [
+"complète",
+"completa"
+],
+"e.g. Obligatorisch, Training, Club match": [
+"p. ex. Tir obligatoire, Entraînement, Match de société",
+"ad es. Tiro obbligatorio, Allenamento, Gara sociale"
+],
+"e.g. Stgw 90": [
+"p. ex. Fass 90",
+"ad es. Fass 90"
+],
+"e.g. kneeling, club match, new sight": [
+"p. ex. à genou, match de société, nouvelle mire",
+"ad es. in ginocchio, gara sociale, nuova mira"
+],
+"en-GB": [
+"fr-CH",
+"it-CH"
+],
+"no result yet": [
+"pas encore de résultat",
+"ancora nessun risultato"
+],
+"not shot": [
+"pas tiré",
+"non tirato"
+],
+"or total": [
+"ou total",
+"o totale"
+],
+"practice shot {}": [
+"coup d'essai {}",
+"colpo di prova {}"
+],
+"practice {}, not counted": [
+"essai {}, ne compte pas",
+"prova {}, non conta"
+],
+"shooting-results": [
+"resultats-tir",
+"risultati-tiro"
+],
+"shot {}": [
+"coup {}",
+"colpo {}"
+],
+"total entered": [
+"total saisi",
+"totale inserito"
+],
+"total only": [
+"total seulement",
+"solo totale"
+],
+"{} counted shots": [
+"{} coups comptés",
+"{} colpi contati"
+],
+"{} items loaded for {}": [
+"{} entrées chargées pour {}",
+"{} voci caricate per {}"
+],
+"{} of {} done": [
+"{} sur {} faits",
+"{} di {} fatti"
+],
+"{} practice": [
+"{} d'essai",
+"{} di prova"
+],
+"{} practice + ": [
+"{} d'essai + ",
+"{} di prova + "
+],
+"{} restored": [
+"{} restauré(s)",
+"{} ripristinato/i"
+],
+"{} selected": [
+"{} sélectionné(s)",
+"{} selezionato/i"
+],
+"‹ Prev": [
+"‹ Préc.",
+"‹ Prec."
+]
+}

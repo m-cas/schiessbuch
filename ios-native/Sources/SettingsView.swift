@@ -25,6 +25,8 @@ struct SettingsView: View {
                 Section(tx.language) {
                     Picker(tx.language, selection: $lang) {
                         Text("Deutsch").tag("de")
+                        Text("Français").tag("fr")
+                        Text("Italiano").tag("it")
                         Text("English").tag("en")
                     }
                     .pickerStyle(.segmented)

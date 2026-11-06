@@ -38,10 +38,10 @@ import org.json.JSONObject
 @Composable
 fun HelpScreen(tx: Tx, nav: Nav) {
     val context = LocalContext.current
-    val sections = remember(tx.de) {
+    val sections = remember(tx.lang) {
         runCatching {
             val o = JSONObject(context.assets.open("help.json").bufferedReader().use { it.readText() })
-            val a = o.getJSONArray(if (tx.de) "de" else "en")
+            val a = o.optJSONArray(tx.lang) ?: o.getJSONArray("en")
             (0 until a.length()).map { i ->
                 val s = a.getJSONObject(i); val p = s.getJSONArray("p")
                 s.getString("t") to (0 until p.length()).map { p.getString(it) }
