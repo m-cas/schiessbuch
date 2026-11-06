@@ -111,7 +111,7 @@ struct StripParser: Sendable {
             }
 
             // numbering starts again at 1 after a few shots: those were the sighters (Probe), e.g. "1 9 / 2 10 19", then "1 + 10 …"
-            if nums.count >= 2, nums[0].value == 1, lastIndex > 0, sighters.isEmpty {
+            if nums.count >= 2, nums[0].value == 1, lastIndex > 0, sighters.isEmpty, printedTotal == nil {
                 let before = series.flatMap(\.shots) + pending
                 if before.count <= 5 {
                     sighters = before; series = []; pending = []; lastIndex = 0; printedTotal = nil
@@ -359,9 +359,11 @@ struct StripParser: Sendable {
     static let scheibePattern = #"(?i)^\s*scheibe\s*(\d{1,3}(?:\s*/\s*\d{1,3})?)"#
     static let deepShotPattern = #"(?i)^\s*[TI1l]\s*/\s*[PF]\s*(\d{1,2})\s+(\d{1,3})\b"#
 
+    /// "Pg 32  23/0005", "Scheibe 3/14", or a misread header that still ends in a run number ("g32 23/0005")
     static func isHeaderLine(_ line: String) -> Bool {
         GenericSheetParser.firstMatch(pgPattern, in: line) != nil
             || GenericSheetParser.firstMatch(scheibePattern, in: line) != nil
+            || line.range(of: #"^\s*\S{1,6}\s+\d{1,3}/\d{4}\s*$"#, options: .regularExpression) != nil
     }
 
     static func deepShot(in line: String) -> DeepShot? {

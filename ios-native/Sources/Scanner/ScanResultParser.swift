@@ -90,8 +90,11 @@ enum ResultAssembler {
     /// Two readings of the same printout: same target (a misread character or two allowed), or mostly the same shots.
     static func sameCopy(_ a: ShootingResult, _ b: ShootingResult) -> Bool {
         if let ta = a.targetLabel, let tb = b.targetLabel {
-            let d = lev(ta, tb)
-            return d <= 2 && Double(d) < Double(min(ta.count, tb.count)) / 2
+            if ta == tb { return true }
+            // two cleanly read labels that differ are two runs ("23/0004", "23/0005"); only a malformed one may be a misreading
+            let clean = { (l: String) in l.range(of: #"^\d{1,2}/\d{4}$"#, options: .regularExpression) != nil }
+            if clean(ta) && clean(tb) { return false }
+            return lev(ta, tb) <= 2 && abs(a.shots.count - b.shots.count) <= 1
         }
         let x = a.shots.map(\.value), y = b.shots.map(\.value)
         guard x.count >= 4, x.count == y.count else { return false }

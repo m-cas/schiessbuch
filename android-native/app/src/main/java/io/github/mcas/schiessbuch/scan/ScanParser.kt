@@ -221,7 +221,9 @@ object Scan {
     private val TOTAL_WORDS = listOf("tota", "gesamt", "résultat", "resultat", "risultato")
     private val NEUTRAL = setOf("ring", "ringe", "pkt", "pts", "punkte", "points", "punti")
     private val SINGLE_DIGITS = mapOf("O" to 0, "o" to 0, "I" to 1, "l" to 1, "Z" to 2, "J" to 3, "S" to 5, "G" to 6, "B" to 8)
-    fun isHeaderLine(l: String) = PG_RE.containsMatchIn(l) || SCHEIBE_RE.containsMatchIn(l)
+    // "Pg 32  23/0005", "Scheibe 3/14", or a misread header that still ends in a run number ("g32 23/0005")
+    private val LABEL_END_RE = Regex("""^\s*\S{1,6}\s+\d{1,3}/\d{4}\s*$""")
+    fun isHeaderLine(l: String) = PG_RE.containsMatchIn(l) || SCHEIBE_RE.containsMatchIn(l) || LABEL_END_RE.matches(l)
     private fun deepShot(line: String) = DEEP_RE.find(line)?.let { DeepShot(it.groupValues[1].toInt(), it.groupValues[2].toInt()) }
 
     private class Num(val value: Int, val inner: Boolean, val text: String)
@@ -365,7 +367,7 @@ object Scan {
                 return@forEachIndexed
             }
             // numbering starts again at 1 after a few shots: those were the sighters (Probe), e.g. "1 9 / 2 10 19", then "1 + 10 …"
-            if (nums.size >= 2 && nums[0].value == 1 && last > 0 && sighters.isEmpty()) {
+            if (nums.size >= 2 && nums[0].value == 1 && last > 0 && sighters.isEmpty() && pt == null) {
                 val before = series.flatMap { it.shots } + pending
                 if (before.size <= 5) { sighters += before; series.clear(); pending = mutableListOf(); last = 0; pt = null }
             }
@@ -489,7 +491,7 @@ object Scan {
         if (words.size < 8) return null
         val pairs = mutableListOf<Triple<Word, Word, Double>>()
         for (a in words) for (b in words) {
-            if (b === a || b.x <= a.x || a.text != b.text) continue
+            if (b === a || b.x <= a.x || a.text != b.text || a.text.none { it.isDigit() }) continue   // digits only: arrows and smudges repeat too
             if (abs(a.midY - b.midY) < 0.5 * minOf(a.h, b.h)) pairs += Triple(a, b, b.x - a.x)
         }
         if (pairs.size < 4) return null
@@ -524,7 +526,9 @@ object Scan {
             buckets = buckets.flatMap { b ->
                 val x = copySplit(b) ?: return@flatMap listOf(b)
                 val l = b.filter { it.x < x }; val r = b.filter { it.x >= x }
-                if (l.isEmpty() || r.isEmpty()) listOf(b) else { changed = true; listOf(l, r) }
+                // both sides must look like a printout: at least 3 rows with two or more numbers
+                fun full(ws: List<Word>) = rows(ws).count { line -> Regex("""\d+""").findAll(line).count() >= 2 } >= 3
+                if (l.isEmpty() || r.isEmpty() || !full(l) || !full(r)) listOf(b) else { changed = true; listOf(l, r) }
             }
             if (!changed) return buckets.map(::rows).filter { it.isNotEmpty() }
         }
@@ -544,7 +548,13 @@ object Scan {
     /** Two readings of the same printout: same target (a misread character or two allowed), or mostly the same shots. */
     private fun sameCopy(a: ScanResult, b: ScanResult): Boolean {
         val ta = a.targetLabel; val tb = b.targetLabel
-        if (ta != null && tb != null) return lev(ta, tb) <= 2 && lev(ta, tb) < minOf(ta.length, tb.length) / 2.0
+        if (ta != null && tb != null) {
+            if (ta == tb) return true
+            // two cleanly read labels that differ are two runs ("23/0004", "23/0005"); only a malformed one may be a misreading
+            val clean = Regex("""^\d{1,2}/\d{4}$""")
+            if (clean.matches(ta) && clean.matches(tb)) return false
+            return lev(ta, tb) <= 2 && abs(a.shots.size - b.shots.size) <= 1
+        }
         val x = a.shots.map { it.value }; val y = b.shots.map { it.value }
         if (x.size < 4 || x.size != y.size) return false
         return x.indices.count { x[it] == y[it] } >= 0.7 * x.size

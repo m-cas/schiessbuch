@@ -171,7 +171,9 @@
   const TOTAL_WORDS = ["tota", "gesamt", "résultat", "resultat", "risultato"];
   const NEUTRAL = new Set(["ring", "ringe", "pkt", "pts", "punkte", "points", "punti"]);
   const SINGLE_DIGITS = { O: 0, o: 0, I: 1, l: 1, Z: 2, J: 3, S: 5, G: 6, B: 8 };
-  const isHeaderLine = (l) => PG_RE.test(l) || SCHEIBE_RE.test(l);
+  // "Pg 32  23/0005", "Scheibe 3/14", or a misread header that still ends in a run number ("g32 23/0005")
+  const LABEL_END_RE = /^\s*\S{1,6}\s+\d{1,3}\/\d{4}\s*$/;
+  const isHeaderLine = (l) => PG_RE.test(l) || SCHEIBE_RE.test(l) || LABEL_END_RE.test(l);
   const deepShot = (line) => { const m = DEEP_RE.exec(line); return m ? { shot: +m[1], value: +m[2] } : null; };
 
   function makeRow(line) {
@@ -227,6 +229,8 @@
     m = SCHEIBE_RE.exec(row.raw);
     if (m) { r.targetLabel = m[1].replace(/ /g, ""); return; }
     if (!r.program && row.lower.includes("progr")) r.program = row.raw;
+    // "21/0001" without the "Pg" in front (misread or cut off)
+    if (!r.targetLabel) { m = /(?:^|\s)(\d{1,3}\/\d{3,4})\s*$/.exec(row.raw); if (m) r.targetLabel = m[1]; }
   }
 
   function stripParse(lines) {
@@ -309,11 +313,14 @@
         return;
       }
       // numbering starts again at 1 after a few shots: those were the sighters (Probe), e.g. "1 9 / 2 10 19", then "1 + 10 …"
-      if (nums.length >= 2 && nums[0].value === 1 && st.last > 0 && !st.sighters.length) {
+      if (nums.length >= 2 && nums[0].value === 1 && st.last > 0 && !st.sighters.length && st.pt == null) {
         const before = st.series.flatMap((x) => x.shots).concat(st.pending);
         if (before.length <= 5) { st.sighters = before; st.series = []; st.pending = []; st.last = 0; st.pt = null; }
       }
-      const expected = st.last + 1, first = nums[0];
+      const expected0 = st.last + 1;
+      // a stray character in front of the shot number (dash of the line above, dirt): "6 20 + 7 89"
+      if (nums.length >= 3 && nums[0].value !== expected0 && nums[1].value === expected0 && nums[0].text.length === 1) nums.shift();
+      const expected = expected0, first = nums[0];
       if (nums.length >= 2) {
         let index = null;
         if (first.value === expected) index = expected;
@@ -344,6 +351,9 @@
       const c = sComputedH(s);
       if (s.printedHundredTotal != null && c != null && s.printedHundredTotal !== c) w.push({ type: "seriesHundred", series: s.number, printed: s.printedHundredTotal, computed: c });
     }
+    // the grand total disagrees but every series matches its own printed subtotal: the total was misread
+    if (r.printedTotal != null && Math.abs(r.printedTotal - rComputed(r)) >= TOL && r.series.length > 1
+        && r.series.every((s) => s.printedTotal != null && Math.abs(s.printedTotal - sComputed(s)) < TOL)) r.printedTotal = rComputed(r);
     if (r.printedTotal != null && Math.abs(r.printedTotal - rComputed(r)) >= TOL) w.push({ type: "grandTotal", printed: r.printedTotal, computed: rComputed(r) });
     if (r.printedHundredTotal != null) {
       const p = r.series.map(sHundred);
@@ -438,7 +448,7 @@
     const mid = (w) => w.y + w.h / 2;
     const pairs = [];
     for (const a of words) for (const b of words) {
-      if (b === a || b.x <= a.x || a.text !== b.text) continue;
+      if (b === a || b.x <= a.x || a.text !== b.text || !/\d/.test(a.text)) continue;   // digits only: arrows and smudges repeat too
       if (Math.abs(mid(a) - mid(b)) < 0.5 * Math.min(a.h, b.h)) pairs.push([a, b, b.x - a.x]);
     }
     if (pairs.length < 4) return null;
@@ -475,7 +485,9 @@
         const x = copySplit(b);
         if (x == null) return [b];
         const l = b.filter((w) => w.x < x), r = b.filter((w) => w.x >= x);
-        if (!l.length || !r.length) return [b];
+        // both sides must look like a printout: at least 3 rows with two or more numbers
+        const full = (ws) => rowsOf(ws).filter((line) => (line.match(/\d+/g) || []).length >= 2).length >= 3;
+        if (!l.length || !r.length || !full(l) || !full(r)) return [b];
         changed = true; return [l, r];
       });
       if (!changed) break;
@@ -494,7 +506,13 @@
   }
   // two readings of the same printout: same target (a misread character or two allowed), or mostly the same shots
   function sameCopy(a, b) {
-    if (a.targetLabel && b.targetLabel) return lev(a.targetLabel, b.targetLabel) <= 2 && lev(a.targetLabel, b.targetLabel) < Math.min(a.targetLabel.length, b.targetLabel.length) / 2;
+    if (a.targetLabel && b.targetLabel) {
+      if (a.targetLabel === b.targetLabel) return true;
+      // two cleanly read labels that differ are two runs ("23/0004", "23/0005"); only a malformed one may be a misreading
+      const clean = (l) => /^\d{1,2}\/\d{4}$/.test(l);
+      if (clean(a.targetLabel) && clean(b.targetLabel)) return false;
+      return lev(a.targetLabel, b.targetLabel) <= 2 && Math.abs(rShots(a).length - rShots(b).length) <= 1;
+    }
     const x = rShots(a).map((s) => s.value), y = rShots(b).map((s) => s.value);
     if (x.length < 4 || x.length !== y.length) return false;
     return x.filter((v, i) => v === y[i]).length >= 0.7 * x.length;

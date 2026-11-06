@@ -38,7 +38,11 @@ enum LayoutAnalyzer {
             buckets = buckets.flatMap { b -> [[TextFragment]] in
                 guard let x = copySplit(b) else { return [b] }
                 let l = b.filter { $0.box.minX < x }, r = b.filter { $0.box.minX >= x }
-                if l.isEmpty || r.isEmpty { return [b] }
+                // both sides must look like a printout: at least 3 rows with two or more numbers
+                func full(_ ws: [TextFragment]) -> Bool {
+                    rows(ws).filter { line in line.split(separator: " ").filter { $0.contains(where: \.isNumber) }.count >= 2 }.count >= 3
+                }
+                if l.isEmpty || r.isEmpty || !full(l) || !full(r) { return [b] }
                 changed = true
                 return [l, r]
             }
@@ -54,7 +58,8 @@ enum LayoutAnalyzer {
         guard words.count >= 8 else { return nil }
         var pairs: [(a: TextFragment, dx: CGFloat)] = []
         for a in words {
-            for b in words where b.box.minX > a.box.minX && a.text == b.text {
+            // digits only: arrows and smudges repeat too
+            for b in words where b.box.minX > a.box.minX && a.text == b.text && a.text.contains(where: \.isNumber) {
                 if abs(a.box.midY - b.box.midY) < 0.5 * min(a.box.height, b.box.height) {
                     pairs.append((a, b.box.minX - a.box.minX))
                 }

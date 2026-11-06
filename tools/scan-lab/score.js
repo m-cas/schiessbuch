@@ -26,9 +26,14 @@ for (const pg of pages) {
   const words = (pg.words || []).map((w) => ({ text: w.t, x: w.x, y: w.y, w: w.w, h: w.h }));
   const cols = P.columns(words);
   const res = P.mergeCopies(cols.flatMap((c) => P.parseAll(c)));
+  const used = new Set();
   for (const e of exp) {
     total++;
-    const r = res.find((x) => x.targetLabel === e.target) || (e.target == null ? res[0] : null);
+    // by target label; else (label misread or missing - it is not shown to the user) the result whose shots agree most
+    const sim = (x) => { const a = P.shots(x).map((q) => q.value); return a.filter((v, i) => v === e.shots[i]).length - Math.abs(a.length - e.shots.length); };
+    const r = res.find((x) => x.targetLabel === e.target && !used.has(x))
+      || res.filter((x) => !used.has(x) && !exp.some((o) => o !== e && o.target && o.target === x.targetLabel)).sort((a, b) => sim(b) - sim(a))[0] || null;
+    if (r) used.add(r);
     const shots = r ? P.shots(r).map((s) => s.value) : [];
     const sight = r ? r.sighters.map((s) => s.value) : [];
     const ok = r && JSON.stringify(shots) === JSON.stringify(e.shots) && P.total(r) === e.total && (!e.sighters || JSON.stringify(sight) === JSON.stringify(e.sighters));
