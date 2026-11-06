@@ -30,7 +30,8 @@ for (const pg of pages) {
     total++;
     const r = res.find((x) => x.targetLabel === e.target) || (e.target == null ? res[0] : null);
     const shots = r ? P.shots(r).map((s) => s.value) : [];
-    const ok = r && JSON.stringify(shots) === JSON.stringify(e.shots) && P.total(r) === e.total;
+    const sight = r ? r.sighters.map((s) => s.value) : [];
+    const ok = r && JSON.stringify(shots) === JSON.stringify(e.shots) && P.total(r) === e.total && (!e.sighters || JSON.stringify(sight) === JSON.stringify(e.sighters));
     if (ok) good++;
     byVariant[variant][1]++; if (ok) byVariant[variant][0]++;
     console.log(`${ok ? "OK  " : "FAIL"} ${pg.file} ${e.target}: ${r ? `${shots.join(",")} = ${P.total(r)}` : "not found"}${ok ? "" : `   (expected ${e.shots.join(",")} = ${e.total})`}`);

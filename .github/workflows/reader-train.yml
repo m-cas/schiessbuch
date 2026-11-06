@@ -1,0 +1,61 @@
+# Trains the printout reader (tools/reader) on synthetic photos, checks it on the sample photos and
+# publishes the model files to the reader-model branch. Nothing is built for release.
+name: Reader training
+
+on:
+  push:
+    branches: [native]
+    paths: ["tools/reader/**", ".github/workflows/reader-train.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: reader-train
+  cancel-in-progress: true
+
+jobs:
+  train:
+    strategy:
+      matrix:
+        part: [det, rec]
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install PyTorch (CPU)
+        run: pip install -q torch --index-url https://download.pytorch.org/whl/cpu && pip install -q numpy opencv-python-headless
+      - name: Previous model (continue training)
+        run: |
+          git fetch -q origin reader-model:reader-model 2>/dev/null && git show reader-model:${{ matrix.part }}.pt > prev.pt 2>/dev/null || rm -f prev.pt
+          [ -f tools/reader/fresh ] && rm -f prev.pt; ls -la prev.pt 2>/dev/null || echo "starting fresh"
+      - name: Train
+        working-directory: tools/reader
+        run: python3 train.py ${{ matrix.part }} ../../out --minutes $(cat train-minutes.txt) --workers ${{ matrix.part == 'det' && 2 || 3 }} --resume ../../prev.pt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.part }}
+          path: out/
+
+  check:
+    needs: train
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          path: model
+          merge-multiple: true
+      - name: Read the sample photos
+        run: |
+          pip install -q numpy opencv-python-headless
+          python3 tools/reader/infer.py model model/samples.json tools/scan-samples/*.jpg | tee model/read.txt
+          node tools/scan-lab/score.js model/samples.json | tee model/score.txt
+      - name: Publish to the reader-model branch
+        run: |
+          cd model
+          git init -q -b reader-model
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          git add -A && git commit -q -m "Reader model for ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" reader-model
