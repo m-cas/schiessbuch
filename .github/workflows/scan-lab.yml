@@ -1,12 +1,12 @@
-# Reads the sample photos in tools/scan-samples/ with the text recognition of both phones
-# (Android: ML Kit in the emulator, iPhone: Apple Vision on a Mac) and publishes what was read
-# to the scan-lab-results branch. Used to tune the printout parser; nothing is built for release.
+# Reads the sample photos in tools/scan-samples/ with the printout reader of the Android app (in the emulator)
+# and of the iPhone app (its Swift code on a Mac) and publishes the words to the scan-lab-results branch,
+# to check both ports against the reference (tools/reader/infer.py). Nothing is built for release.
 name: Scan lab
 
 on:
   push:
     branches: [native]
-    paths: ["tools/scan-samples/**", "tools/scan-lab/**", ".github/workflows/scan-lab.yml"]
+    paths: ["tools/scan-lab/**", ".github/workflows/scan-lab.yml"]
   workflow_dispatch:
 
 permissions:
@@ -31,14 +31,14 @@ jobs:
       - name: Build debug app
         working-directory: android-native
         run: gradle assembleDebug --no-daemon -q
-      - name: Make preprocessed copies of the photos
-        run: pip install -q pillow numpy scipy && python3 tools/scan-lab/variants.py tools/scan-samples lab-input rows
+      - name: Photos to read
+        run: mkdir -p lab-input && cp tools/scan-samples/*.jpg lab-input/
       - name: Enable KVM for the emulator
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Read the photos with ML Kit in the emulator
+      - name: Read the photos with the Android app in the emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -56,12 +56,12 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v6
-      - name: Read the photos with Apple Vision
+      - name: Read the photos with the iPhone app's reader
         run: |
-          mkdir -p lab
-          python3 -m pip install -q --break-system-packages pillow numpy scipy || python3 -m pip install -q pillow numpy scipy
-          python3 tools/scan-lab/variants.py tools/scan-samples lab-input rows
-          swift tools/scan-lab/vision-dump.swift lab/vision.json lab-input/*.jpg
+          mkdir -p lab build
+          cp tools/scan-lab/ios/main.swift ios-native/Sources/Scanner/ScanReader.swift ios-native/Sources/Scanner/ScanLayoutAnalyzer.swift build/
+          cd build && swiftc -O main.swift ScanReader.swift ScanLayoutAnalyzer.swift -o readercheck
+          ./readercheck ../ios-native/Resources/reader.json ../ios-native/Resources/reader.bin ../lab/ios.json ../tools/scan-samples/*.jpg
       - uses: actions/upload-artifact@v4
         with:
           name: vision
