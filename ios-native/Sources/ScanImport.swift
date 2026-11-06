@@ -16,11 +16,10 @@ enum ScanImport {
         let desc = r0.competition ?? r0.event ?? ""
         if !desc.isEmpty { s.desc = desc }
         if let w = r0.weapon { s.weapon = w }
-        let labels = results.compactMap { r -> String? in
-            let pg = r.program.flatMap { $0.allSatisfy(\.isNumber) ? "Pg \($0)" : nil }
-            let target = r.targetLabel.map { pg == nil ? "\(tx.scanTarget) \($0)" : $0 }
-            let parts = [pg, target].compactMap { $0 }
-            return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        // only the program goes into the notes; target and running number ("21/0002") are not needed
+        var labels: [String] = []
+        for r in results {
+            if let p = r.program, !p.isEmpty, p.allSatisfy(\.isNumber), !labels.contains("Pg \(p)") { labels.append("Pg \(p)") }
         }
         s.notes = tx.scanNote(labels.joined(separator: "; "))
         let warnings = results.enumerated().flatMap { i, r in

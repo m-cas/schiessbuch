@@ -1883,7 +1883,8 @@ function scanDraft(results, photoDate) {
   d.series = results.map(scanSeries);
   d.desc = r0.competition || r0.event || "";
   if (r0.weapon) d.weapon = r0.weapon;
-  const labels = results.map((r) => [r.program && /^\d+$/.test(r.program) ? "Pg " + r.program : "", r.targetLabel ? (r.program && /^\d+$/.test(r.program) ? "" : t("scanTarget") + " ") + r.targetLabel : ""].filter(Boolean).join(" · ")).filter(Boolean);
+  // only the program goes into the notes; target and running number ("21/0002") are not needed
+  const labels = [...new Set(results.filter((r) => r.program && /^\d+$/.test(r.program)).map((r) => "Pg " + r.program))];
   d.notes = t("scanNote", labels.join("; "));
   d.scanWarn = results.flatMap((r, i) => r.warnings.map((w) => (results.length > 1 ? `${i + 1}: ` : "") + scanWarnText(w)));
   return d;

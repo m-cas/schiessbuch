@@ -148,11 +148,8 @@ object ScanImport {
     /** Date: printed on the strip, else the day the photo was taken ([photoDay]), else today. */
     fun session(results: List<ScanResult>, base: Session, tx: Tx, photoDay: String? = null): Pair<Session, List<String>> {
         val r0 = results.first()
-        val labels = results.mapNotNull { r ->
-            val pg = r.program?.takeIf { p -> p.all { it.isDigit() } }?.let { "Pg $it" }
-            val target = r.targetLabel?.let { if (pg == null) "${tx.scanTarget} $it" else it }
-            listOfNotNull(pg, target).takeIf { it.isNotEmpty() }?.joinToString(" · ")
-        }
+        // only the program goes into the notes; target and running number ("21/0002") are not needed
+        val labels = results.mapNotNull { r -> r.program?.takeIf { p -> p.isNotEmpty() && p.all { it.isDigit() } }?.let { "Pg $it" } }.distinct()
         val s = base.copy(
             preset = Discipline.R300.key,
             date = r0.date?.let(::isoDay) ?: photoDay ?: base.date,
