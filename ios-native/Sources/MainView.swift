@@ -91,7 +91,9 @@ struct MainView: View {
                 guard let item else { return }
                 pickedPhoto = nil
                 Task {
-                    if let data = try? await item.loadTransferable(type: Data.self), let img = UIImage(data: data) { scan(img) }
+                    if let data = try? await item.loadTransferable(type: Data.self), let img = UIImage(data: data) {
+                        scan(img, photoDay: ScanImport.photoDay(data))   // no date on the strip: the day the photo was taken
+                    }
                     else { scanMessage = tx.scanFail }
                 }
             }
@@ -350,14 +352,14 @@ struct MainView: View {
         return s
     }
     /// Reads the printout on the photo and opens the editor with the shots filled in (and the photo attached).
-    private func scan(_ image: UIImage) {
+    private func scan(_ image: UIImage, photoDay: String? = nil) {
         scanning = true
         Task {
             defer { scanning = false }
             do {
                 let results = try await ShootingResultScanner().scan(image)
                 guard !results.isEmpty else { scanMessage = tx.scanNone; return }
-                var (s, warnings) = ScanImport.session(from: results, base: newSession(), tx: tx)
+                var (s, warnings) = ScanImport.session(from: results, base: newSession(), tx: tx, photoDay: photoDay)
                 if let id = store.addPhoto(image) { s.photos = [id]; scanPhotos = [id] } else { scanPhotos = [] }
                 scanWarnings = warnings
                 editing = s

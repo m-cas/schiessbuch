@@ -119,7 +119,34 @@ object ScanOcr {
 
 /** Turns scan results into a new session: one series per printout, known 300 m programs get their format. */
 object ScanImport {
-    fun session(results: List<ScanResult>, base: Session, tx: Tx): Pair<Session, List<String>> {
+    /**
+     * The day the photo was taken ("YYYY-MM-DD"): EXIF date of the picture, else the file's date, else null.
+     * Used when the strip has no date printed.
+     */
+    fun photoDay(context: Context, uri: Uri): String? {
+        runCatching {
+            context.contentResolver.openInputStream(uri)?.use { ins ->
+                val ex = ExifInterface(ins)
+                val w = ex.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL) ?: ex.getAttribute(ExifInterface.TAG_DATETIME)
+                if (w != null && w.length >= 10 && !w.startsWith("0000")) return w.substring(0, 10).replace(':', '-')
+            }
+        }
+        val ms = runCatching {
+            if (uri.scheme == "file") java.io.File(uri.path!!).lastModified()
+            else context.contentResolver.query(uri, null, null, null, null)?.use { c ->
+                if (!c.moveToFirst()) return@use 0L
+                listOf("datetaken", "date_taken_ms", "date_modified", "last_modified").firstNotNullOfOrNull { col ->
+                    c.getColumnIndex(col).takeIf { it >= 0 }?.let { c.getLong(it) }?.takeIf { it > 0 }
+                        ?.let { if (col == "date_modified") it * 1000 else it }
+                } ?: 0L
+            } ?: 0L
+        }.getOrDefault(0L)
+        if (ms <= 0) return null
+        return java.time.Instant.ofEpochMilli(ms).atZone(java.time.ZoneId.systemDefault()).toLocalDate().toString()
+    }
+
+    /** Date: printed on the strip, else the day the photo was taken ([photoDay]), else today. */
+    fun session(results: List<ScanResult>, base: Session, tx: Tx, photoDay: String? = null): Pair<Session, List<String>> {
         val r0 = results.first()
         val labels = results.mapNotNull { r ->
             val pg = r.program?.takeIf { p -> p.all { it.isDigit() } }?.let { "Pg $it" }
@@ -128,7 +155,7 @@ object ScanImport {
         }
         val s = base.copy(
             preset = Discipline.R300.key,
-            date = r0.date?.let(::isoDay) ?: base.date,
+            date = r0.date?.let(::isoDay) ?: photoDay ?: base.date,
             series = results.map(::series),
             desc = (r0.competition ?: r0.event)?.takeIf { it.isNotBlank() } ?: base.desc,
             weapon = r0.weapon ?: base.weapon,

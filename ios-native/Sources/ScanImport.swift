@@ -1,13 +1,16 @@
 import SwiftUI
+import ImageIO
 import UIKit
 
 /// Turns results read from a photo of the range printout into a new session (one series per printout).
 /// Known 300 m programs get their format; anything else becomes a custom series. Same rules as the web app.
 enum ScanImport {
-    static func session(from results: [ShootingResult], base: Session, tx: Tx) -> (session: Session, warnings: [String]) {
+    /// Date: printed on the strip, else the day the photo was taken (`photoDay`, "YYYY-MM-DD"), else today.
+    static func session(from results: [ShootingResult], base: Session, tx: Tx, photoDay: String? = nil) -> (session: Session, warnings: [String]) {
         var s = base
         s.preset = Discipline.r300.rawValue
         let r0 = results[0]
+        if let p = photoDay { s.date = p }
         if let d = r0.date, let day = isoDay(d) { s.date = day }
         s.series = results.map(series)
         let desc = r0.competition ?? r0.event ?? ""
@@ -24,6 +27,17 @@ enum ScanImport {
             r.warnings.map { (results.count > 1 ? "\(i + 1): " : "") + text($0, tx) }
         }
         return (s, warnings)
+    }
+
+    /// The day a photo was taken, from its EXIF data ("2026:07:02 17:50:12" → "2026-07-02").
+    static func photoDay(_ data: Data) -> String? {
+        guard let src = CGImageSourceCreateWithData(data as CFData, nil),
+              let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [CFString: Any] else { return nil }
+        let exif = props[kCGImagePropertyExifDictionary] as? [CFString: Any]
+        let tiff = props[kCGImagePropertyTIFFDictionary] as? [CFString: Any]
+        guard let when = (exif?[kCGImagePropertyExifDateTimeOriginal] ?? tiff?[kCGImagePropertyTIFFDateTime]) as? String,
+              when.count >= 10, !when.hasPrefix("0000") else { return nil }
+        return String(when.prefix(10)).replacingOccurrences(of: ":", with: "-")
     }
 
     /// "19.9.2026" → "2026-09-19"

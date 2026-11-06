@@ -127,7 +127,7 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                 val results = ScanOcr.read(context, uri)
                 if (results.isEmpty()) scanMessage = tx.scanNone
                 else {
-                    var (s, warnings) = ScanImport.session(results, newSession(store), tx)
+                    var (s, warnings) = ScanImport.session(results, newSession(store), tx, ScanImport.photoDay(context, uri))
                     val photo = store.addPhoto(uri)
                     if (photo != null) s = s.copy(photos = listOf(photo))
                     nav.push(Screen.Editor(s, true, warnings, listOfNotNull(photo)))
