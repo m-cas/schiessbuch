@@ -78,7 +78,14 @@ public struct ShootingResultScanner: Sendable {
         var results: [ShootingResult] = []
         if let reader = PrintoutReader.shared {
             let (gray, w, h) = PrintoutReader.gray(ImagePreprocessor().upright(cgImage, orientation: orientation))
-            results = LayoutAnalyzer.columns(from: reader.read(gray: gray, width: w, height: h)).flatMap { parser.parseAll(lines: $0) }
+            let parse = { (g: [Float]) in
+                ResultAssembler.mergeCopies(LayoutAnalyzer.columns(from: reader.read(gray: g, width: w, height: h)).flatMap { parser.parseAll(lines: $0) })
+            }
+            results = parse(gray)
+            // nothing adds up: maybe a strip lies upside down on the photo, read it turned by 180° too
+            if !results.isEmpty, !results.contains(where: \.isVerified) {
+                results = ResultAssembler.addTurned(results, parse(Array(gray.reversed())))
+            }
         }
         if results.isEmpty {
             let upright = try recognizer.recognize(prepared)

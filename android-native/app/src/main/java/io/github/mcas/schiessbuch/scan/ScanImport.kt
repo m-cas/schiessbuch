@@ -57,7 +57,11 @@ object ScanOcr {
         val original = load(context, uri) ?: error("unreadable")
         // the trained printout reader first (made for dot-matrix strips), ML Kit when it finds nothing
         var results = reader(context)?.let { r ->
-            Scan.mergeCopies(Scan.columns(r.read(gray(original), original.width, original.height)).flatMap { Scan.parseAll(it) })
+            val g = gray(original)
+            val parse = { gr: FloatArray -> Scan.mergeCopies(Scan.columns(r.read(gr, original.width, original.height)).flatMap { Scan.parseAll(it) }) }
+            val first = parse(g)
+            // nothing adds up: maybe a strip lies upside down on the photo, read it turned by 180° too
+            if (first.isNotEmpty() && first.none { it.isVerified }) Scan.addTurned(first, parse(g.reversedArray())) else first
         } ?: emptyList()
         val bmp = prepare(original)
         if (results.isEmpty()) {

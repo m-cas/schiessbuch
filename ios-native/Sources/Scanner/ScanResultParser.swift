@@ -71,6 +71,15 @@ enum ResultAssembler {
         return groups.map(mergeGroup)
     }
 
+    /// Results from reading the photo turned by 180° (a strip lying upside down): only printouts with a cleanly read
+    /// run number and at least 4 shots count (an upright strip read upside down gives junk), merged with the first pass.
+    static func addTurned(_ results: [ShootingResult], _ turned: [ShootingResult]) -> [ShootingResult] {
+        let ok = turned.filter { r in
+            (r.targetLabel?.range(of: #"^\d{1,3}/\d{4}$"#, options: .regularExpression) != nil) && r.shots.count >= 4
+        }
+        return ok.isEmpty ? results : mergeCopies(results + ok)
+    }
+
     static func lev(_ a: String, _ b: String) -> Int {
         let a = Array(a), b = Array(b)
         var d = Array(0...b.count)

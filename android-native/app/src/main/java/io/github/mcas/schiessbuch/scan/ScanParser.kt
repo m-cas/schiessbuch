@@ -545,6 +545,15 @@ object Scan {
     }
 
     // ---------- copies printed side by side ----------
+    /**
+     * Results from reading the photo turned by 180° (a strip lying upside down): only printouts with a cleanly read
+     * run number and at least 4 shots count (an upright strip read upside down gives junk), merged with the first pass.
+     */
+    fun addTurned(results: List<ScanResult>, turned: List<ScanResult>): List<ScanResult> {
+        val ok = turned.filter { r -> r.targetLabel?.let { Regex("""^\d{1,3}/\d{4}$""").matches(it) } == true && r.shots.size >= 4 }
+        return if (ok.isEmpty()) results else mergeCopies(results + ok)
+    }
+
     private fun lev(a: String, b: String): Int {
         val d = IntArray(b.length + 1) { it }
         for (i in 1..a.length) {

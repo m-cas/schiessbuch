@@ -563,7 +563,14 @@
     });
   }
 
-  const api = { parseAll, parseHeader, applyHeader, columns, rowsOf, mergeCopies, isHeaderLine,
+  // Results from reading the photo turned by 180° (a strip lying upside down): only printouts with a cleanly read
+  // run number and at least 4 shots count (an upright strip read upside down gives junk), merged with the first pass.
+  function addTurned(results, turned) {
+    const ok = turned.filter((r) => r.targetLabel && /^\d{1,3}\/\d{4}$/.test(r.targetLabel) && rShots(r).length >= 4);
+    return ok.length ? mergeCopies(results.concat(ok)) : results;
+  }
+
+  const api = { parseAll, parseHeader, applyHeader, columns, rowsOf, mergeCopies, addTurned, isHeaderLine,
     total: rTotal, hundredTotal: rHundred, verified: rVerified, shots: rShots, seriesTotal: sTotal, seriesHundred: sHundred, fmt };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ScanParser = api;
 })(typeof self !== "undefined" ? self : this);
