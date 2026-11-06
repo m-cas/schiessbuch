@@ -105,4 +105,22 @@ class ScanParserTest {
         assertEquals(1, merged.size); assertEquals("21/0004", merged[0].targetLabel)
         assertEquals(10, merged[0].shots.size); assertEquals(89.0, merged[0].total, 0.0); assertTrue(merged[0].isVerified)
     }
+
+    @Test fun sightersWhenNumberingRestarts() {
+        val r = one(listOf("Pg211 23/0003", "1 ↗ 9", "2 ↗ 10 19", "1 + 10", "2 ↓ 10", "3 ↓ 9", "4 ↙ 8", "5 → 10", "6 ↘ 8 55", "7 ↘ 10", "8 → 8", "9 ↘ 9", "10 ↘ 9 36", "91 91", "T/P 7 94"))
+        assertEquals(listOf(9.0, 10.0), r.sighters.map { it.value }); assertEquals(listOf(6, 4), r.series.map { it.shots.size })
+        assertEquals(91.0, r.total, 0.0); assertTrue(r.warnings.toString(), r.isVerified)
+    }
+
+    @Test fun hundredSeriesTotalOnLastRow() {
+        val r = one(listOf("Pg 57 23/0051", "1 ← 94", "2 + 97", "3 → 89", "4 ↑ 78", "5 ↖ 89", "6 ↓ 91", "7 → 80", "8 ↑ 87", "9 ↗ 94", "10 ↗ 75 874", "874 874"))
+        assertEquals(ScoringMode.HUNDRED, r.scoringMode); assertEquals(10, r.shots.size); assertEquals(874.0, r.total, 0.0); assertTrue(r.warnings.toString(), r.isVerified)
+    }
+
+    @Test fun thermalSubtotalAfterParentheses() {
+        val r = one(listOf("Scheibe 10/6 K", "18.7.2026 09:05 K", "[1] A10 Benutzerpr", "1-34251(49) Castel", "1 ↗ 8 72 K", "2 ↖ 9 86 K", "3 ↘ 9 89 K", "4 ↙ 10# 96 K", "5 ↙ 8 73 K",
+            "6 ← 8 77 K", "Subtota 52 493 K", "7 ↘ 8 74 K", "8 ↘ 9 85 K", "9 ↙ 7 67 K", "10 ↙ 10 92 K", "( 10 ↙ 10 92) K", "Subtota 34 318 K", "Total 86 811 K"))
+        assertEquals(listOf(52.0, 34.0), r.series.map { it.printedTotal }); assertEquals(811, r.hundredTotal)
+        assertEquals(1, r.shots.count { it.inner }); assertTrue(r.warnings.toString(), r.isVerified)
+    }
 }

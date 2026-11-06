@@ -83,6 +83,17 @@ eq("merged", [merged.length, merged[0].copiesRead, merged[0].copiesAgree, P.tota
   eq("single copy stays one", P.columns(w3).length, 1);
 }
 
+// sighters on a Pg strip: numbering starts again at 1 (Verbandsstich, Pg211)
+r = one(["Pg211 23/0003", "1 ↗ 9", "2 ↗ 10 19", "1 + 10", "2 ↓ 10", "3 ↓ 9", "4 ↙ 8", "5 → 10", "6 ↘ 8 55", "7 ↘ 10", "8 → 8", "9 ↘ 9", "10 ↘ 9 36", "91 91", "T/P 7 94"]);
+eq("sighters restart", [r.sighters.map((x) => x.value), r.series.map((x) => x.shots.length), P.total(r), P.verified(r)], [[9, 10], [6, 4], 91, true]);
+// 100-value program: the series total on the last shot row is not an eleventh shot (Pg 57)
+r = one(["Pg 57 23/0051", "1 ← 94", "2 + 97", "3 → 89", "4 ↑ 78", "5 ↖ 89", "6 ↓ 91", "7 → 80", "8 ↑ 87", "9 ↗ 94", "10 ↗ 75 874", "874 874"]);
+eq("hundred subtotal", [r.scoringMode, P.shots(r).length, P.total(r), P.verified(r)], ["hundred", 10, 874, true]);
+// thermal strip: subtotal after the parentheses line, Mouche marked with #
+r = one(["Scheibe 10/6 K", "18.7.2026 09:05 K", "[1] A10 Benutzerpr", "1-34251(49) Castel", "1 ↗ 8 72 K", "2 ↖ 9 86 K", "3 ↘ 9 89 K", "4 ↙ 10# 96 K", "5 ↙ 8 73 K",
+  "6 ← 8 77 K", "Subtota 52 493 K", "7 ↘ 8 74 K", "8 ↘ 9 85 K", "9 ↙ 7 67 K", "10 ↙ 10 92 K", "( 10 ↙ 10 92) K", "Subtota 34 318 K", "Total 86 811 K"]);
+eq("thermal late subtotal", [r.series.map((x) => x.printedTotal), P.hundredTotal(r), P.shots(r).filter((x) => x.inner).length, P.verified(r)], [[52, 34], 811, 1, true]);
+
 // generic sheet
 r = one(["Serie 1  10.5 10.2 9.8 10.1 10.4 9.9 10.0 10.3 10.6 9.7 = 101.5"]);
 eq("generic", [r.scoringMode, P.shots(r).length, r.series[0].printedTotal, P.verified(r)], ["decimal", 10, 101.5, true]);

@@ -110,6 +110,13 @@ struct StripParser: Sendable {
                 return
             }
 
+            // numbering starts again at 1 after a few shots: those were the sighters (Probe), e.g. "1 9 / 2 10 19", then "1 + 10 …"
+            if nums.count >= 2, nums[0].value == 1, lastIndex > 0, sighters.isEmpty {
+                let before = series.flatMap(\.shots) + pending
+                if before.count <= 5 {
+                    sighters = before; series = []; pending = []; lastIndex = 0; printedTotal = nil
+                }
+            }
             let expected = lastIndex + 1
             let first = nums[0]
 
@@ -159,6 +166,13 @@ struct StripParser: Sendable {
             guard let last = r.last else { return nil }
             switch layout {
             case .hundreds:
+                // "10 > 75 874": the series total printed on the last shot row
+                if r.count >= 2 {
+                    let a = r[r.count - 2]
+                    if a.value <= 100, last.value > 100 || (!pending.isEmpty && last.value == pendingSum + a.value) {
+                        return (ScanShot(number: number, value: Double(a.value), hundred: a.value, isInnerTen: a.inner), last.value)
+                    }
+                }
                 return (ScanShot(number: number, value: Double(last.value), hundred: last.value, isInnerTen: last.inner), nil)
 
             case .ringsAndHundreds:
@@ -193,7 +207,12 @@ struct StripParser: Sendable {
         }
 
         mutating func closePending(printed values: [Int] = []) {
-            guard !pending.isEmpty else { return }
+            if pending.isEmpty {
+                // a subtotal line right after the series was closed (e.g. by the parentheses line) still belongs to it
+                guard !values.isEmpty, let prev = series.last, prev.printedTotal == nil, prev.printedHundredTotal == nil else { return }
+                pending = prev.shots
+                series.removeLast()
+            }
             var s = ScanSeries(number: series.count + 1, shots: pending)
             switch layout {
             case .rings, .hundreds:

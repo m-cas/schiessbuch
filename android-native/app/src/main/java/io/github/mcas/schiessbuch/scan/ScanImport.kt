@@ -158,8 +158,9 @@ object ScanImport {
         fun custom(t: Target) = Series(type = SeriesFormat.CUSTOM.key, target = t.key, planned = shots.size, practice = prac.size, shots = prac + shots, tief = if (t == Target.A100) null else deep)
         return when {
             r.scoringMode == ScoringMode.HUNDRED -> custom(Target.A100)
-            counts == listOf(6, 3, 3, 6) && maxV <= 4 && prac.isEmpty() -> fixed(SeriesFormat.FS300, shots)
-            counts == listOf(5, 5, 2, 3, 5) && maxV <= 5 && prac.isEmpty() -> fixed(SeriesFormat.OP300, shots)
+            // Feldschiessen and Obligatorisch: printed in different groupings (6/3/3/6, 6/6/6 …), so known by shot count and values
+            shots.size == 18 && maxV <= 4 && prac.isEmpty() -> fixed(SeriesFormat.FS300, shots)
+            shots.size == 20 && maxV <= 5 && prac.isEmpty() -> fixed(SeriesFormat.OP300, shots)
             prac.size == 2 && counts == listOf(5, 2, 3) -> fixed(SeriesFormat.P2S5R23, prac + shots)
             prac.size == 2 && counts == listOf(6, 4) -> fixed(SeriesFormat.P2S6R4, prac + shots)
             prac.isEmpty() && counts == listOf(6, 4) -> fixed(SeriesFormat.S6R4, shots)

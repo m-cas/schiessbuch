@@ -238,7 +238,15 @@
     function makeShot(number, vals) {
       const last = vals[vals.length - 1];
       if (!last) return null;
-      if (layout === "h") return { shot: shot(number, last.value, last.value, last.inner), sub: null };
+      if (layout === "h") {
+        // "10 > 75 874": the series total printed on the last shot row
+        if (vals.length >= 2) {
+          const a = vals[vals.length - 2];
+          if (a.value <= 100 && (last.value > 100 || (st.pending.length && last.value === pendingSum() + a.value)))
+            return { shot: shot(number, a.value, a.value, a.inner), sub: last.value };
+        }
+        return { shot: shot(number, last.value, last.value, last.inner), sub: null };
+      }
       if (layout === "rh") {
         if (vals.length >= 2 && last.value > 10) {
           const ring = vals[vals.length - 2];
@@ -256,7 +264,12 @@
       return { shot: shot(number, last.value, null, last.inner), sub: null };
     }
     function close(values = []) {
-      if (!st.pending.length) return;
+      if (!st.pending.length) {
+        // a subtotal line right after the series was closed (e.g. by the parentheses line) still belongs to it
+        const prev = st.series[st.series.length - 1];
+        if (values.length && prev && prev.printedTotal == null && prev.printedHundredTotal == null) { st.pending = prev.shots; st.series.pop(); }
+        else return;
+      }
       const s = series(st.series.length + 1, st.pending);
       if (layout !== "rh") { if (values.length) s.printedTotal = values[values.length - 1]; }
       else if (values.length >= 2) { s.printedTotal = values[values.length - 2]; s.printedHundredTotal = values[values.length - 1]; }
@@ -286,7 +299,7 @@
       if (isHeaderLine(row.raw)) return;
       const d = deepShot(row.raw);
       if (d) { st.deep.push(d); return; }
-      if (row.isParen) { close(); return; }
+      if (row.isParen) { close(); return; }   // best shot of the series repeated in parentheses: ends the series
       if (SUBTOTAL_WORDS.some((w) => row.lower.includes(w))) { close(row.nums.map((n) => n.value)); return; }
       if (TOTAL_WORDS.some((w) => row.lower.includes(w))) { close(); setTotals(row.nums.map((n) => n.value)); return; }
       if (row.hasWords || !row.nums.length) return;
@@ -294,6 +307,11 @@
       if (row.isSighter) {
         if (nums.length >= 2) { const m = makeShot(nums[0].value, nums.slice(1)); if (m) st.sighters.push(m.shot); }
         return;
+      }
+      // numbering starts again at 1 after a few shots: those were the sighters (Probe), e.g. "1 9 / 2 10 19", then "1 + 10 …"
+      if (nums.length >= 2 && nums[0].value === 1 && st.last > 0 && !st.sighters.length) {
+        const before = st.series.flatMap((x) => x.shots).concat(st.pending);
+        if (before.length <= 5) { st.sighters = before; st.series = []; st.pending = []; st.last = 0; st.pt = null; }
       }
       const expected = st.last + 1, first = nums[0];
       if (nums.length >= 2) {

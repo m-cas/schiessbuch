@@ -54,8 +54,9 @@ enum ScanImport {
             return x
         }
         if r.scoringMode == .hundred { return custom(.a100) }
-        if counts == [6, 3, 3, 6], maxV <= 4, prac.isEmpty { return fixed(.fs300, shots) }
-        if counts == [5, 5, 2, 3, 5], maxV <= 5, prac.isEmpty { return fixed(.op300, shots) }
+        // Feldschiessen and Obligatorisch: printed in different groupings (6/3/3/6, 6/6/6 …), so known by shot count and values
+        if shots.count == 18, maxV <= 4, prac.isEmpty { return fixed(.fs300, shots) }
+        if shots.count == 20, maxV <= 5, prac.isEmpty { return fixed(.op300, shots) }
         if prac.count == 2, counts == [5, 2, 3] { return fixed(.p2s5r23, prac + shots) }
         if prac.count == 2, counts == [6, 4] { return fixed(.p2s6r4, prac + shots) }
         if prac.isEmpty, counts == [6, 4] { return fixed(.s6r4, shots) }

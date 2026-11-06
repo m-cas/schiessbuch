@@ -292,7 +292,13 @@ object Scan {
         fun makeShot(number: Int, vals: List<Num>): Made? {
             val l = vals.lastOrNull() ?: return null
             return when (layout) {
-                Layout.H -> Made(ScanShot(number, l.value.toDouble(), l.value, l.inner), null)
+                Layout.H -> {
+                    // "10 > 75 874": the series total printed on the last shot row
+                    val a = vals.getOrNull(vals.size - 2)
+                    if (a != null && a.value <= 100 && (l.value > 100 || (pending.isNotEmpty() && l.value == pending.sumOf { it.value }.toInt() + a.value)))
+                        Made(ScanShot(number, a.value.toDouble(), a.value, a.inner), l.value)
+                    else Made(ScanShot(number, l.value.toDouble(), l.value, l.inner), null)
+                }
                 Layout.RH -> when {
                     vals.size >= 2 && l.value > 10 -> {
                         val ring = vals[vals.size - 2]
@@ -313,7 +319,13 @@ object Scan {
             }
         }
         fun close(values: List<Int> = emptyList()) {
-            if (pending.isEmpty()) return
+            if (pending.isEmpty()) {
+                // a subtotal line right after the series was closed (e.g. by the parentheses line) still belongs to it
+                val prev = series.lastOrNull()
+                if (values.isNotEmpty() && prev != null && prev.printedTotal == null && prev.printedHundredTotal == null) {
+                    pending = prev.shots.toMutableList(); series.removeAt(series.size - 1)
+                } else return
+            }
             val s = ScanSeries(series.size + 1, pending)
             if (layout != Layout.RH) { if (values.isNotEmpty()) s.printedTotal = values.last().toDouble() }
             else if (values.size >= 2) { s.printedTotal = values[values.size - 2].toDouble(); s.printedHundredTotal = values.last() }
@@ -351,6 +363,11 @@ object Scan {
             if (row.isSighter) {
                 if (nums.size >= 2) makeShot(nums[0].value, nums.drop(1))?.let { sighters += it.shot }
                 return@forEachIndexed
+            }
+            // numbering starts again at 1 after a few shots: those were the sighters (Probe), e.g. "1 9 / 2 10 19", then "1 + 10 …"
+            if (nums.size >= 2 && nums[0].value == 1 && last > 0 && sighters.isEmpty()) {
+                val before = series.flatMap { it.shots } + pending
+                if (before.size <= 5) { sighters += before; series.clear(); pending = mutableListOf(); last = 0; pt = null }
             }
             val expected = last + 1; val first = nums[0]
             if (nums.size >= 2) {

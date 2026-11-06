@@ -1821,8 +1821,9 @@ function scanSeries(r) {
     : all.some((x) => x.hundred != null) ? Math.max(...all.map((x) => x.hundred || 0)) : null;
   const base = { total: null, tief: deep != null && r.scoringMode !== "hundred" ? deep : null, target: "A10" };
   if (r.scoringMode === "hundred") return { ...base, type: "custom", target: "A100", planned: n, practice: prac.length, shots: prac.concat(shots) };
-  if (counts === "6,3,3,6" && maxV <= 4 && !prac.length) return { ...base, type: "fs300", planned: 18, shots };
-  if (counts === "5,5,2,3,5" && maxV <= 5 && !prac.length) return { ...base, type: "op300", planned: 20, shots };
+  // Feldschiessen and Obligatorisch: printed in different groupings (6/3/3/6, 6/6/6 …), so known by shot count and values
+  if (n === 18 && maxV <= 4 && !prac.length) return { ...base, type: "fs300", planned: 18, shots };
+  if (n === 20 && maxV <= 5 && !prac.length) return { ...base, type: "op300", planned: 20, shots };
   if (prac.length === 2 && counts === "5,2,3") return { ...base, type: "p2s5r23", planned: 12, shots: prac.concat(shots) };
   if (prac.length === 2 && counts === "6,4") return { ...base, type: "p2s6r4", planned: 12, shots: prac.concat(shots) };
   if (!prac.length && counts === "6,4") return { ...base, type: "s6r4", planned: 10, shots };
