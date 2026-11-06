@@ -31,6 +31,8 @@ jobs:
       - name: Build debug app
         working-directory: android-native
         run: gradle assembleDebug --no-daemon -q
+      - name: Make preprocessed copies of the photos
+        run: pip install -q pillow numpy && python3 tools/scan-lab/variants.py tools/scan-samples lab-input
       - name: Enable KVM for the emulator
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -57,7 +59,9 @@ jobs:
       - name: Read the photos with Apple Vision
         run: |
           mkdir -p lab
-          swift tools/scan-lab/vision-dump.swift lab/vision.json tools/scan-samples/*.jpg
+          python3 -m pip install -q --break-system-packages pillow numpy || python3 -m pip install -q pillow numpy
+          python3 tools/scan-lab/variants.py tools/scan-samples lab-input
+          swift tools/scan-lab/vision-dump.swift lab/vision.json lab-input/*.jpg
       - uses: actions/upload-artifact@v4
         with:
           name: vision

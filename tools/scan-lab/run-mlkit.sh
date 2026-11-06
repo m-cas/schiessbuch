@@ -10,9 +10,9 @@ adb install -r "$APK"
 adb shell settings put global hide_error_dialogs 1
 sleep 20
 adb shell mkdir -p $DIR
-for f in tools/scan-samples/*.jpg; do adb push "$f" $DIR/; done
+for f in lab-input/*.jpg; do adb push "$f" $DIR/ >/dev/null; done
 adb shell am start -W -n $PKG/.MainActivity --ez scanlab true
-for i in $(seq 1 60); do adb shell ls $DIR/mlkit.json >/dev/null 2>&1 && break; sleep 5; done
+for i in $(seq 1 180); do adb shell ls $DIR/mlkit.json >/dev/null 2>&1 && break; sleep 5; done
 sleep 3
 adb pull $DIR/mlkit.json lab/mlkit.json
 adb logcat -d -s AndroidRuntime:E > lab/crash.log || true
