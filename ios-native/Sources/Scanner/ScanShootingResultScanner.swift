@@ -74,8 +74,16 @@ public struct ShootingResultScanner: Sendable {
                                         languages: config.recognitionLanguages)
         let parser = ResultParser(configuration: config)
 
-        let upright = try recognizer.recognize(prepared)
-        var results = LayoutAnalyzer.columns(from: upright.words).flatMap { parser.parseAll(lines: $0) }
+        // the trained printout reader first (made for dot-matrix strips), Apple Vision when it finds nothing
+        var results: [ShootingResult] = []
+        if let reader = PrintoutReader.shared {
+            let (gray, w, h) = PrintoutReader.gray(ImagePreprocessor().upright(cgImage, orientation: orientation))
+            results = LayoutAnalyzer.columns(from: reader.read(gray: gray, width: w, height: h)).flatMap { parser.parseAll(lines: $0) }
+        }
+        if results.isEmpty {
+            let upright = try recognizer.recognize(prepared)
+            results = LayoutAnalyzer.columns(from: upright.words).flatMap { parser.parseAll(lines: $0) }
+        }
 
         // SIUS-style strips print name, club and weapon sideways. Pg strips have no header.
         let needsHeader = results.contains { result in

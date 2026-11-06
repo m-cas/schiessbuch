@@ -39,10 +39,31 @@ object ScanOcr {
             blocks.flatMap { block -> block.lines.map { word(it.text, it.boundingBox, bmp) } }.filterNotNull()
     }
 
+    @Volatile private var reader: Reader? = null
+
+    /** The trained printout reader (assets/reader.json + reader.bin), null if the model is missing. */
+    fun reader(context: Context): Reader? = reader ?: runCatching {
+        Reader(context.assets.open("reader.json").use { String(it.readBytes()) }, context.assets.open("reader.bin").use { it.readBytes() })
+    }.getOrNull()?.also { reader = it }
+
+    /** Luminance 0..255 (as OpenCV computes it) */
+    fun gray(bmp: Bitmap): FloatArray {
+        val px = IntArray(bmp.width * bmp.height)
+        bmp.getPixels(px, 0, bmp.width, 0, 0, bmp.width, bmp.height)
+        return FloatArray(px.size) { val c = px[it]; 0.299f * ((c shr 16) and 255) + 0.587f * ((c shr 8) and 255) + 0.114f * (c and 255) }
+    }
+
     suspend fun read(context: Context, uri: Uri): List<ScanResult> = withContext(Dispatchers.Default) {
-        val bmp = prepare(load(context, uri) ?: error("unreadable"))
-        val words = recognize(bmp).flatMap { block -> block.lines.flatMap { line -> line.elements.map { word(it.text, it.boundingBox, bmp) } } }.filterNotNull()
-        val results = Scan.mergeCopies(Scan.columns(words).flatMap { Scan.parseAll(it) })
+        val original = load(context, uri) ?: error("unreadable")
+        // the trained printout reader first (made for dot-matrix strips), ML Kit when it finds nothing
+        var results = reader(context)?.let { r ->
+            Scan.mergeCopies(Scan.columns(r.read(gray(original), original.width, original.height)).flatMap { Scan.parseAll(it) })
+        } ?: emptyList()
+        val bmp = prepare(original)
+        if (results.isEmpty()) {
+            val words = recognize(bmp).flatMap { block -> block.lines.flatMap { line -> line.elements.map { word(it.text, it.boundingBox, bmp) } } }.filterNotNull()
+            results = Scan.mergeCopies(Scan.columns(words).flatMap { Scan.parseAll(it) })
+        }
         // name, club and weapon printed sideways on SIUS-style strips (Pg strips have none)
         if (results.isNotEmpty() && results.any { r -> r.program?.all { it.isDigit() } != true }) {
             val heads = listOf(90f, -90f).map { deg ->

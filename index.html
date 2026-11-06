@@ -428,6 +428,7 @@ td.r, th.r { text-align: right; }
 <div id="toast" class="toast" hidden></div>
 
 <script src="scan.js"></script>
+<script src="reader.js"></script>
 <script src="i18n.js"></script>
 <script>
 /* ---------- language ---------- */
@@ -1711,7 +1712,7 @@ async function printSessions(ids, withPhotos = true) {
   document.addEventListener("contextmenu", (e) => { if (e.target.closest && e.target.closest("#logobtn")) e.preventDefault(); });
 })();
 
-/* ---------- new session from a photo of the range printout (OCR with Tesseract.js, parser in scan.js) ---------- */
+/* ---------- new session from a photo of the range printout (trained reader in reader.js, Tesseract.js as fallback, parser in scan.js) ---------- */
 function newMenuView() {
   return `<div class="newmenu" role="menu">
     <button role="menuitem" data-act="newmanual">✎ ${t("newManual")}</button>
@@ -1764,20 +1765,42 @@ async function ocrWords(canvas) {
   const W = canvas.width, H = canvas.height;
   return words.filter((x) => x.confidence >= 30 && x.text.trim()).map((x) => ({ text: x.text.trim(), x: x.bbox.x0 / W, y: 1 - x.bbox.y1 / H, w: (x.bbox.x1 - x.bbox.x0) / W, h: (x.bbox.y1 - x.bbox.y0) / H }));
 }
+// trained printout reader (reader.js, model in reader.json + reader.bin): made for dot-matrix strips, works offline
+let printoutReader = null;
+async function loadReader() {
+  if (printoutReader) return printoutReader;
+  const [meta, bin] = await Promise.all([fetch("./reader.json").then((r) => r.json()), fetch("./reader.bin").then((r) => r.arrayBuffer())]);
+  return (printoutReader = ScanReader.create(meta, bin));
+}
+async function readerWords(img) {
+  const r = await loadReader();
+  const k = Math.min(1, 2400 / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.round(img.naturalWidth * k), h = Math.round(img.naturalHeight * k);
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(img, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, gray = new Float32Array(w * h);
+  for (let i = 0; i < gray.length; i++) gray[i] = 0.299 * d[4 * i] + 0.587 * d[4 * i + 1] + 0.114 * d[4 * i + 2];
+  await new Promise((res) => setTimeout(res, 30));   // let the "reading" overlay paint first
+  return r.read(gray, w, h);
+}
 async function scanPhoto(file) {
   S.scanning = true; S.scanPct = null; render(); scanOverlay();
   const url = URL.createObjectURL(file);
   try {
     const img = new Image(); img.src = url; await img.decode();
-    const words = await ocrWords(scanCanvas(img));
-    const results = ScanParser.mergeCopies(ScanParser.columns(words).flatMap((c) => ScanParser.parseAll(c)));
+    const parse = (words) => ScanParser.mergeCopies(ScanParser.columns(words).flatMap((c) => ScanParser.parseAll(c)));
+    let results = [];
+    try { results = parse(await readerWords(img)); } catch (e) { console.warn("reader", e); }
+    if (!results.length) results = parse(await ocrWords(scanCanvas(img)));   // Tesseract when the reader finds nothing
     if (!results.length) { S.scanning = false; scanOverlay(); render(); return toast(t("scanNone"), 7000); }
     // name, club and weapon printed sideways on SIUS-style strips (Pg strips have none)
     if (results.some((r) => !r.program || !/^\d+$/.test(r.program))) {
-      const heads = [];
-      for (const turn of [1, -1]) heads.push(ScanParser.parseHeader(ScanParser.rowsOf(await ocrWords(scanCanvas(img, turn)))));
-      const best = heads.sort((a, b) => b.score - a.score)[0];
-      if (best && best.score > 0) ScanParser.applyHeader(best, results);
+      try {
+        const heads = [];
+        for (const turn of [1, -1]) heads.push(ScanParser.parseHeader(ScanParser.rowsOf(await ocrWords(scanCanvas(img, turn)))));
+        const best = heads.sort((a, b) => b.score - a.score)[0];
+        if (best && best.score > 0) ScanParser.applyHeader(best, results);
+      } catch { /* offline: no name and club, the values are there */ }
     }
     S.current = null; S.draft = scanDraft(results); S.active = 0; S.view = "edit"; S.scanning = false; scanOverlay(); render(); scrollTo(0, 0);
     addPhotos([file]);      // the photo of the printout is kept with the session

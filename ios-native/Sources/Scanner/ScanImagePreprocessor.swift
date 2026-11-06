@@ -38,6 +38,13 @@ struct ImagePreprocessor {
         return context.createCGImage(image, from: image.extent) ?? cgImage
     }
 
+    /// The photo turned upright, colours untouched (input of the trained reader).
+    func upright(_ cgImage: CGImage, orientation: CGImagePropertyOrientation) -> CGImage {
+        if orientation == .up { return cgImage }
+        let image = CIImage(cgImage: cgImage).oriented(orientation)
+        return context.createCGImage(image, from: image.extent) ?? cgImage
+    }
+
     private func detectPage(in image: CIImage) -> VNRectangleObservation? {
         let request = VNDetectDocumentSegmentationRequest()
         let handler = VNImageRequestHandler(ciImage: image, options: [:])
