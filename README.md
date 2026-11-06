@@ -2,7 +2,11 @@
 
 Eigenständige App zum Erfassen von Schiessresultaten und Fotos der Papierscheiben.
 Alle Übungen und Fotos werden nur auf dem Telefon gespeichert. Es wird nichts hochgeladen.
-Die App funktioniert auch offline.
+Die App funktioniert auch offline. Sprachen: Deutsch, Français, Italiano, English.
+
+Neue Übungen lassen sich von Hand erfassen oder aus einem Foto des Resultatstreifens lesen
+(«Neue Übung» → «Foto aufnehmen» / «Foto laden»): iPhone mit Apple Vision, Android mit ML Kit,
+beide auf dem Gerät; die Web-App mit Tesseract.js (braucht beim ersten Mal Internet).
 
 Ein Code, drei Varianten:
 
@@ -23,6 +27,10 @@ Speichere regelmässig ein Backup.
 | Pfad | Inhalt |
 |---|---|
 | `index.html` | Die ganze App (Oberfläche, Logik, Texte DE/EN) |
+| `i18n.json`, `i18n.js` | Französische und italienische Texte, nach englischem Text geordnet (für alle drei Varianten) |
+| `scan.js` | Liest den OCR-Text von Resultatstreifen (Pg- und «Scheibe»-Streifen); `tools/scan-test.js` prüft ihn |
+| `ios-native/Sources/Scanner/` | Lese-Engine aus dem Paket ShootingResultScanner (Apple Vision) |
+| `android-native/…/scan/` | Kotlin-Fassung des Parsers mit ML Kit; Tests in `app/src/test` |
 | `sw.js`, `manifest.webmanifest`, `*.png` | Offline-Cache, App-Angaben und Symbole der Web-App |
 | `capacitor.config.json` | Name und ID der Android/iOS-App (`io.github.mcas.schiessbuch`) |
 | `scripts/copy-web.mjs` | Kopiert die Web-App nach `www/` für die nativen Apps |
@@ -51,7 +59,7 @@ Die Ordner `android/` und `ios/` werden beim Bauen auf GitHub erzeugt und nicht 
 ## E-Mails nach Excel übernehmen
 
 `tools/schiessbuch_import.py` liest den Text einer E-Mail, die CHSchiessbuch mit «E-Mail» verschickt
-(Deutsch oder Englisch, eine oder mehrere Übungen), und hängt **pro Serie eine Zeile** an eine
+(Deutsch, Französisch, Italienisch oder Englisch, eine oder mehrere Übungen), und hängt **pro Serie eine Zeile** an eine
 Excel-Datei an. So lassen sich die Resultate mehrerer Schützen in einer Tabelle sammeln.
 
 Einmalig installieren: `pip3 install openpyxl`
