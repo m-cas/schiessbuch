@@ -54,6 +54,12 @@ struct StripParser: Sendable {
         let layout = Self.detectLayout(rows)
         var result = ShootingResult(scoringMode: layout == .hundreds ? .hundred : .integer, recognizedLines: lines)
         var state = State(layout: layout)
+        // how often the shot numbering starts again at 1 (once: sighters before; more often: groups numbered from 1)
+        var seen = false
+        for row in rows where !row.hasWords && !row.isSighter && row.nums.count >= 2
+            && !Self.isHeaderLine(row.raw) && Self.deepShot(in: row.raw) == nil {
+            if row.nums[0].value == 1 { if seen { state.restarts += 1 }; seen = true }
+        }
 
         for index in rows.indices {
             state.consume(rows[index], at: index, in: rows, result: &result)
@@ -73,6 +79,7 @@ struct StripParser: Sendable {
 
     struct State {
         let layout: Layout
+        var restarts = 0
         var sighters: [ScanShot] = []
         var series: [ScanSeries] = []
         var pending: [ScanShot] = []
@@ -111,11 +118,15 @@ struct StripParser: Sendable {
             }
 
             // numbering starts again at 1 after a few shots: those were the sighters (Probe), e.g. "1 9 / 2 10 19", then "1 + 10 …"
-            if nums.count >= 2, nums[0].value == 1, lastIndex > 0, sighters.isEmpty, printedTotal == nil {
+            // Several restarts: groups numbered from 1 each (Obligatorisch on the form: 5 shots per group) - a new series.
+            if nums.count >= 2, nums[0].value == 1, lastIndex > 0 {
                 let before = series.flatMap(\.shots) + pending
-                if before.count <= 5 {
-                    sighters = before; series = []; pending = []; lastIndex = 0; printedTotal = nil
+                if restarts == 1, sighters.isEmpty, printedTotal == nil, before.count <= 5 {
+                    sighters = before; series = []; pending = []; printedTotal = nil
+                } else {
+                    closePending()
                 }
+                lastIndex = 0
             }
             let expected = lastIndex + 1
             let first = nums[0]

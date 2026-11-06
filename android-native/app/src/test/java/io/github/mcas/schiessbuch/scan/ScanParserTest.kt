@@ -123,4 +123,11 @@ class ScanParserTest {
         assertEquals(listOf(52.0, 34.0), r.series.map { it.printedTotal }); assertEquals(811, r.hundredTotal)
         assertEquals(1, r.shots.count { it.inner }); assertTrue(r.warnings.toString(), r.isVerified)
     }
+
+    @Test fun obligatorischGroupsNumberedFromOne() {
+        val r = one(listOf("1 ← 4", "2 ← 4", "3 ← 5", "4 ↖ 5", "5 ← 4 22", "", "1 ↖ 3", "2 ↙ 3", "3 ↖ 2", "4 ← 3", "5 ↖ 3 14", "", "1 ↙ 2", "2 ← 4", "3 → 4", "4 ↑ 4", "5 ↓ 4 18", "",
+            "1 ↘ 4", "2 ↗ 4", "3 ↙ 3", "4 ↙ 3", "5 ↓ 4 18", "", "20/ 72"))
+        assertEquals(0, r.sighters.size); assertEquals(listOf(22.0, 14.0, 18.0, 18.0), r.series.map { it.printedTotal })
+        assertEquals(72.0, r.total, 0.0); assertTrue(r.warnings.toString(), r.isVerified)
+    }
 }

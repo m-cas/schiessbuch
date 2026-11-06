@@ -236,6 +236,12 @@
   function stripParse(lines) {
     const rows = lines.map(makeRow);
     const layout = detectLayout(rows);
+    // how often the shot numbering starts again at 1 (once: sighters before; more often: groups numbered from 1)
+    let restarts = 0, seen = false;
+    for (const row of rows) {
+      if (row.hasWords || row.isSighter || row.nums.length < 2 || isHeaderLine(row.raw) || deepShot(row.raw)) continue;
+      if (row.nums[0].value === 1) { if (seen) restarts++; seen = true; }
+    }
     const r = newResult(layout === "h" ? "hundred" : "integer", lines);
     const st = { sighters: [], series: [], pending: [], last: 0, deep: [], pt: null, pht: null, missing: [], warnings: [] };
     const pendingSum = () => st.pending.reduce((a, x) => a + x.value, 0);
@@ -313,9 +319,12 @@
         return;
       }
       // numbering starts again at 1 after a few shots: those were the sighters (Probe), e.g. "1 9 / 2 10 19", then "1 + 10 …"
-      if (nums.length >= 2 && nums[0].value === 1 && st.last > 0 && !st.sighters.length && st.pt == null) {
+      // Several restarts: groups numbered from 1 each (Obligatorisch on the form: 5 shots per group) - a new series.
+      if (nums.length >= 2 && nums[0].value === 1 && st.last > 0) {
         const before = st.series.flatMap((x) => x.shots).concat(st.pending);
-        if (before.length <= 5) { st.sighters = before; st.series = []; st.pending = []; st.last = 0; st.pt = null; }
+        if (restarts === 1 && !st.sighters.length && st.pt == null && before.length <= 5) { st.sighters = before; st.series = []; st.pending = []; st.pt = null; }
+        else close();
+        st.last = 0;
       }
       const expected0 = st.last + 1;
       // a stray character in front of the shot number (dash of the line above, dirt): "6 20 + 7 89"

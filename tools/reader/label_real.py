@@ -84,8 +84,11 @@ def label_photo(det, rec, path):
         def agree(e): return sum(1 for n, pc in seq if n <= len(e["shots"]) and pc[2]["t"] == str(e["shots"][n - 1]))
         e = max(exp, key=agree)
         if agree(e) < 0.6 * len(seq): continue
+        # with sighters or groups numbered from 1, shot number n is not always shots[n-1]: only confirm, never correct
+        safe = not e.get("sighters") and not e.get("groups")
         for n, pc in seq:
             if n > len(e["shots"]): continue
+            if not safe and pc[2]["t"] != str(e["shots"][n - 1]): continue
             labels += [(pc[0], str(n)), (pc[1], pc[1]["t"]), (pc[2], str(e["shots"][n - 1]))]
     # crops at the recogniser's geometry (raw grey, as dump_crops.py)
     out = []

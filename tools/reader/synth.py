@@ -196,7 +196,7 @@ def page(rng, long_side=1024):
     cx = big_w * rng.uniform(0.3, 0.5)
     for si in range(nstrips):
         cv = render_strip(rng, p, sius)
-        copies = 1 if sius else 2
+        copies = 1 if sius or rng.random() < 0.3 else 2   # Pg 31 and others print one copy only
         gap = int(rng.uniform(0.0, 3) * p)
         sw, sh = cv.ink.shape[1], cv.ink.shape[0]
         pw = sw * copies + gap * (copies - 1) + int(rng.uniform(2, 10) * p)
@@ -232,6 +232,27 @@ def page(rng, long_side=1024):
                 q = np.array([[a0, b0], [a1, b0], [a1, b1], [a0, b1]], np.float32) + [ox, oy]
                 if q[:, 0].min() >= 0 and q[:, 1].min() >= 0 and q[:, 0].max() < big_w and q[:, 1].max() < big_h:
                     words.append((t, q, c == 1))
+    # ribbon smudge: a blurred, smeared imprint of another printout with the fabric texture of the ribbon,
+    # often right next to or over the sharp rows (bottom left on many Pg strips). Not text: no words.
+    if not sius and rng.random() < 0.55:
+        for _ in range(int(rng.integers(1, 3))):
+            g = render_strip(rng, p).ink
+            g = cv2.GaussianBlur(g, (0, 0), p * rng.uniform(1.2, 2.6))
+            k = int(max(3, p * rng.uniform(5, 14))); kern = np.ones((1, k), np.float32) / k
+            g = cv2.filter2D(g, -1, kern)                                   # smeared sideways
+            gh, gw = g.shape
+            yy, xx = np.mgrid[0:gh, 0:gw]
+            per = max(2.0, p * rng.uniform(0.6, 1.2))
+            fabric = 0.55 + 0.45 * (0.5 + 0.5 * np.sin(xx * 2 * np.pi / per) * np.sin(yy * 2 * np.pi / per))
+            g = np.clip(g * fabric * rng.uniform(1.2, 2.5), 0, 1) * rng.uniform(0.25, 0.75)
+            if rng.random() < 0.5:                                          # only part of it (a band)
+                a0 = int(rng.uniform(0, 0.6) * gh); g[:a0] = 0; g[int(a0 + rng.uniform(0.2, 0.6) * gh):] = 0
+            ox = int(cx + rng.uniform(-0.6, 0.3) * gw); oy = int(rng.uniform(-0.1, 0.6) * big_h)
+            ya2, xa2 = max(0, oy), max(0, ox); yb2, xb2 = min(big_h, oy + gh), min(big_w, ox + gw)
+            if ya2 >= yb2 or xa2 >= xb2: continue
+            sub = g[ya2 - oy:yb2 - oy, xa2 - ox:xb2 - ox][..., None]
+            col = np.array(INKS[rng.integers(len(INKS))], np.float32) * rng.uniform(0.9, 1.3)
+            img[ya2:yb2, xa2:xb2] = img[ya2:yb2, xa2:xb2] * (1 - sub) + col * sub
     # sideways text (name, club) on some strips: should not be read as rows
     if rng.random() < 0.15:
         tmp = Canvas(int(14 * p), int(big_h * 0.8))

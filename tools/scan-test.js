@@ -94,6 +94,14 @@ r = one(["Scheibe 10/6 K", "18.7.2026 09:05 K", "[1] A10 Benutzerpr", "1-34251(4
   "6 ← 8 77 K", "Subtota 52 493 K", "7 ↘ 8 74 K", "8 ↘ 9 85 K", "9 ↙ 7 67 K", "10 ↙ 10 92 K", "( 10 ↙ 10 92) K", "Subtota 34 318 K", "Total 86 811 K"]);
 eq("thermal late subtotal", [r.series.map((x) => x.printedTotal), P.hundredTotal(r), P.shots(r).filter((x) => x.inner).length, P.verified(r)], [[52, 34], 811, 1, true]);
 
+// Obligatorisch printed on the form: every group of 5 numbered from 1 - four series, no sighters
+r = one(["1 ← 4", "2 ← 4", "3 ← 5", "4 ↖ 5", "5 ← 4 22", "", "1 ↖ 3", "2 ↙ 3", "3 ↖ 2", "4 ← 3", "5 ↖ 3 14", "", "1 ↙ 2", "2 ← 4", "3 → 4", "4 ↑ 4", "5 ↓ 4 18", "",
+  "1 ↘ 4", "2 ↗ 4", "3 ↙ 3", "4 ↙ 3", "5 ↓ 4 18", "", "20/ 72"]);
+eq("groups from 1", [r.sighters.length, r.series.map((x) => x.printedTotal), P.total(r), P.verified(r)], [0, [22, 14, 18, 18], 72, true]);
+// sighters with their own sum, then the numbering continues over the series (St. Arbogast, Pg220)
+r = one(["Pg220 5/0016", "1 → 7", "2 → 8 15", "1 ↓ 9", "2 ↓ 9 18", "3 ↗ 9", "4 → 8", "5 → 7 24", "6 ↓ 7", "7 ↓ 5", "8 ↓ 6 18", "60 60", "T/P 2 86", "T/P 3 83", "T/P 6 66"]);
+eq("sighters with sum", [r.sighters.map((x) => x.value), P.shots(r).length, P.total(r), P.verified(r)], [[7, 8], 8, 60, true]);
+
 // generic sheet
 r = one(["Serie 1  10.5 10.2 9.8 10.1 10.4 9.9 10.0 10.3 10.6 9.7 = 101.5"]);
 eq("generic", [r.scoringMode, P.shots(r).length, r.series[0].printedTotal, P.verified(r)], ["decimal", 10, 101.5, true]);

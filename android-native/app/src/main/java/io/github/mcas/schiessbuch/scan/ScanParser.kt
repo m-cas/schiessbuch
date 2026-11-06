@@ -286,6 +286,12 @@ object Scan {
     private fun stripParse(lines: List<String>): ScanResult {
         val rows = lines.map(::makeRow)
         val layout = detectLayout(rows)
+        // how often the shot numbering starts again at 1 (once: sighters before; more often: groups numbered from 1)
+        var restarts = 0; var seen = false
+        for (row in rows) {
+            if (row.hasWords || row.isSighter || row.nums.size < 2 || isHeaderLine(row.raw) || deepShot(row.raw) != null) continue
+            if (row.nums[0].value == 1) { if (seen) restarts++; seen = true }
+        }
         val r = ScanResult(if (layout == Layout.H) ScoringMode.HUNDRED else ScoringMode.INTEGER, lines)
         val sighters = mutableListOf<ScanShot>(); val series = mutableListOf<ScanSeries>(); var pending = mutableListOf<ScanShot>()
         var last = 0; val deep = mutableListOf<DeepShot>(); var pt: Double? = null; var pht: Int? = null
@@ -367,9 +373,12 @@ object Scan {
                 return@forEachIndexed
             }
             // numbering starts again at 1 after a few shots: those were the sighters (Probe), e.g. "1 9 / 2 10 19", then "1 + 10 …"
-            if (nums.size >= 2 && nums[0].value == 1 && last > 0 && sighters.isEmpty() && pt == null) {
+            // Several restarts: groups numbered from 1 each (Obligatorisch on the form: 5 shots per group) - a new series.
+            if (nums.size >= 2 && nums[0].value == 1 && last > 0) {
                 val before = series.flatMap { it.shots } + pending
-                if (before.size <= 5) { sighters += before; series.clear(); pending = mutableListOf(); last = 0; pt = null }
+                if (restarts == 1 && sighters.isEmpty() && pt == null && before.size <= 5) { sighters += before; series.clear(); pending = mutableListOf(); pt = null }
+                else close()
+                last = 0
             }
             val expected = last + 1; val first = nums[0]
             if (nums.size >= 2) {
