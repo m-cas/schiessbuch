@@ -26,10 +26,28 @@ def variants(im):
     out["v7"] = ImageOps.autocontrast(f.resize((int(f.width * .35), int(f.height * .35)), Image.LANCZOS), cutoff=1)
     return out
 
+def row_crops(p):
+    """the photo cut into its printed rows (deskewed), one image per row"""
+    sys.path.insert(0, os.path.dirname(__file__))
+    from rows import analyse
+    im, f, k, a, mr, rs = analyse(p)
+    rot = im.rotate(-a, resample=Image.BICUBIC, fillcolor=(255, 255, 255))
+    out = []
+    for (y0, y1) in rs:
+        pad = int((y1 - y0) * 0.35)
+        out.append(rot.crop((0, max(0, int((y0 - pad) / k)), rot.width, min(rot.height, int((y1 + pad) / k)))))
+    return out
+
 src, dst = sys.argv[1], sys.argv[2]
+mode = sys.argv[3] if len(sys.argv) > 3 else "variants"
 os.makedirs(dst, exist_ok=True)
 for p in sorted(glob.glob(os.path.join(src, "*.jpg"))):
     n = os.path.splitext(os.path.basename(p))[0]
-    for k, v in variants(Image.open(p).convert("RGB")).items():
-        v.save(os.path.join(dst, f"{n}_{k}.jpg"), quality=90)
-print("variants written")
+    if mode == "rows":
+        Image.open(p).convert("RGB").save(os.path.join(dst, f"{n}_v0.jpg"), quality=90)
+        for i, c in enumerate(row_crops(p)):
+            c.save(os.path.join(dst, f"{n}_r{i:02d}.jpg"), quality=92)
+    else:
+        for k, v in variants(Image.open(p).convert("RGB")).items():
+            v.save(os.path.join(dst, f"{n}_{k}.jpg"), quality=90)
+print("written")

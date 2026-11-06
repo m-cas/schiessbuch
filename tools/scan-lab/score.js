@@ -4,13 +4,22 @@
 const fs = require("fs");
 const path = require("path");
 const P = require("../../scan.js");
-const pages = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+let pages = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+// row crops (sNN_rKK.jpg): put their words back on one page, row K at height 1 - (K + 0.5) / rows
+const rowPages = {};
+for (const pg of pages) { const m = /^(s\d+)_r(\d+)\.jpg$/.exec(pg.file); if (m) (rowPages[m[1]] = rowPages[m[1]] || []).push([+m[2], pg]); }
+for (const [s, list] of Object.entries(rowPages)) {
+  const n = Math.max(...list.map((x) => x[0])) + 1, words = [];
+  for (const [k, pg] of list) for (const w of pg.words || []) words.push({ t: w.t, x: w.x, w: w.w, y: 1 - (k + 0.7) / n, h: 0.4 / n });
+  pages.push({ file: `${s}_rows.jpg`, words });
+}
+pages = pages.filter((p) => !/_r\d+\.jpg$/.test(p.file));
 const verbose = process.argv.includes("-v");
 const expected = JSON.parse(fs.readFileSync(path.join(__dirname, "expected.json"), "utf8"));
 let good = 0, total = 0;
 const byVariant = {};
 for (const pg of pages) {
-  const m = /^(s\d+)(?:_(v\d+))?\.jpg$/.exec(pg.file);
+  const m = /^(s\d+)(?:_(v\d+|rows))?\.jpg$/.exec(pg.file);
   const exp = expected[m ? m[1] + ".jpg" : pg.file] || [];
   const variant = (m && m[2]) || "v0";
   byVariant[variant] = byVariant[variant] || [0, 0];
