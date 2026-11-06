@@ -27,6 +27,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         // Test screenshots start the app with: --ez demo true --es lang de --es screen editor|detail|settings
+        // test run only (scan-lab workflow): read the sample photos and quit
+        if (intent.getBooleanExtra("scanlab", false)) {
+            Thread { kotlinx.coroutines.runBlocking { io.github.mcas.schiessbuch.scan.ScanLab.run(applicationContext) }; runOnUiThread { finish() } }.start()
+            return
+        }
         val demo = intent.getBooleanExtra("demo", false)
         val store = Store(applicationContext, demo)
         val prefs = Prefs(this)

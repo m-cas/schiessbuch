@@ -1,0 +1,80 @@
+# Reads the sample photos in tools/scan-samples/ with the text recognition of both phones
+# (Android: ML Kit in the emulator, iPhone: Apple Vision on a Mac) and publishes what was read
+# to the scan-lab-results branch. Used to tune the printout parser; nothing is built for release.
+name: Scan lab
+
+on:
+  push:
+    branches: [native]
+    paths: ["tools/scan-samples/**", "tools/scan-lab/**", ".github/workflows/scan-lab.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scan-lab
+  cancel-in-progress: true
+
+jobs:
+  mlkit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.13"
+      - name: Build debug app
+        working-directory: android-native
+        run: gradle assembleDebug --no-daemon -q
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Read the photos with ML Kit in the emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-animations: true
+          script: bash tools/scan-lab/run-mlkit.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mlkit
+          path: lab/
+
+  vision:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Read the photos with Apple Vision
+        run: |
+          mkdir -p lab
+          swift tools/scan-lab/vision-dump.swift lab/vision.json tools/scan-samples/*.jpg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vision
+          path: lab/
+
+  publish:
+    needs: [mlkit, vision]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: lab
+      - name: Publish to the scan-lab-results branch
+        run: |
+          cd lab
+          git init -q -b scan-lab-results
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          git add -A && git commit -q -m "Scan lab for ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" scan-lab-results

@@ -31,6 +31,14 @@ import kotlin.math.roundToInt
 
 /** Reads a photo of the range printout on the device (ML Kit text recognition, no network). */
 object ScanOcr {
+    /** Words (and whole lines) recognized on the photo, boxes normalized with the origin at the bottom left. */
+    suspend fun recognizeWords(context: Context, uri: Uri): Pair<List<Word>, List<Word>> = withContext(Dispatchers.Default) {
+        val bmp = prepare(load(context, uri) ?: error("unreadable"))
+        val blocks = recognize(bmp)
+        blocks.flatMap { block -> block.lines.flatMap { line -> line.elements.map { word(it.text, it.boundingBox, bmp) } } }.filterNotNull() to
+            blocks.flatMap { block -> block.lines.map { word(it.text, it.boundingBox, bmp) } }.filterNotNull()
+    }
+
     suspend fun read(context: Context, uri: Uri): List<ScanResult> = withContext(Dispatchers.Default) {
         val bmp = prepare(load(context, uri) ?: error("unreadable"))
         val words = recognize(bmp).flatMap { block -> block.lines.flatMap { line -> line.elements.map { word(it.text, it.boundingBox, bmp) } } }.filterNotNull()
