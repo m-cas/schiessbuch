@@ -82,6 +82,7 @@ fun ChampScreen(store: Store, tx: Tx, nav: Nav) {
     val cs = store.champ
     val st = cs.state
     var resetItem by remember { mutableStateOf<ChampItem?>(null) }
+    var lateItem by remember { mutableStateOf<ChampItem?>(null) }
 
     Scaffold(
         topBar = {
@@ -122,12 +123,22 @@ fun ChampScreen(store: Store, tx: Tx, nav: Nav) {
                 }
                 items(cur.items, key = { "c" + it.id }) { item ->
                     ChampRow(item, cs.sessionFor(item), tx = tx,
-                        onActivate = { cs.activate(item.id)?.let { nav.push(Screen.Editor(it, false)) } },
+                        onActivate = { late -> if (late) lateItem = item else cs.activate(item.id)?.let { nav.push(Screen.Editor(it, false)) } },
                         onReset = { resetItem = item },
                         onOpen = { nav.push(Screen.Detail(it)) })
                 }
             }
         }
+    }
+
+    // an overdue item can still be shot, but the club deducts a penalty: ask first
+    lateItem?.let { item ->
+        AlertDialog(
+            onDismissRequest = { lateItem = null },
+            text = { Text(tx.chLateAsk) },
+            confirmButton = { TextButton(onClick = { lateItem = null; cs.activate(item.id)?.let { nav.push(Screen.Editor(it, false)) } }) { Text(tx.chLateGo, color = MaterialTheme.colorScheme.error) } },
+            dismissButton = { TextButton(onClick = { lateItem = null }) { Text(tx.cancel) } },
+        )
     }
 
     resetItem?.let { item ->
@@ -246,7 +257,7 @@ fun ChampSettingsScreen(store: Store, tx: Tx, nav: Nav) {
 
 /** One item: description on the left, the round + or ✕ button at the bottom right. */
 @Composable
-private fun ChampRow(item: ChampItem, session: Session?, tx: Tx, onActivate: () -> Unit, onReset: () -> Unit, onOpen: (String) -> Unit) {
+private fun ChampRow(item: ChampItem, session: Session?, tx: Tx, onActivate: (late: Boolean) -> Unit, onReset: () -> Unit, onOpen: (String) -> Unit) {
     val active = session != null
     val what = tx.disciplineName(item.discipline) + " · " + item.series.joinToString(" | ") { it.groupText(tx) }
     val meta = listOfNotNull(item.day?.let(tx::longDate), item.location).filter { it.isNotEmpty() }.joinToString(" · ")
@@ -284,9 +295,9 @@ private fun ChampRow(item: ChampItem, session: Session?, tx: Tx, onActivate: () 
             if (active) FilledTonalIconButton(onClick = onReset, modifier = Modifier.size(40.dp)) {
                 Icon(Icons.Filled.Close, tx.chReset, tint = MaterialTheme.colorScheme.error)
             } else FilledIconButton(
-                onClick = onActivate, enabled = !past, modifier = Modifier.size(40.dp),
+                onClick = { onActivate(past) }, modifier = Modifier.size(40.dp),
                 colors = if (past) IconButtonDefaults.filledIconButtonColors(
-                    disabledContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.5f), disabledContentColor = androidx.compose.ui.graphics.Color.White,
+                    containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError,
                 ) else IconButtonDefaults.filledIconButtonColors(),
             ) {
                 Icon(Icons.Filled.Add, if (past) tx.chPast else tx.chActivate)

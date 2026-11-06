@@ -9,6 +9,7 @@ struct ChampionshipView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var resetItem: ChampItem? = nil
+    @State private var lateItem: ChampItem? = nil
     @State private var editing: Session? = nil
     @State private var showSettings = false
     @State private var path: [String] = []
@@ -57,6 +58,11 @@ struct ChampionshipView: View {
             }
             .sheet(item: $editing) { s in SessionEditor(original: s, isNew: false) }
             .sheet(isPresented: $showSettings) { ChampSettingsView() }
+            // an overdue item can still be shot, but the club deducts a penalty: ask first
+            .alert(tx.chLateAsk, isPresented: Binding(get: { lateItem != nil }, set: { if !$0 { lateItem = nil } })) {
+                Button(tx.chLateGo, role: .destructive) { if let i = lateItem, let s = store.activate(i.id) { editing = s }; lateItem = nil }
+                Button(tx.cancel, role: .cancel) { lateItem = nil }
+            }
             // an alert always shows all three choices (a confirmation dialog hides Cancel when shown as a popover)
             .alert(tx.chResetAsk, isPresented: Binding(get: { resetItem != nil }, set: { if !$0 { resetItem = nil } })) {
                 Button(tx.chKeep) { if let i = resetItem { store.resetChamp(i.id, deleteSession: false) }; resetItem = nil }
@@ -108,16 +114,15 @@ struct ChampionshipView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Button {
-                if active { resetItem = item } else if let s = store.activate(item.id) { editing = s }
+                if active { resetItem = item } else if past { lateItem = item } else if let s = store.activate(item.id) { editing = s }
             } label: {
                 Image(systemName: active ? "xmark" : "plus")
                     .font(.system(size: active ? 15 : 18, weight: .bold))
                     .frame(width: 36, height: 36)
                     .foregroundStyle(active ? Color.red : Color.white)
-                    .background(Circle().fill(active ? Color(.secondarySystemFill) : past ? Color.red.opacity(0.55) : Color.accentColor))
+                    .background(Circle().fill(active ? Color(.secondarySystemFill) : past ? Color.red : Color.accentColor))
             }
             .buttonStyle(.borderless)
-            .disabled(past)
             .accessibilityLabel(active ? tx.chReset : past ? tx.chPast : tx.chActivate)
         }
         .padding(.vertical, 2)

@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MySchiessbuch</title>
+<title>CHSchiessbuch</title>
 <meta name="description" content="Record shooting results and photos of your paper targets. All data stays on this device.">
 <meta name="theme-color" content="#2c5a38">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="MySchiessbuch">
+<meta name="apple-mobile-web-app-title" content="CHSchiessbuch">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest">
@@ -262,7 +262,7 @@ a.btn { text-decoration: none; color: inherit; }
 .ch-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-size: 22px; font-weight: 600; line-height: 1; display: grid; place-items: center; }
 .ch-btn.plus { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .ch-btn.x { color: var(--danger); font-size: 17px; }
-.ch-btn.plus.past { background: var(--danger); border-color: var(--danger); color: #fff; opacity: .55; cursor: not-allowed; }
+.ch-btn.plus.past { background: var(--danger); border-color: var(--danger); color: #fff; }
 .ch-warn { color: #E0A800; font-size: 14px; }
 .ch-late { color: var(--danger) !important; }
 .ch-top { display: flex; align-items: center; gap: 10px; }
@@ -315,6 +315,15 @@ a.btn { text-decoration: none; color: inherit; }
   #printArea .pr-pics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6pt; margin-top: 5pt; }
   #printArea .pr-pics img { width: 100%; height: 42mm; object-fit: cover; border: 1px solid #bbb; }
 }
+.newwrap { position: relative; }
+.newmenu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 220px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.18); padding: 6px; display: grid; }
+.newmenu button, .newmenu label { display: block; text-align: left; border: 0; background: transparent; color: var(--ink); font: inherit; font-weight: 600; padding: 12px; border-radius: 8px; cursor: pointer; }
+.newmenu button:hover, .newmenu label:hover { background: var(--sunken); }
+.scanwarn { display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; border: 1px solid #E0A800; background: color-mix(in srgb, #E0A800 12%, var(--surface)); border-radius: 12px; padding: 10px 12px; font-size: 14px; }
+.scanwarn.ok { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+.scanwarn b { display: block; margin-bottom: 2px; }
+.scanover { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.45); display: grid; place-items: center; }
+.scanover div { background: var(--surface); color: var(--ink); border-radius: 14px; padding: 18px 22px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
 .has-keypad .wrap { padding-bottom: calc(260px + env(safe-area-inset-bottom, 0px)); }
 .wrap { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 .hint { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 14px; padding: 12px 14px; display: grid; gap: 10px; font-size: 14px; }
@@ -407,7 +416,7 @@ td.r, th.r { text-align: right; }
 <header class="bar"><div class="bar-in">
   <div class="brand">
     <button class="logobtn" id="logobtn" data-act="settings" aria-label="Settings"><img class="logo" id="logo" src="icon-192.png" width="44" height="44" alt=""><span class="gear" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.3 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L4.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1L9 21h4l.3-2.9a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg></span><span class="alert-dot" id="logodot" hidden></span></button>
-    <h1 id="title">MySchiessbuch</h1>
+    <h1 id="title">CHSchiessbuch</h1>
   </div>
   <div id="barActions" class="baract"></div>
 </div></header>
@@ -417,11 +426,12 @@ td.r, th.r { text-align: right; }
 <div id="lightbox" class="lightbox" hidden></div>
 <div id="toast" class="toast" hidden></div>
 
+<script src="scan.js"></script>
 <script>
 /* ---------- language ---------- */
 const STR = {
   en: {
-    appName: "MySchiessbuch", locale: "en-GB",
+    appName: "CHSchiessbuch", locale: "en-GB",
     pl: (n, one, many) => (n === 1 ? one : many),
     // presets
     "p.r300": "Rifle 300m", "p.p25": "Pistol 25m", "p.p50": "Pistol 50m", "p.ap10": "Air Pistol 10m", "p.ag10": "Air Rifle 10m", "p.other": "Other",
@@ -434,16 +444,16 @@ const STR = {
     "seg.practice": "Practice · not counted", "seg.single": "Single shots", groupN: (n) => `Group ${n}`, seriesOf: (n) => `Series of ${n}`,
     // bar & list
     none: "None", all: "All", selected: (n) => `${n} selected`, cancel: "Cancel", email: "Email", export: "Export", newBtn: "New Session", back: "Back",
-    loading: "Loading MySchiessbuch…", signInH: "Storage isn't available", signInP: "This browser doesn't allow saving data on this device. Turn off private browsing and open the app again.",
+    loading: "Loading CHSchiessbuch…", signInH: "Storage isn't available", signInP: "This browser doesn't allow saving data on this device. Turn off private browsing and open the app again.",
     localH: "Data on this phone", localP: "Sessions and photos are stored only on this device. Nothing is uploaded. Save a backup now and then, and before changing phones.",
     selectBtn: "Select", deleteN: (n) => `Delete${n ? " (" + n + ")" : ""}`,
     confirmBulk: (n, p) => `Delete ${n} ${n === 1 ? "session" : "sessions"}${p ? ` and ${p} ${p === 1 ? "photo" : "photos"}` : ""}? This can't be undone.`,
     bulkDeleted: (n) => `${n} ${n === 1 ? "session" : "sessions"} deleted`,
-    emailBackup: "Email backup", backupMailSubject: (d) => `MySchiessbuch backup ${d}`,
-    backupMailText: "Backup of MySchiessbuch with all sessions and target photos. To load it: open MySchiessbuch, tap Restore backup and choose this file.",
+    emailBackup: "Email backup", backupMailSubject: (d) => `CHSchiessbuch backup ${d}`,
+    backupMailText: "Backup of CHSchiessbuch with all sessions and target photos. To load it: open CHSchiessbuch, tap Restore backup and choose this file.",
     backupNoShare: "This browser can't attach files to an email, so the backup was saved instead. Attach it from Files or Downloads.",
     backup: "Save backup", restore: "Restore backup", backupBusy: "Preparing backup…", restored: (n) => `${n} ${n === 1 ? "session" : "sessions"} restored`,
-    badBackup: "This file isn't a MySchiessbuch backup.", restoreFail: "The backup couldn't be restored.", backupFile: "myschiessbuch-backup",
+    badBackup: "This file isn't a CHSchiessbuch backup.", restoreFail: "The backup couldn't be restored.", backupFile: "chschiessbuch-backup",
     sharePhotos: "Share with photos", sharePhotosNote: "Opens the share sheet with the text and all target photos attached. Choose Mail and add the recipient.",
     shareTextNote: "Opens the share sheet with this text. Choose Mail and add the recipient.", shareText: "Share",
     fileSaved: "File ready", storageLine: (u, a) => `Storage used: ${u}${a ? ` · ${a} available` : ""}`, photosLine: (n, b) => `${n} ${n === 1 ? "photo" : "photos"} · backup about ${b}`,
@@ -484,7 +494,7 @@ const STR = {
     // toasts
     seriesFull: "This series is complete. Add a series for more shots.", seriesFullCustom: "All shots of this series are entered. Increase Shots to add more.", tooLarge: "That photo is too large. Try a smaller one.",
     storageFull: "Photo storage is full. Delete old sessions to make room.", photoFail: "The photo couldn't be saved. Try again.",
-    addDate: "Add a date first.", saved: "Session saved", dbFull: "MySchiessbuch is full. Delete old sessions to save new ones.",
+    addDate: "Add a date first.", saved: "Session saved", dbFull: "CHSchiessbuch is full. Delete old sessions to save new ones.",
     saveFail: "The session couldn't be saved. Check your connection and try again.", deleted: "Session deleted", delFail: "The session couldn't be deleted. Try again.",
     exportFail: "The export couldn't be saved.", wholeNumber: (m) => `Enter a whole number from 0 to ${m}.`,
     copied: "Email text copied", selectedText: "Text selected. Use Copy from your keyboard menu.",
@@ -501,7 +511,7 @@ const STR = {
     copyText: "Copy text", copyNote: "If the mail app didn't open, copy the text and paste it into a new email.", recipient: "Recipient",
     preparing: "Preparing report…", saveReport: "Save report with photos",
     reportNote: (n) => `Saves one file with the results and all ${n} target photos, to attach to an email or keep.`,
-    copyTo: "To", copySubject: "Subject", reportFile: "shooting-results", csvFile: "myschiessbuch",
+    copyTo: "To", copySubject: "Subject", reportFile: "shooting-results", csvFile: "chschiessbuch",
     csvHead: ["date", "discipline", "category", "description", "range", "weapon", "conditions", "series", "format", "score", "max", "score_10_shots_A10", "inner_tens", "tiefschuss", "shots", "notes"],
     chTitle: "Championship", chCurrent: "Current", chHistory: "History", chUrl: "Address of the CSV file", chLoad: "Load", chReload: "Reload", chLoading: "Loading…",
     chFromFile: "Choose file", chExample: "Example file", chActivate: "Activate", chReset: "Reset", chResetAsk: "Make this item available again. Keep the session already recorded, or delete it?",
@@ -515,7 +525,8 @@ const STR = {
     chNeedUrl: "Enter the address of the CSV file first.", chFetchFail: "The file couldn't be loaded. Check the address, or download the file and use Choose file.", chBadFile: "This file couldn't be read.",
     chDefaultName: (y) => `Championship ${y}`, chEmptyH: "No championship loaded", chEmptyP: "Load the club's CSV file with the sessions to shoot. One line per session:",
     chNoHistory: "No earlier championships yet.", chHistDel: "Remove from history", chPrac: (n) => `${n} practice`, chHistDelSure: "Remove for good",
-    helpH: "Help", helpOpen: "How to use the app", print: "Print", printAsk: (n) => `Print with the target photos (${n})?`, printPhotos: "With photos", printNoPhotos: "Without photos", printTitle: "Shooting results", printTotal: "Total", chSettings: "Championship settings", chSoon: (d) => d === 0 ? "Today" : `In ${d} ${d === 1 ? "day" : "days"}`, chPast: "Date has passed", chEmptyCog: "Load the club\u2019s file under Championship settings (cog at the top left).", chOnlyOne: "Only one championship is kept. A file for another year replaces it; recorded sessions stay.", chLoadedInfo: (y, n) => `Loaded: championship ${y} with ${n} items.`, logoClubOn: "SG Muttenz logo on", logoClubOff: "App icon on",
+    helpH: "Help", helpOpen: "How to use the app", newManual: "Enter manually", newTakePhoto: "Take picture", newLoadPhoto: "Load picture", scanReading: "Reading the printout…", scanNone: "No shots found. Lay the strip flat, avoid glare and let the printed area fill the photo.", scanFail: "The photo could not be read.", scanOffline: "Reading photos needs an internet connection the first time.", scanCheck: "Please check the values read from the photo:", scanOk: "Read from the photo: all printed totals match. Please check before saving.", scanNote: (x) => `Read from photo${x ? ": " + x : ""}`, scanTarget: "Target", scanWSeries: (s, p, c) => `Series ${s}: printed ${p}, shots add up to ${c}.`, scanWSeriesH: (s, p, c) => `Series ${s}: printed 100-total ${p}, shots add up to ${c}.`, scanWTotal: (p, c) => `Printed total ${p}, series add up to ${c}.`, scanWTotalH: (p, c) => `Printed 100-total ${p}, shots add up to ${c}.`, scanWShot: (n, v, h) => `Shot ${n}: ring ${v} does not fit the 100-value ${h}.`, scanWMissing: (x) => `Shot(s) ${x} could not be read.`, scanWCopies: "The copies on the strip were read differently.",
+    print: "Print", printAsk: (n) => `Print with the target photos (${n})?`, printPhotos: "With photos", printNoPhotos: "Without photos", printTitle: "Shooting results", printTotal: "Total", chSettings: "Championship settings", chSoon: (d) => d === 0 ? "Today" : `In ${d} ${d === 1 ? "day" : "days"}`, chPast: "Overdue", chLateAsk: "This activity is overdue and will incur a penalty. Do you want to continue?", chLateGo: "Continue", chEmptyCog: "Load the club\u2019s file under Championship settings (cog at the top left).", chOnlyOne: "Only one championship is kept. A file for another year replaces it; recorded sessions stay.", chLoadedInfo: (y, n) => `Loaded: championship ${y} with ${n} items.`, logoClubOn: "SG Muttenz logo on", logoClubOff: "App icon on",
     language: "Language", settings: "Settings", exitSettings: "Exit settings", openSettings: "Open settings", logoH: "Logo",
     clubLogo: "Show SG Muttenz logo", clubLogoNote: "Replaces the app icon at the top left.", backupH: "Backup and data", exportH: "Export", exportCsv: "Export as CSV", exportNote: "One row per series, for Excel or Numbers.",
     chromeH: "Installing on Android? Use Chrome",
@@ -523,7 +534,7 @@ const STR = {
     openChrome: "Open in Chrome", copyUrl: "Copy address", urlCopied: "Address copied. Paste it into Chrome.", hide: "Hide",
   },
   de: {
-    appName: "MySchiessbuch", locale: "de-CH",
+    appName: "CHSchiessbuch", locale: "de-CH",
     "p.r300": "Gewehr 300m", "p.p25": "Pistole 25m", "p.p50": "Pistole 50m", "p.ap10": "Luftpistole 10m", "p.ag10": "Luftgewehr 10m", "p.other": "Andere",
     "f.All": "Alle", "f.r300": "G300", "f.p25": "P25", "f.p50": "P50", "f.ap10": "LP10", "f.ag10": "LG10", "f.other": "Andere",
     "st.s10": "10 Schüsse · A10", "st.s2x10": "2×10 Einzelschüsse · A10", "st.s6r4": "10 Schüsse · 6 Einzel, 4 Serie · A10", "st.p2s6r4": "12 Schüsse · 2 Probe, 6 Einzel, 4 Serie · A10", "st.p2s5r23": "12 Schüsse · 2 Probe, 5 Einzel, Serien zu 2 und 3 · A10",
@@ -533,16 +544,16 @@ const STR = {
     "st.pstd": "Standard · 5/5/5", "st.pop": "OP · 5 Einzel + 5/5/5", "st.pfs": "Feldschiessen · 3 Einzel + 5/5/5", "st.ap10s": "10 Schüsse", "st.ap20s": "20 Schüsse",
     "seg.practice": "Probe · zählt nicht", "seg.single": "Einzelschüsse", groupN: (n) => `Gruppe ${n}`, seriesOf: (n) => `Serie zu ${n}`,
     none: "Keine", all: "Alle", selected: (n) => `${n} ausgewählt`, cancel: "Abbrechen", email: "E-Mail", export: "Export", newBtn: "Neue Übung", back: "Zurück",
-    loading: "MySchiessbuch wird geladen…", signInH: "Speicher nicht verfügbar", signInP: "Dieser Browser erlaubt keine Datenspeicherung auf dem Gerät. Schalte das private Surfen aus und öffne die App erneut.",
+    loading: "CHSchiessbuch wird geladen…", signInH: "Speicher nicht verfügbar", signInP: "Dieser Browser erlaubt keine Datenspeicherung auf dem Gerät. Schalte das private Surfen aus und öffne die App erneut.",
     localH: "Daten auf diesem Telefon", localP: "Übungen und Fotos werden nur auf diesem Gerät gespeichert. Nichts wird hochgeladen. Speichere ab und zu ein Backup, und vor einem Telefonwechsel.",
     selectBtn: "Auswählen", deleteN: (n) => `Löschen${n ? " (" + n + ")" : ""}`,
     confirmBulk: (n, p) => `${n} ${n === 1 ? "Übung" : "Übungen"}${p ? ` und ${p} ${p === 1 ? "Foto" : "Fotos"}` : ""} löschen? Das kann nicht rückgängig gemacht werden.`,
     bulkDeleted: (n) => `${n} ${n === 1 ? "Übung" : "Übungen"} gelöscht`,
-    emailBackup: "Backup per E-Mail", backupMailSubject: (d) => `MySchiessbuch-Backup ${d}`,
-    backupMailText: "Backup von MySchiessbuch mit allen Übungen und Scheibenfotos. Zum Laden: MySchiessbuch öffnen, «Backup wiederherstellen» antippen und diese Datei wählen.",
+    emailBackup: "Backup per E-Mail", backupMailSubject: (d) => `CHSchiessbuch-Backup ${d}`,
+    backupMailText: "Backup von CHSchiessbuch mit allen Übungen und Scheibenfotos. Zum Laden: CHSchiessbuch öffnen, «Backup wiederherstellen» antippen und diese Datei wählen.",
     backupNoShare: "Dieser Browser kann keine Dateien an E-Mails anhängen, darum wurde das Backup gespeichert. Hänge es aus «Dateien» oder «Downloads» an.",
     backup: "Backup speichern", restore: "Backup wiederherstellen", backupBusy: "Backup wird erstellt…", restored: (n) => `${n} ${n === 1 ? "Übung" : "Übungen"} wiederhergestellt`,
-    badBackup: "Diese Datei ist kein MySchiessbuch-Backup.", restoreFail: "Das Backup konnte nicht wiederhergestellt werden.", backupFile: "myschiessbuch-backup",
+    badBackup: "Diese Datei ist kein CHSchiessbuch-Backup.", restoreFail: "Das Backup konnte nicht wiederhergestellt werden.", backupFile: "chschiessbuch-backup",
     sharePhotos: "Mit Fotos teilen", sharePhotosNote: "Öffnet das Teilen-Menü mit dem Text und allen Scheibenfotos im Anhang. Wähle «Mail» und gib den Empfänger ein.",
     shareTextNote: "Öffnet das Teilen-Menü mit diesem Text. Wähle «Mail» und gib den Empfänger ein.", shareText: "Teilen",
     fileSaved: "Datei bereit", storageLine: (u, a) => `Speicher belegt: ${u}${a ? ` · ${a} verfügbar` : ""}`, photosLine: (n, b) => `${n} ${n === 1 ? "Foto" : "Fotos"} · Backup ca. ${b}`,
@@ -579,7 +590,7 @@ const STR = {
     practiceShotN: (n) => `Probeschuss ${n}`, shotN: (n) => `Schuss ${n}`, typeThenAdd: (m) => `0–${m} eingeben, dann Hinzufügen`, tapToRemove: "Erfassten Schuss antippen zum Entfernen",
     seriesFull: "Diese Serie ist vollständig. Füge eine Serie für weitere Schüsse hinzu.", seriesFullCustom: "Alle Schüsse dieser Serie sind erfasst. Erhöhe «Schüsse», um weitere einzugeben.", tooLarge: "Dieses Foto ist zu gross. Versuche ein kleineres.",
     storageFull: "Der Fotospeicher ist voll. Lösche alte Übungen, um Platz zu schaffen.", photoFail: "Das Foto konnte nicht gespeichert werden. Versuche es nochmals.",
-    addDate: "Bitte zuerst ein Datum eingeben.", saved: "Übung gespeichert", dbFull: "MySchiessbuch ist voll. Lösche alte Übungen, um neue zu speichern.",
+    addDate: "Bitte zuerst ein Datum eingeben.", saved: "Übung gespeichert", dbFull: "CHSchiessbuch ist voll. Lösche alte Übungen, um neue zu speichern.",
     saveFail: "Die Übung konnte nicht gespeichert werden. Prüfe die Verbindung und versuche es nochmals.", deleted: "Übung gelöscht", delFail: "Die Übung konnte nicht gelöscht werden. Versuche es nochmals.",
     exportFail: "Der Export konnte nicht gespeichert werden.", wholeNumber: (m) => `Gib eine ganze Zahl von 0 bis ${m} ein.`,
     copied: "E-Mail-Text kopiert", selectedText: "Text markiert. Kopiere ihn über das Tastaturmenü.",
@@ -595,7 +606,7 @@ const STR = {
     copyText: "Text kopieren", copyNote: "Falls sich die Mail-App nicht geöffnet hat, kopiere den Text und füge ihn in eine neue E-Mail ein.", recipient: "Empfänger",
     preparing: "Bericht wird erstellt…", saveReport: "Bericht mit Fotos speichern",
     reportNote: (n) => `Speichert eine Datei mit den Resultaten und allen ${n} Scheibenfotos, zum Anhängen an eine E-Mail oder zum Aufbewahren.`,
-    copyTo: "An", copySubject: "Betreff", reportFile: "schiessresultate", csvFile: "myschiessbuch",
+    copyTo: "An", copySubject: "Betreff", reportFile: "schiessresultate", csvFile: "chschiessbuch",
     csvHead: ["datum", "disziplin", "kategorie", "beschreibung", "schiessstand", "waffe", "bedingungen", "serie", "format", "resultat", "maximum", "resultat_10_schuss_a10", "innenzehner", "tiefschuss", "schuesse", "notizen"],
     chTitle: "Meisterschaft", chCurrent: "Aktuell", chHistory: "Verlauf", chUrl: "Adresse der CSV-Datei", chLoad: "Laden", chReload: "Neu laden", chLoading: "Lädt…",
     chFromFile: "Datei wählen", chExample: "Beispieldatei", chActivate: "Aktivieren", chReset: "Zurücksetzen", chResetAsk: "Eintrag wieder freigeben. Die bereits erfasste Übung behalten oder löschen?",
@@ -609,7 +620,8 @@ const STR = {
     chNeedUrl: "Zuerst die Adresse der CSV-Datei eingeben.", chFetchFail: "Die Datei konnte nicht geladen werden. Adresse prüfen, oder die Datei herunterladen und «Datei wählen» nutzen.", chBadFile: "Diese Datei konnte nicht gelesen werden.",
     chDefaultName: (y) => `Meisterschaft ${y}`, chEmptyH: "Keine Meisterschaft geladen", chEmptyP: "Lade die CSV-Datei des Vereins mit den zu schiessenden Übungen. Eine Zeile pro Übung:",
     chNoHistory: "Noch keine früheren Meisterschaften.", chHistDel: "Aus dem Verlauf entfernen", chPrac: (n) => `${n} Probe`, chHistDelSure: "Endgültig entfernen",
-    helpH: "Hilfe", helpOpen: "Anleitung zur App", print: "Drucken", printAsk: (n) => `Mit den Scheibenfotos (${n}) drucken?`, printPhotos: "Mit Fotos", printNoPhotos: "Ohne Fotos", printTitle: "Schiessresultate", printTotal: "Total", chSettings: "Meisterschaft einrichten", chSoon: (d) => d === 0 ? "Heute" : `In ${d} ${d === 1 ? "Tag" : "Tagen"}`, chPast: "Datum ist vorbei", chEmptyCog: "Lade die Datei des Vereins unter «Meisterschaft einrichten» (Zahnrad oben links).", chOnlyOne: "Es wird nur eine Meisterschaft gespeichert. Eine Datei eines anderen Jahres ersetzt sie; erfasste Übungen bleiben.", chLoadedInfo: (y, n) => `Geladen: Meisterschaft ${y} mit ${n} Einträgen.`, logoClubOn: "SG-Muttenz-Logo aktiv", logoClubOff: "App-Symbol aktiv",
+    helpH: "Hilfe", helpOpen: "Anleitung zur App", newManual: "Manuell erfassen", newTakePhoto: "Foto aufnehmen", newLoadPhoto: "Foto laden", scanReading: "Ausdruck wird gelesen…", scanNone: "Keine Schüsse gefunden. Streifen flach hinlegen, Spiegelungen vermeiden und den Druck möglichst bildfüllend fotografieren.", scanFail: "Das Foto konnte nicht gelesen werden.", scanOffline: "Zum Lesen von Fotos braucht es beim ersten Mal eine Internetverbindung.", scanCheck: "Bitte die gelesenen Werte prüfen:", scanOk: "Aus dem Foto gelesen: alle gedruckten Totale stimmen. Bitte vor dem Speichern kontrollieren.", scanNote: (x) => `Aus Foto gelesen${x ? ": " + x : ""}`, scanTarget: "Scheibe", scanWSeries: (s, p, c) => `Serie ${s}: gedruckt ${p}, die Schüsse ergeben ${c}.`, scanWSeriesH: (s, p, c) => `Serie ${s}: gedrucktes 100er-Total ${p}, die Schüsse ergeben ${c}.`, scanWTotal: (p, c) => `Gedrucktes Total ${p}, die Serien ergeben ${c}.`, scanWTotalH: (p, c) => `Gedrucktes 100er-Total ${p}, die Schüsse ergeben ${c}.`, scanWShot: (n, v, h) => `Schuss ${n}: Ring ${v} passt nicht zum 100er-Wert ${h}.`, scanWMissing: (x) => `Schuss ${x} konnte nicht gelesen werden.`, scanWCopies: "Die Kopien auf dem Streifen wurden unterschiedlich gelesen.",
+    print: "Drucken", printAsk: (n) => `Mit den Scheibenfotos (${n}) drucken?`, printPhotos: "Mit Fotos", printNoPhotos: "Ohne Fotos", printTitle: "Schiessresultate", printTotal: "Total", chSettings: "Meisterschaft einrichten", chSoon: (d) => d === 0 ? "Heute" : `In ${d} ${d === 1 ? "Tag" : "Tagen"}`, chPast: "Überfällig", chLateAsk: "Diese Übung ist überfällig und wird mit einem Abzug bestraft. Möchtest du fortfahren?", chLateGo: "Fortfahren", chEmptyCog: "Lade die Datei des Vereins unter «Meisterschaft einrichten» (Zahnrad oben links).", chOnlyOne: "Es wird nur eine Meisterschaft gespeichert. Eine Datei eines anderen Jahres ersetzt sie; erfasste Übungen bleiben.", chLoadedInfo: (y, n) => `Geladen: Meisterschaft ${y} mit ${n} Einträgen.`, logoClubOn: "SG-Muttenz-Logo aktiv", logoClubOff: "App-Symbol aktiv",
     language: "Sprache", settings: "Einstellungen", exitSettings: "Einstellungen verlassen", openSettings: "Einstellungen öffnen", logoH: "Logo",
     clubLogo: "SG-Muttenz-Logo anzeigen", clubLogoNote: "Ersetzt das App-Symbol oben links.", backupH: "Backup und Daten", exportH: "Export", exportCsv: "Als CSV exportieren", exportNote: "Eine Zeile pro Serie, für Excel oder Numbers.",
     chromeH: "Auf Android installieren? Nimm Chrome",
@@ -825,7 +837,7 @@ function sessionStats(x) {
 const hasResult = (s) => s.shots.length > 0 || (s.total !== null && s.total !== undefined && s.total !== "");
 // A series converted to 10 shots on A10 (0–100), or null when nothing was entered.
 function seriesNorm(s) { if (!hasResult(s)) return null; const st = seriesStats(s); return st.max ? Math.round((st.total / st.max) * 1000) / 10 : null; }
-function toast(msg) { const el = $("#toast"); el.textContent = msg; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (el.hidden = true), 2400); }
+function toast(msg, ms = 2400) { const el = $("#toast"); el.textContent = msg; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (el.hidden = true), ms); }
 
 /* ---------- data ---------- */
 const MAIL_LIMIT = 20 * 1024 * 1024;
@@ -899,7 +911,7 @@ function render() {
   } else if (S.view === "list") {
     bar.innerHTML = S.sessions.length ? `<button class="btn" data-act="select">${t("selectBtn")}</button>` : "";
     bar.innerHTML = `<button class="btn" data-act="champ">🏆 ${t("chTitle")}</button>` + bar.innerHTML;
-    if (S.db && S.uid) bar.innerHTML += `<button class="btn primary" data-act="new">${t("newBtn")}</button>`;
+    if (S.db && S.uid) bar.innerHTML += `<div class="newwrap"><button class="btn primary" data-act="new" aria-haspopup="menu" aria-expanded="${S.newMenu ? "true" : "false"}">${t("newBtn")} ▾</button>${S.newMenu ? newMenuView() : ""}</div>`;
     $("#app").innerHTML = chromeHint() + listView();
   } else if (S.view === "detail") {
     bar.innerHTML = `<button class="btn" data-act="back">${t("back")}</button>`;
@@ -938,7 +950,7 @@ function listView() {
       <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="28" cy="28" r="26"/><circle cx="28" cy="28" r="18"/><circle cx="28" cy="28" r="10"/></g><circle cx="28" cy="28" r="4" fill="currentColor"/></svg>
       <h2>${t("emptyH")}</h2>
       <p>${t("emptyP")}</p>
-      <button class="btn primary" data-act="new">${t("newSession")}</button></div>`;
+      <button class="btn primary" data-act="newmanual">${t("newSession")}</button></div>`;
   const sv = rows.flatMap((x) => x.series.map(seriesNorm)).filter((v) => v !== null);
   const avg = sv.length ? sv.reduce((a, v) => a + v, 0) / sv.length : 0;
   const best = sv.length ? Math.max(...sv) : 0;
@@ -1159,7 +1171,8 @@ function detailView() {
 
 function editView() {
   const d = S.draft, st = sessionStats(d);
-  return `<div class="form">
+  const scan = d.scanWarn ? `<div class="scanwarn${d.scanWarn.length ? "" : " ok"}" role="status"><div><b>${d.scanWarn.length ? t("scanCheck") : t("scanOk")}</b>${d.scanWarn.map((w) => `<div>${esc(w)}</div>`).join("")}</div><button class="btn ghost" data-act="scanwarnclose" aria-label="${t("close")}">✕</button></div>` : "";
+  return `${scan}<div class="form">
     <div class="row2 date-row">
       <div class="field"><label for="f-date">${t("date")}</label><input id="f-date" type="date" lang="${t("locale")}" value="${esc(d.date)}" data-f="date"></div>
       <div class="field"><label for="f-preset">${t("discipline")}</label><select id="f-preset" data-f="preset">${Object.keys(PRESETS).map((k) => `<option value="${k}"${k === d.preset ? " selected" : ""}>${esc(plabel(k))}</option>`).join("")}</select></div>
@@ -1524,15 +1537,16 @@ function champItemView(item) {
   // + creates the session, X makes the item available again; both sit at the bottom right of the item
   const tool = active
     ? `<button class="ch-btn x" data-act="chreset" data-id="${id}" aria-label="${t("chReset")}" title="${t("chReset")}">✕</button>`
-    : `<button class="ch-btn plus${past ? " past" : ""}" data-act="chact" data-id="${id}" aria-label="${past ? t("chPast") : t("chActivate")}" title="${past ? t("chPast") : t("chActivate")}"${past ? " disabled" : ""}>+</button>`;
+    : `<button class="ch-btn plus${past ? " past" : ""}" data-act="chact" data-id="${id}" aria-label="${past ? t("chPast") : t("chActivate")}" title="${past ? t("chPast") : t("chActivate")}">+</button>`;
   const ask = active && S.champReset === item.id ? `<div class="confirm" role="alertdialog"><span>${t("chResetAsk")}</span><div class="actions"><button class="btn" data-act="chkeep" data-id="${id}">${t("chKeep")}</button><button class="btn danger solid" data-act="chdel" data-id="${id}">${t("chDelete")}</button><button class="btn" data-act="chresetno">${t("cancel")}</button></div></div>` : "";
+  const late = !active && S.champLate === item.id ? `<div class="confirm" role="alertdialog"><span>${t("chLateAsk")}</span><div class="actions"><button class="btn danger solid" data-act="chlateyes" data-id="${id}">${t("chLateGo")}</button><button class="btn" data-act="chlateno">${t("cancel")}</button></div></div>` : "";
   return `<li class="ch-item${active ? " done" : ""}">
     <div class="ch-main">
       <span class="ch-check" aria-hidden="true">${active ? "✓" : ""}</span>
       <div class="ch-txt"><strong class="ch-fit">${esc(item.title)}</strong><span class="note">${esc(what)}</span>${meta ? `<span class="note${past ? " ch-late" : ""}">${meta}</span>` : ""}${item.notes ? `<span class="note">${esc(item.notes)}</span>` : ""}
         ${x ? `<button class="ch-res" data-act="chopen" data-id="${esc(x.id)}"><span class="num">${esc(champResult(x))}</span> · ${esc(fmtDateShort(x.date))} ›</button>` : ""}</div>
       ${tool}
-    </div>${ask}</li>`;
+    </div>${ask}${late}</li>`;
 }
 function champLoader() {
   const ch = S.champ, cur = ch.current;
@@ -1618,6 +1632,130 @@ async function printSessions(ids, withPhotos = true) {
   for (const ev of ["pointerup", "pointercancel", "pointerleave"]) document.addEventListener(ev, (e) => { if (timer && (ev !== "pointerleave" || e.target.closest && e.target.closest("#logobtn"))) stop(); }, true);
   document.addEventListener("contextmenu", (e) => { if (e.target.closest && e.target.closest("#logobtn")) e.preventDefault(); });
 })();
+
+/* ---------- new session from a photo of the range printout (OCR with Tesseract.js, parser in scan.js) ---------- */
+function newMenuView() {
+  return `<div class="newmenu" role="menu">
+    <button role="menuitem" data-act="newmanual">✎ ${t("newManual")}</button>
+    <label role="menuitem" for="scan-cam">📷 ${t("newTakePhoto")}</label>
+    <label role="menuitem" for="scan-file">🖼 ${t("newLoadPhoto")}</label>
+    <input id="scan-cam" class="visually-hidden" type="file" accept="image/*" capture="environment">
+    <input id="scan-file" class="visually-hidden" type="file" accept="image/*">
+  </div>`;
+}
+let tessWorker = null;
+async function ocrWorker() {
+  if (tessWorker) return tessWorker;
+  if (!window.Tesseract) await new Promise((res, rej) => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+    sc.onload = res; sc.onerror = () => rej(new Error("offline"));
+    document.head.appendChild(sc);
+  });
+  try {
+    tessWorker = await Tesseract.createWorker("deu", 1, { logger: (m) => { if (m.status === "recognizing text" && S.scanning) { S.scanPct = Math.round(m.progress * 100); scanStatus(); } } });
+    await tessWorker.setParameters({ tessedit_pageseg_mode: "6" });   // one block of lines: keeps shot number, arrow and value together
+  } catch { throw new Error("offline"); }
+  return tessWorker;
+}
+function scanStatus() { const el = $("#scanstat"); if (el) el.textContent = S.scanPct != null ? `${t("scanReading")} ${S.scanPct}%` : t("scanReading"); }
+function scanOverlay() {
+  let el = $("#scanover");
+  if (!S.scanning) { if (el) el.remove(); return; }
+  if (!el) { el = document.createElement("div"); el.id = "scanover"; el.className = "scanover"; el.setAttribute("role", "status"); el.innerHTML = `<div id="scanstat"></div>`; document.body.appendChild(el); }
+  scanStatus();
+}
+// grey + more contrast (blue, yellow and grey paper look alike), longest side about 2400 px, optional quarter turn
+function scanCanvas(img, turn = 0) {
+  const k = Math.min(1, 2400 / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.round(img.naturalWidth * k), h = Math.round(img.naturalHeight * k);
+  const c = document.createElement("canvas");
+  c.width = turn ? h : w; c.height = turn ? w : h;
+  const g = c.getContext("2d");
+  g.filter = "grayscale(1) contrast(1.35)";
+  if (turn) { g.translate(c.width / 2, c.height / 2); g.rotate(turn * Math.PI / 2); g.drawImage(img, -w / 2, -h / 2, w, h); }
+  else g.drawImage(img, 0, 0, w, h);
+  return c;
+}
+// word boxes normalized to 0…1 with the origin at the bottom left (as the parser expects)
+async function ocrWords(canvas) {
+  const wk = await ocrWorker();
+  const { data } = await wk.recognize(canvas, {}, { blocks: true, text: false });
+  let words = data.words;
+  if (!words || !words.length) words = (data.blocks || []).flatMap((b) => b.paragraphs.flatMap((p) => p.lines.flatMap((l) => l.words)));
+  const W = canvas.width, H = canvas.height;
+  return words.filter((x) => x.confidence >= 30 && x.text.trim()).map((x) => ({ text: x.text.trim(), x: x.bbox.x0 / W, y: 1 - x.bbox.y1 / H, w: (x.bbox.x1 - x.bbox.x0) / W, h: (x.bbox.y1 - x.bbox.y0) / H }));
+}
+async function scanPhoto(file) {
+  S.scanning = true; S.scanPct = null; render(); scanOverlay();
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image(); img.src = url; await img.decode();
+    const words = await ocrWords(scanCanvas(img));
+    const results = ScanParser.mergeCopies(ScanParser.columns(words).flatMap((c) => ScanParser.parseAll(c)));
+    if (!results.length) { S.scanning = false; scanOverlay(); render(); return toast(t("scanNone"), 7000); }
+    // name, club and weapon printed sideways on SIUS-style strips (Pg strips have none)
+    if (results.some((r) => !r.program || !/^\d+$/.test(r.program))) {
+      const heads = [];
+      for (const turn of [1, -1]) heads.push(ScanParser.parseHeader(ScanParser.rowsOf(await ocrWords(scanCanvas(img, turn)))));
+      const best = heads.sort((a, b) => b.score - a.score)[0];
+      if (best && best.score > 0) ScanParser.applyHeader(best, results);
+    }
+    S.current = null; S.draft = scanDraft(results); S.active = 0; S.view = "edit"; S.scanning = false; scanOverlay(); render(); scrollTo(0, 0);
+    addPhotos([file]);      // the photo of the printout is kept with the session
+  } catch (e) {
+    S.scanning = false; scanOverlay(); render();
+    toast(e && e.message === "offline" ? t("scanOffline") : t("scanFail"), 7000);
+  } finally { URL.revokeObjectURL(url); }
+}
+// One series per printout. Known 300 m programs get their format; anything else becomes a custom series.
+function scanSeries(r) {
+  const all = ScanParser.shots(r);
+  const counts = r.series.map((s) => s.shots.length).join(",");
+  const shots = all.map((x) => String(Math.round(x.value)));
+  const prac = r.sighters.map((x) => String(Math.round(x.value)));
+  const n = shots.length, maxV = Math.max(...shots.map(Number));
+  // Tiefschuss: printed T/P value, or the best 100-value of the counted shots
+  const deep = r.deepShots.length ? Math.max(...r.deepShots.map((d) => d.value))
+    : all.some((x) => x.hundred != null) ? Math.max(...all.map((x) => x.hundred || 0)) : null;
+  const base = { total: null, tief: deep != null && r.scoringMode !== "hundred" ? deep : null, target: "A10" };
+  if (r.scoringMode === "hundred") return { ...base, type: "custom", target: "A100", planned: n, practice: prac.length, shots: prac.concat(shots) };
+  if (counts === "6,3,3,6" && maxV <= 4 && !prac.length) return { ...base, type: "fs300", planned: 18, shots };
+  if (counts === "5,5,2,3,5" && maxV <= 5 && !prac.length) return { ...base, type: "op300", planned: 20, shots };
+  if (prac.length === 2 && counts === "5,2,3") return { ...base, type: "p2s5r23", planned: 12, shots: prac.concat(shots) };
+  if (prac.length === 2 && counts === "6,4") return { ...base, type: "p2s6r4", planned: 12, shots: prac.concat(shots) };
+  if (!prac.length && counts === "6,4") return { ...base, type: "s6r4", planned: 10, shots };
+  if (!prac.length && counts === "10,10") return { ...base, type: "s2x10", planned: 20, shots };
+  if (!prac.length && n === 10) return { ...base, type: "s10", planned: 10, shots };
+  return { ...base, type: "custom", target: maxV <= 4 && n >= 6 ? "B4" : "A10", planned: n, practice: prac.length, shots: prac.concat(shots) };
+}
+function scanWarnText(w) {
+  const f = ScanParser.fmt;
+  switch (w.type) {
+    case "noShots": return t("scanNone");
+    case "seriesTotal": return t("scanWSeries", w.series, f(w.printed), f(w.computed));
+    case "seriesHundred": return t("scanWSeriesH", w.series, w.printed, w.computed);
+    case "grandTotal": return t("scanWTotal", f(w.printed), f(w.computed));
+    case "hundredTotal": return t("scanWTotalH", w.printed, w.computed);
+    case "shotValue": return t("scanWShot", w.shot, f(w.value), w.hundred);
+    case "missing": return t("scanWMissing", w.numbers.join(", "));
+    default: return t("scanWCopies");
+  }
+}
+function scanDraft(results) {
+  const d = newDraft();
+  const r0 = results[0];
+  const m = r0.date && /^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/.exec(r0.date);
+  if (m) { const y = m[3].length === 2 ? "20" + m[3] : m[3]; d.date = `${y}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`; }
+  d.preset = "r300";
+  d.series = results.map(scanSeries);
+  d.desc = r0.competition || r0.event || "";
+  if (r0.weapon) d.weapon = r0.weapon;
+  const labels = results.map((r) => [r.program && /^\d+$/.test(r.program) ? "Pg " + r.program : "", r.targetLabel ? (r.program && /^\d+$/.test(r.program) ? "" : t("scanTarget") + " ") + r.targetLabel : ""].filter(Boolean).join(" · ")).filter(Boolean);
+  d.notes = t("scanNote", labels.join("; "));
+  d.scanWarn = results.flatMap((r, i) => r.warnings.map((w) => (results.length > 1 ? `${i + 1}: ` : "") + scanWarnText(w)));
+  return d;
+}
 
 /* ---------- actions ---------- */
 function newDraft() {
@@ -1749,7 +1887,9 @@ document.addEventListener("click", (e) => {
     case "settings": if (S.longPressed) { S.longPressed = false; break; } if (S.view === "list" || S.view === "detail") { S.prevView = S.view; S.view = "settings"; S.selecting = false; S.picked.clear(); render(); scrollTo(0, 0); } break;
     case "closesettings": S.view = S.prevView && S.current ? S.prevView : "list"; render(); scrollTo(0, 0); break;
     case "setlang": if (a.dataset.v !== LANG) setLang(a.dataset.v); break;
-    case "new": S.current = null; S.draft = newDraft(); S.active = 0; S.view = "edit"; render(); scrollTo(0, 0); break;
+    case "new": S.newMenu = !S.newMenu; render(); break;   // menu: manual, take picture, load picture
+    case "newmanual": S.newMenu = false; S.current = null; S.draft = newDraft(); S.active = 0; S.view = "edit"; render(); scrollTo(0, 0); break;
+    case "scanwarnclose": if (S.draft) S.draft.scanWarn = null; render(); break;
     case "filter": S.filter = a.dataset.v; render(); break;
     case "catfilter": { const c = a.dataset.v; if (S.cats.has(c)) { if (S.cats.size > 1) S.cats.delete(c); } else S.cats.add(c);
       try { localStorage.setItem("scorebook-cats", JSON.stringify([...S.cats])); } catch {} render(); break; }
@@ -1765,7 +1905,14 @@ document.addEventListener("click", (e) => {
     case "chfetch": champFetch(); break;
     case "chapply": if (S.champAsk) champApply(S.champAsk.p); break;
     case "chaskno": S.champAsk = null; render(); break;
-    case "chact": champActivate(a.dataset.id); break;
+    case "chact": {   // an overdue item asks first (it may incur a penalty)
+      const it = S.champ.current && S.champ.current.items.find((x) => x.id === a.dataset.id);
+      if (it && it.date && it.date < today()) { S.champLate = it.id; S.champReset = null; render(); }
+      else champActivate(a.dataset.id);
+      break;
+    }
+    case "chlateyes": S.champLate = null; champActivate(a.dataset.id); break;
+    case "chlateno": S.champLate = null; render(); break;
     case "chreset": S.champReset = a.dataset.id; render(); break;
     case "chresetno": S.champReset = null; render(); break;
     case "chkeep": champReset(a.dataset.id, false); break;
@@ -1826,9 +1973,11 @@ document.addEventListener("click", (e) => {
       render(); break; }
   }
 });
+document.addEventListener("click", (e) => { if (S.newMenu && !e.target.closest(".newwrap")) { S.newMenu = false; render(); } }, true);
 document.addEventListener("change", (e) => {
   const el = e.target;
   if (el.id === "club-logo") { S.clubLogo = el.checked; try { localStorage.setItem("scorebook-logo", el.checked ? "club" : "app"); } catch {} render(); return; }
+  if (el.id === "scan-cam" || el.id === "scan-file") { const f = el.files && el.files[0]; el.value = ""; S.newMenu = false; if (f) scanPhoto(f); else render(); return; }
   if (el.id === "ch-file") { const f = el.files && el.files[0]; el.value = ""; if (f) f.text().then(champLoaded, () => toast(t("chBadFile"))); return; }
   if (el.id === "restore-file") { const f = el.files && el.files[0]; el.value = ""; if (f) restoreBackup(f); return; }
   if (el.id === "cam" || el.id === "pick") { const files = Array.from(el.files || []); el.value = ""; if (files.length) addPhotos(files); return; }

@@ -8,7 +8,7 @@ struct Tx {
     private func p(_ d: String, _ e: String) -> String { de ? d : e }
 
     var locale: Locale { Locale(identifier: de ? "de_CH" : "en_GB") }
-    var appName: String { "MySchiessbuch" }
+    var appName: String { "CHSchiessbuch" }
 
     // main
     var sessions: String { p("Übungen", "Sessions") }
@@ -159,7 +159,7 @@ struct Tx {
     func backupTooBig(_ size: String) -> String { p("Dieses Backup ist ca. \(size) gross, zu gross für die meisten E-Mail-Dienste (ca. 20–25 MB). Speichere es mit «Backup speichern» in Dropbox oder «Dateien».", "This backup is about \(size), too large for most email services (about 20–25 MB). Use Save backup and keep it in Dropbox or Files.") }
     var backupTooBigShort: String { p("Backup zu gross für E-Mail", "Backup too large for email") }
     func restored(_ n: Int) -> String { p("\(sessionsN(n)) wiederhergestellt", "\(sessionsN(n)) restored") }
-    var badBackup: String { p("Diese Datei ist kein MySchiessbuch-Backup.", "This file isn't a MySchiessbuch backup.") }
+    var badBackup: String { p("Diese Datei ist kein CHSchiessbuch-Backup.", "This file isn't a CHSchiessbuch backup.") }
     var restoreFailed: String { p("Das Backup konnte nicht wiederhergestellt werden.", "The backup couldn't be restored.") }
     var version: String { p("Version", "Version") }
     var ok: String { "OK" }
@@ -172,10 +172,10 @@ struct Tx {
     var totalOnly: String { p("nur Total", "total only") }
     func mPractice(_ n: Int) -> String { p("Probe \(n), zählt nicht", "practice \(n), not counted") }
     var targetPhotos: String { p("Scheibenfotos", "Target photos") }
-    func backupMailSubject(_ d: String) -> String { p("MySchiessbuch-Backup \(d)", "MySchiessbuch backup \(d)") }
-    var backupMailText: String { p("Backup von MySchiessbuch mit allen Übungen und Scheibenfotos. Zum Laden: MySchiessbuch öffnen, «Backup wiederherstellen» antippen und diese Datei wählen.", "Backup of MySchiessbuch with all sessions and target photos. To load it: open MySchiessbuch, tap Restore backup and choose this file.") }
-    var backupFile: String { "myschiessbuch-backup" }
-    var csvFile: String { "myschiessbuch" }
+    func backupMailSubject(_ d: String) -> String { p("CHSchiessbuch-Backup \(d)", "CHSchiessbuch backup \(d)") }
+    var backupMailText: String { p("Backup von CHSchiessbuch mit allen Übungen und Scheibenfotos. Zum Laden: CHSchiessbuch öffnen, «Backup wiederherstellen» antippen und diese Datei wählen.", "Backup of CHSchiessbuch with all sessions and target photos. To load it: open CHSchiessbuch, tap Restore backup and choose this file.") }
+    var backupFile: String { "chschiessbuch-backup" }
+    var csvFile: String { "chschiessbuch" }
     var csvHead: [String] {
         de ? ["datum", "disziplin", "kategorie", "beschreibung", "schiessstand", "waffe", "bedingungen", "serie", "format", "resultat", "maximum", "resultat_10_schuss_a10", "innenzehner", "tiefschuss", "schuesse", "notizen"]
            : ["date", "discipline", "category", "description", "range", "weapon", "conditions", "series", "format", "score", "max", "score_10_shots_A10", "inner_tens", "tiefschuss", "shots", "notes"]
@@ -216,7 +216,9 @@ struct Tx {
     var chActivate: String { p("Aktivieren", "Activate") }
     var chSettings: String { p("Meisterschaft einrichten", "Championship settings") }
     func chSoon(_ d: Int) -> String { d == 0 ? p("Heute", "Today") : de ? "In \(d) \(d == 1 ? "Tag" : "Tagen")" : "In \(d) \(d == 1 ? "day" : "days")" }
-    var chPast: String { p("Datum ist vorbei", "Date has passed") }
+    var chPast: String { p("Überfällig", "Overdue") }
+    var chLateAsk: String { p("Diese Übung ist überfällig und wird mit einem Abzug bestraft. Möchtest du fortfahren?", "This activity is overdue and will incur a penalty. Do you want to continue?") }
+    var chLateGo: String { p("Fortfahren", "Continue") }
     var chEmptyCog: String { p("Lade die Datei des Vereins unter «Meisterschaft einrichten» (Zahnrad oben links).", "Load the club's file under Championship settings (cog at the top left).") }
     var chOnlyOne: String { p("Es wird nur eine Meisterschaft gespeichert. Eine Datei eines anderen Jahres ersetzt sie; erfasste Übungen bleiben.", "Only one championship is kept. A file for another year replaces it; recorded sessions stay.") }
     func chLoadedInfo(_ y: Int, _ n: Int) -> String { p("Geladen: Meisterschaft \(y) mit \(n) Einträgen.", "Loaded: championship \(y) with \(n) items.") }

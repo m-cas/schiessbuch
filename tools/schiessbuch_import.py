@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Adds the shooting sessions from a MySchiessbuch email to an Excel file.
+Adds the shooting sessions from a CHSchiessbuch email to an Excel file.
 
 The email is the one the app sends with "E-Mail" (German or English, one or more
 sessions). Every series becomes one row; the user given with --user is the first column.
@@ -169,7 +169,7 @@ def row_key(user, date, desc, n, shots, score):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="MySchiessbuch-E-Mail in eine Excel-Datei übernehmen (eine Zeile pro Serie).")
+    ap = argparse.ArgumentParser(description="CHSchiessbuch-E-Mail in eine Excel-Datei übernehmen (eine Zeile pro Serie).")
     ap.add_argument("--user", "-u", required=True, help="Name des Schützen; steht in der ersten Spalte")
     ap.add_argument("--excel", "-x", default="schiessbuch.xlsx", help="Excel-Datei (wird erstellt, wenn sie fehlt)")
     ap.add_argument("--allow-duplicates", action="store_true", help="auch bereits vorhandene Zeilen nochmals eintragen")
@@ -178,7 +178,7 @@ def main():
 
     sessions = [s for t in read_input(a.files) for s in parse_email(t)]
     if not sessions:
-        sys.exit("Keine Übung gefunden. Ist es der Text einer E-Mail aus MySchiessbuch?")
+        sys.exit("Keine Übung gefunden. Ist es der Text einer E-Mail aus CHSchiessbuch?")
 
     wb, ws, created = open_sheet(a.excel)
     existing = set()

@@ -21,7 +21,7 @@ targets:
     info:
       path: Generated/Info.plist
       properties:
-        CFBundleDisplayName: MySchiessbuch
+        CFBundleDisplayName: CHSchiessbuch
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false
@@ -31,9 +31,9 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         CFBundleLocalizations: [de, en]
         CFBundleDevelopmentRegion: de
-        NSCameraUsageDescription: "MySchiessbuch braucht die Kamera, um deine Scheiben zu fotografieren. / MySchiessbuch uses the camera to photograph your targets."
-        NSPhotoLibraryUsageDescription: "MySchiessbuch braucht Zugriff auf Fotos, um Scheibenbilder hinzuzufügen. / MySchiessbuch uses your photos to add target pictures."
-        NSPhotoLibraryAddUsageDescription: "MySchiessbuch kann Scheibenbilder in deinen Fotos speichern. / MySchiessbuch can save target pictures to your photos."
+        NSCameraUsageDescription: "CHSchiessbuch braucht die Kamera, um deine Scheiben zu fotografieren. / CHSchiessbuch uses the camera to photograph your targets."
+        NSPhotoLibraryUsageDescription: "CHSchiessbuch braucht Zugriff auf Fotos, um Scheibenbilder hinzuzufügen. / CHSchiessbuch uses your photos to add target pictures."
+        NSPhotoLibraryAddUsageDescription: "CHSchiessbuch kann Scheibenbilder in deinen Fotos speichern. / CHSchiessbuch can save target pictures to your photos."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.github.mcas.schiessbuch

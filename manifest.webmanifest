@@ -1,6 +1,6 @@
 {
-  "name": "MySchiessbuch",
-  "short_name": "MySchiessbuch",
+  "name": "CHSchiessbuch",
+  "short_name": "CHSchiessbuch",
   "description": "Record shooting results and photos of your paper targets. All data stays on this device.",
   "start_url": "./",
   "scope": "./",

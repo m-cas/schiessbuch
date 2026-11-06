@@ -11,7 +11,7 @@ class Tx(lang: String) {
     private fun p(d: String, e: String) = if (de) d else e
     val locale: Locale = if (de) Locale.forLanguageTag("de-CH") else Locale.UK
 
-    val appName = "MySchiessbuch"
+    val appName = "CHSchiessbuch"
     val sessions get() = p("Übungen", "Sessions")
     val newSession get() = p("Neue Übung", "New Session")
     val select get() = p("Auswählen", "Select")
@@ -153,7 +153,7 @@ class Tx(lang: String) {
     fun backupTooBig(size: String) = p("Dieses Backup ist ca. $size gross, zu gross für die meisten E-Mail-Dienste (ca. 20–25 MB). Speichere es mit «Backup speichern» z. B. in Google Drive oder Dropbox.", "This backup is about $size, too large for most email services (about 20–25 MB). Use Save backup and keep it in e.g. Google Drive or Dropbox.")
     fun restored(n: Int) = p("${sessionsN(n)} wiederhergestellt", "${sessionsN(n)} restored")
     val saved get() = p("Gespeichert", "Saved")
-    val badBackup get() = p("Diese Datei ist kein MySchiessbuch-Backup.", "This file isn't a MySchiessbuch backup.")
+    val badBackup get() = p("Diese Datei ist kein CHSchiessbuch-Backup.", "This file isn't a CHSchiessbuch backup.")
     val restoreFailed get() = p("Das Backup konnte nicht wiederhergestellt werden.", "The backup couldn't be restored.")
     val failed get() = p("Das hat nicht geklappt.", "That didn't work.")
     val version get() = p("Version", "Version")
@@ -165,10 +165,10 @@ class Tx(lang: String) {
     val totalOnly get() = p("nur Total", "total only")
     fun mPractice(n: Int) = p("Probe $n, zählt nicht", "practice $n, not counted")
     val targetPhotos get() = p("Scheibenfotos", "Target photos")
-    fun backupMailSubject(d: String) = p("MySchiessbuch-Backup $d", "MySchiessbuch backup $d")
-    val backupMailText get() = p("Backup von MySchiessbuch mit allen Übungen und Scheibenfotos. Zum Laden: MySchiessbuch öffnen, «Backup wiederherstellen» antippen und diese Datei wählen.", "Backup of MySchiessbuch with all sessions and target photos. To load it: open MySchiessbuch, tap Restore backup and choose this file.")
-    val backupFile = "myschiessbuch-backup"
-    val csvFile = "myschiessbuch"
+    fun backupMailSubject(d: String) = p("CHSchiessbuch-Backup $d", "CHSchiessbuch backup $d")
+    val backupMailText get() = p("Backup von CHSchiessbuch mit allen Übungen und Scheibenfotos. Zum Laden: CHSchiessbuch öffnen, «Backup wiederherstellen» antippen und diese Datei wählen.", "Backup of CHSchiessbuch with all sessions and target photos. To load it: open CHSchiessbuch, tap Restore backup and choose this file.")
+    val backupFile = "chschiessbuch-backup"
+    val csvFile = "chschiessbuch"
     val csvHead: List<String>
         get() = if (de) listOf("datum", "disziplin", "kategorie", "beschreibung", "schiessstand", "waffe", "bedingungen", "serie", "format", "resultat", "maximum", "resultat_10_schuss_a10", "innenzehner", "tiefschuss", "schuesse", "notizen")
         else listOf("date", "discipline", "category", "description", "range", "weapon", "conditions", "series", "format", "score", "max", "score_10_shots_A10", "inner_tens", "tiefschuss", "shots", "notes")
@@ -186,7 +186,9 @@ class Tx(lang: String) {
     val chActivate get() = p("Aktivieren", "Activate")
     val chSettings get() = p("Meisterschaft einrichten", "Championship settings")
     fun chSoon(d: Int) = if (d == 0) p("Heute", "Today") else if (de) "In $d ${if (d == 1) "Tag" else "Tagen"}" else "In $d ${if (d == 1) "day" else "days"}"
-    val chPast get() = p("Datum ist vorbei", "Date has passed")
+    val chPast get() = p("Überfällig", "Overdue")
+    val chLateAsk get() = p("Diese Übung ist überfällig und wird mit einem Abzug bestraft. Möchtest du fortfahren?", "This activity is overdue and will incur a penalty. Do you want to continue?")
+    val chLateGo get() = p("Fortfahren", "Continue")
     val chEmptyCog get() = p("Lade die Datei des Vereins unter «Meisterschaft einrichten» (Zahnrad oben links).", "Load the club's file under Championship settings (cog at the top left).")
     val chOnlyOne get() = p("Es wird nur eine Meisterschaft gespeichert. Eine Datei eines anderen Jahres ersetzt sie; erfasste Übungen bleiben.", "Only one championship is kept. A file for another year replaces it; recorded sessions stay.")
     fun chLoadedInfo(y: Int, n: Int) = p("Geladen: Meisterschaft $y mit $n Einträgen.", "Loaded: championship $y with $n items.")

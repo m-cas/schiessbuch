@@ -1,6 +1,6 @@
 # Builds the native Android app (android-native/) and publishes the installable APK as a GitHub Release.
 # Download link for the newest version:
-#   https://github.com/m-cas/schiessbuch/releases/latest/download/MySchiessbuch.apk
+#   https://github.com/m-cas/schiessbuch/releases/latest/download/CHSchiessbuch.apk
 # (Schiessbuch.apk is published too, so the earlier link keeps working.)
 #
 # Signing: add these repository secrets (Settings → Secrets and variables → Actions)
@@ -62,19 +62,19 @@ jobs:
         run: |
           if [ -n "$ANDROID_KEYSTORE_FILE" ]; then
             gradle --no-daemon assembleRelease
-            cp app/build/outputs/apk/release/app-release.apk ../MySchiessbuch.apk
+            cp app/build/outputs/apk/release/app-release.apk ../CHSchiessbuch.apk
           else
             gradle --no-daemon assembleDebug
-            cp app/build/outputs/apk/debug/app-debug.apk ../MySchiessbuch.apk
+            cp app/build/outputs/apk/debug/app-debug.apk ../CHSchiessbuch.apk
           fi
 
       - name: Copy under the earlier file name
-        run: cp MySchiessbuch.apk Schiessbuch.apk
+        run: cp CHSchiessbuch.apk Schiessbuch.apk && cp CHSchiessbuch.apk MySchiessbuch.apk
 
       - uses: actions/upload-artifact@v6
         with:
-          name: MySchiessbuch-android-${{ github.run_number }}
-          path: MySchiessbuch.apk
+          name: CHSchiessbuch-android-${{ github.run_number }}
+          path: CHSchiessbuch.apk
 
       - name: Publish release
         # only signed builds become a release; unsigned test builds stay an artifact
@@ -82,11 +82,12 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: android-${{ github.run_number }}
-          name: MySchiessbuch Android 2.0.${{ github.run_number }}
+          name: CHSchiessbuch Android 2.0.${{ github.run_number }}
           body: |
             Native Android app, version 2.0.${{ github.run_number }}. Before updating from 1.0.x: save a backup in the old app (Settings → Backup speichern), then restore it in the new one.
-            Install: open this page on the phone, tap **MySchiessbuch.apk** and allow installing apps from this source when asked.
+            Install: open this page on the phone, tap **CHSchiessbuch.apk** and allow installing apps from this source when asked.
           files: |
+            CHSchiessbuch.apk
             MySchiessbuch.apk
             Schiessbuch.apk
           make_latest: true

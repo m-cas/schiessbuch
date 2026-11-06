@@ -5,7 +5,7 @@
   "engines": {
     "node": ">=24"
   },
-  "description": "MySchiessbuch – record shooting results and photos of paper targets. Web app, Android and iOS from one code base.",
+  "description": "CHSchiessbuch – record shooting results and photos of paper targets. Web app, Android and iOS from one code base.",
   "scripts": {
     "web": "node scripts/copy-web.mjs",
     "android": "node scripts/copy-web.mjs && node scripts/prepare-native.mjs android",

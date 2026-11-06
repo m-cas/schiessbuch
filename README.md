@@ -1,4 +1,4 @@
-# MySchiessbuch
+# CHSchiessbuch
 
 Eigenständige App zum Erfassen von Schiessresultaten und Fotos der Papierscheiben.
 Alle Übungen und Fotos werden nur auf dem Telefon gespeichert. Es wird nichts hochgeladen.
@@ -8,7 +8,7 @@ Ein Code, drei Varianten:
 
 | Variante | Installation |
 |---|---|
-| **Android-App** | Auf dem Telefon öffnen: <https://github.com/m-cas/schiessbuch/releases/latest/download/MySchiessbuch.apk> und die Installation erlauben. |
+| **Android-App** | Auf dem Telefon öffnen: <https://github.com/m-cas/schiessbuch/releases/latest/download/CHSchiessbuch.apk> und die Installation erlauben. |
 | **iPhone-App** | Über TestFlight (Einladung per E-Mail) bzw. später aus dem App Store. |
 | **Web-App** | <https://m-cas.github.io/schiessbuch/> in Safari bzw. Chrome öffnen → «Zum Home-Bildschirm». |
 
@@ -50,7 +50,7 @@ Die Ordner `android/` und `ios/` werden beim Bauen auf GitHub erzeugt und nicht 
 
 ## E-Mails nach Excel übernehmen
 
-`tools/schiessbuch_import.py` liest den Text einer E-Mail, die MySchiessbuch mit «E-Mail» verschickt
+`tools/schiessbuch_import.py` liest den Text einer E-Mail, die CHSchiessbuch mit «E-Mail» verschickt
 (Deutsch oder Englisch, eine oder mehrere Übungen), und hängt **pro Serie eine Zeile** an eine
 Excel-Datei an. So lassen sich die Resultate mehrerer Schützen in einer Tabelle sammeln.
 
