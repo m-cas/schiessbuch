@@ -61,9 +61,9 @@ if (platform === "ios") {
   if (existsSync("ios/App/Podfile")) patch("ios/App/Podfile", (s) => s.replace(/platform :ios, '[\d.]+'/, `platform :ios, '${IOS_MIN}'`));
   patch("ios/App/App/Info.plist", (s) => {
     const keys = {
-      NSCameraUsageDescription: "MySchiessbuch braucht die Kamera, um deine Scheiben zu fotografieren. / MySchiessbuch uses the camera to photograph your targets.",
-      NSPhotoLibraryUsageDescription: "MySchiessbuch braucht Zugriff auf Fotos, um Scheibenbilder hinzuzufügen. / MySchiessbuch uses your photos to add target pictures.",
-      NSPhotoLibraryAddUsageDescription: "MySchiessbuch kann Scheibenbilder in deinen Fotos speichern. / MySchiessbuch can save target pictures to your photos.",
+      NSCameraUsageDescription: "CHSchiessbuch braucht die Kamera, um deine Scheiben zu fotografieren. / CHSchiessbuch uses the camera to photograph your targets.",
+      NSPhotoLibraryUsageDescription: "CHSchiessbuch braucht Zugriff auf Fotos, um Scheibenbilder hinzuzufügen. / CHSchiessbuch uses your photos to add target pictures.",
+      NSPhotoLibraryAddUsageDescription: "CHSchiessbuch kann Scheibenbilder in deinen Fotos speichern. / CHSchiessbuch can save target pictures to your photos.",
     };
     let add = "";
     for (const [k, v] of Object.entries(keys)) if (!s.includes(`<key>${k}</key>`)) add += `\t<key>${k}</key>\n\t<string>${v}</string>\n`;

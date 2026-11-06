@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct MySchiessbuchApp: App {
+struct CHSchiessbuchApp: App {
     // "-demo" (used for test screenshots) shows sample data kept apart from the real data.
     @State private var store = Store(demo: ProcessInfo.processInfo.arguments.contains("-demo"))
     @AppStorage("lang") private var lang: String = { let c = Locale.current.language.languageCode?.identifier ?? "en"; return ["de", "fr", "it"].contains(c) ? c : "en" }()

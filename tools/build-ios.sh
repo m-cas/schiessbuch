@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds the MySchiessbuch iPhone app with this Mac's Xcode and uploads it to TestFlight.
+# Builds the CHSchiessbuch iPhone app with this Mac's Xcode and uploads it to TestFlight.
 # Start in Terminal with:  bash ~/Documents/Development/Schiessbuch/build-ios.sh
 # The build number is picked automatically: one higher than the last build in uploaded-builds.txt,
 # version 2.0.<build>. When the iPhone app has not changed since the last upload, nothing is built;
@@ -53,8 +53,8 @@ cd ios-native
 xcodegen generate --quiet
 OUT="$HERE/build"
 mkdir -p "$OUT"
-xcodebuild -project MySchiessbuch.xcodeproj -scheme MySchiessbuch -configuration Release \
-  -destination 'generic/platform=iOS' -archivePath "$OUT/MySchiessbuch.xcarchive" \
+xcodebuild -project CHSchiessbuch.xcodeproj -scheme CHSchiessbuch -configuration Release \
+  -destination 'generic/platform=iOS' -archivePath "$OUT/CHSchiessbuch.xcarchive" \
   DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_STYLE=Automatic CODE_SIGNING_ALLOWED=NO \
   MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$BUILD" \
   clean archive -quiet
@@ -72,7 +72,7 @@ cat > "$OUT/ExportOptions.plist" <<PLIST
   <key>signingStyle</key><string>automatic</string>
 </dict></plist>
 PLIST
-xcodebuild -exportArchive -archivePath "$OUT/MySchiessbuch.xcarchive" -exportOptionsPlist "$OUT/ExportOptions.plist" \
+xcodebuild -exportArchive -archivePath "$OUT/CHSchiessbuch.xcarchive" -exportOptionsPlist "$OUT/ExportOptions.plist" \
   -exportPath "$OUT/export" -allowProvisioningUpdates -quiet
 
 echo "$VERSION ($BUILD) $HEAD_COMMIT" >> "$LOG"
