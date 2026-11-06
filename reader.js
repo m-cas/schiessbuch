@@ -68,8 +68,8 @@
   // area resampling (like OpenCV INTER_AREA) when shrinking, bilinear when enlarging
   function resize(src, w, h, nw, nh) {
     const tmp = new Float32Array(nw * h), out = new Float32Array(nw * nh);
-    axis(src, tmp, h, w, nw, 1, w, 1, nw);          // rows
-    axis(tmp, out, nw, h, nh, nw, 1, nw, 1);        // columns
+    axis(src, tmp, h, w, nw, w, 1, nw, 1);          // rows: line l starts at l*w, pixels next to each other
+    axis(tmp, out, nw, h, nh, 1, nw, 1, nw);        // columns: line l starts at l, pixels nw apart
     return out;
     function axis(a, b, lines, n, m, lineA, stepA, lineB, stepB) {
       const sc = n / m;
