@@ -57,33 +57,36 @@ def label_photo(det, rec, path):
     words, _ = read(det, rec, g)
     labels = []
     targets = [e["target"] for e in exp if e["target"]]
+    cands = []   # shot rows: (n, piece)
     for row in rows_of(words):
         for piece in split_copies(row):
+            # header target "21/0004": only when one target is clearly the closest
+            for w in piece:
+                if "/" not in w["t"] or not targets: continue
+                d = sorted((lev(w["t"], tg), tg) for tg in targets)
+                if d[0][0] <= 2 and (len(d) == 1 or d[1][0] > d[0][0]): labels.append((w, d[0][1]))
             t = [w["t"] for w in piece]
-            # header target "21/0004"
-            for w in piece:
-                for tg in targets:
-                    if "/" in w["t"] and lev(w["t"], tg) <= 2: labels.append((w, tg))
-            # shot row: number, arrow, value
-            if len(piece) >= 3:
-                n, arr, v = piece[0], piece[1], piece[2]
-                for e in exp:
-                    shots = e["shots"]
-                    cands = []
-                    # number as read, or derived from the value pattern
-                    if n["t"].isdigit() and 1 <= int(n["t"]) <= len(shots): cands.append(int(n["t"]))
-                    for k in cands:
-                        ok_n = True
-                        ok_a = arr["t"] == ">"
-                        ok_v = v["t"] == str(shots[k - 1])
-                        if ok_n + ok_a + ok_v >= 2:
-                            labels += [(n, str(k)), (arr, ">"), (v, str(shots[k - 1]))]
-                            break
-            # total
-            for w in piece:
-                for e in exp:
-                    if w["t"].isdigit() and len(w["t"]) >= 2 and lev(w["t"], str(e["total"])) == 1 and len(w["t"]) == len(str(e["total"])):
-                        labels.append((w, str(e["total"])))
+            if len(piece) >= 3 and t[0].isdigit() and 1 <= int(t[0]) <= 40 and t[1] in (">", "+") and t[2].isdigit():
+                cands.append((int(t[0]), piece))
+    # columns of shot rows (one per copy), top to bottom
+    cols = []
+    for n, piece in sorted(cands, key=lambda c: c[1][0]["box"][1]):
+        x, h = piece[0]["box"][0], piece[0]["box"][3] - piece[0]["box"][1]
+        col = next((c for c in cols if abs(c["x"] - x) < 2.5 * h), None)
+        if col is None: col = dict(x=x, rows=[]); cols.append(col)
+        col["rows"].append((n, piece))
+    for col in cols:
+        rows = col["rows"]
+        seq = [r for i, r in enumerate(rows)
+               if (i > 0 and rows[i - 1][0] == r[0] - 1) or (i + 1 < len(rows) and rows[i + 1][0] == r[0] + 1)]
+        if len(seq) < 3: continue
+        # which printout: the one whose values agree most with what was read
+        def agree(e): return sum(1 for n, pc in seq if n <= len(e["shots"]) and pc[2]["t"] == str(e["shots"][n - 1]))
+        e = max(exp, key=agree)
+        if agree(e) < 0.6 * len(seq): continue
+        for n, pc in seq:
+            if n > len(e["shots"]): continue
+            labels += [(pc[0], str(n)), (pc[1], pc[1]["t"]), (pc[2], str(e["shots"][n - 1]))]
     # crops at the recogniser's geometry (raw grey, as dump_crops.py)
     out = []
     seen = set()

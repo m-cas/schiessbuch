@@ -412,6 +412,35 @@
     if (!/^[PF][9s]\d{0,3}$/.test(w.text)) return false;
     return words.some((v) => v.x > w.x + w.w && v.x - (w.x + w.w) < 0.35 && Math.abs((v.y + v.h / 2) - (w.y + w.h / 2)) < w.h && /^\d{1,3}\/\d{2,4}$/.test(v.text));
   }
+  // Copies printed side by side repeat every row at the same horizontal distance: same text, same height.
+  // Returns the x where the right copy starts, or null. Needs that pattern in at least half the rows,
+  // so a value equal to its shot number ("9 > 9") in a single copy doesn't count.
+  function copySplit(words) {
+    if (words.length < 8) return null;
+    const mid = (w) => w.y + w.h / 2;
+    const pairs = [];
+    for (const a of words) for (const b of words) {
+      if (b === a || b.x <= a.x || a.text !== b.text) continue;
+      if (Math.abs(mid(a) - mid(b)) < 0.5 * Math.min(a.h, b.h)) pairs.push([a, b, b.x - a.x]);
+    }
+    if (pairs.length < 4) return null;
+    const bins = {};
+    for (const [, , dx] of pairs) { const k = Math.round(dx / 0.01); for (const j of [k - 1, k, k + 1]) bins[j] = (bins[j] || 0) + 1; }
+    const best = +Object.keys(bins).sort((x, y) => bins[y] - bins[x])[0];
+    const near = pairs.filter((p) => Math.abs(p[2] - best * 0.01) <= 0.015);
+    const dx = near.reduce((t, p) => t + p[2], 0) / near.length;
+    const rows = rowsOf(words.map((w) => ({ ...w })));
+    const rowMids = new Set(near.map((p) => Math.round(mid(p[0]) / Math.max(0.004, p[0].h * 0.8))));
+    if (near.length < 4 || rowMids.size < Math.max(4, 0.5 * rows.length)) return null;
+    const left = Math.min(...near.map((p) => p[0].x));
+    // split in the middle of the widest empty strip just before where the right copy lines up
+    const lo = left + dx - 0.15, hi = left + dx + 0.01;
+    const iv = words.filter((w) => w.x + w.w > lo && w.x < hi).map((w) => [Math.max(lo, w.x), Math.min(hi, w.x + w.w)]).sort((p, q) => p[0] - q[0]);
+    let bestGap = [hi - 0.01, 0], cur = lo;
+    for (const [x0, x1] of iv) { if (x0 - cur > bestGap[1]) bestGap = [(cur + x0) / 2, x0 - cur]; cur = Math.max(cur, x1); }
+    if (hi - cur > bestGap[1]) bestGap = [(cur + hi) / 2, hi - cur];
+    return bestGap[0];
+  }
   function columns(words) {
     if (!words.length) return [];
     const anchors = words.filter((w) => isAnchor(w, words)).map((w) => w.x).sort((a, b) => a - b);
@@ -419,24 +448,68 @@
     for (const x of anchors) if (!clusters.length || x - clusters[clusters.length - 1] >= 0.06) clusters.push(x);
     let starts = [0];
     if (clusters.length > 1) { starts = clusters.map((x) => Math.max(0, x - 0.03)); starts[0] = 0; }
-    const buckets = starts.map(() => []);
+    let buckets = starts.map(() => []);
     for (const w of words) { let i = 0; starts.forEach((s, k) => { if (w.x >= s) i = k; }); buckets[i].push(w); }
+    // a copy whose header was misread is still found by its repeating rows
+    for (let guard = 0; guard < 6; guard++) {
+      let changed = false;
+      buckets = buckets.flatMap((b) => {
+        const x = copySplit(b);
+        if (x == null) return [b];
+        const l = b.filter((w) => w.x < x), r = b.filter((w) => w.x >= x);
+        if (!l.length || !r.length) return [b];
+        changed = true; return [l, r];
+      });
+      if (!changed) break;
+    }
     return buckets.map(rowsOf).filter((r) => r.length);
   }
 
   // ---------- copies printed side by side ----------
+  function lev(a, b) {
+    const d = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+      let p = d[0]; d[0] = i;
+      for (let j = 1; j <= b.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, p + (a[i - 1] !== b[j - 1] ? 1 : 0)); p = t; }
+    }
+    return d[b.length];
+  }
+  // two readings of the same printout: same target (a misread character or two allowed), or mostly the same shots
+  function sameCopy(a, b) {
+    if (a.targetLabel && b.targetLabel) return lev(a.targetLabel, b.targetLabel) <= 2 && lev(a.targetLabel, b.targetLabel) < Math.min(a.targetLabel.length, b.targetLabel.length) / 2;
+    const x = rShots(a).map((s) => s.value), y = rShots(b).map((s) => s.value);
+    if (x.length < 4 || x.length !== y.length) return false;
+    return x.filter((v, i) => v === y[i]).length >= 0.7 * x.length;
+  }
+  // neither copy adds up: take each series from the copy whose series matches its printed subtotal
+  function combineCopies(copies) {
+    const base = copies[0];
+    if (!copies.every((c) => c.series.length === base.series.length && c.series.every((s, i) => s.shots.length === base.series[i].shots.length))) return null;
+    const r = { ...base, series: base.series.map((s, i) => {
+      const ok = copies.map((c) => c.series[i]).find((x) => sConsistent(x) === true);
+      return ok || s;
+    }), warnings: [] };
+    r.printedTotal = copies.map((c) => c.printedTotal).find((t) => t != null && Math.abs(t - rComputed(r)) < TOL) ?? base.printedTotal;
+    r.warnings = validate(r, []);
+    return rVerified(r) ? r : null;
+  }
   function mergeCopies(results) {
-    const groups = [], idx = {};
+    const groups = [];
     for (const r of results) {
-      const key = r.targetLabel ? `${r.program || ""}|${r.targetLabel}` : null;
-      if (key && key in idx) groups[idx[key]].push(r);
-      else { if (key) idx[key] = groups.length; groups.push([r]); }
+      const g = groups.find((gr) => gr.some((c) => sameCopy(c, r) && (c.program == null || r.program == null || c.program === r.program || lev(c.program, r.program) <= 1)));
+      if (g) g.push(r); else groups.push([r]);
     }
     return groups.map((copies) => {
       if (copies.length === 1) return copies[0];
       const rank = (r) => [rVerified(r) ? 0 : 1, r.warnings.length, -rShots(r).length];
       const cmp = (a, b) => { const x = rank(a), y = rank(b); for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i]; return 0; };
-      const best = [...copies].sort(cmp)[0];
+      let best = [...copies].sort(cmp)[0];
+      if (!rVerified(best)) best = combineCopies(copies) || best;
+      // the label as printed: the form the copies agree on, else the one shaped like "21/0004"
+      const labels = copies.map((c) => c.targetLabel).filter(Boolean);
+      const shaped = labels.filter((l) => /^\d{1,3}\/\d{1,4}$/.test(l) && !/^\d{3}\/\d{4}$/.test(l));
+      const common = labels.find((l, i) => labels.indexOf(l) !== i);
+      best.targetLabel = common || shaped.find((l) => /^\d{2}\/\d{4}$/.test(l)) || shaped[0] || best.targetLabel;
       const agree = new Set(copies.map((c) => rShots(c).map((s) => s.value).join(","))).size === 1;
       best.copiesRead = copies.length; best.copiesAgree = agree;
       if (!agree && !rVerified(best)) best.warnings.push({ type: "copies" });
