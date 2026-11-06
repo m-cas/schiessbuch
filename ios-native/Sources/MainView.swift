@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct MainView: View {
     @Environment(Store.self) private var store
@@ -18,6 +19,14 @@ struct MainView: View {
     @State private var showSettings = false
     @State private var showChamp = false
     @State private var editing: Session? = nil
+    // new session from a photo of the range printout
+    @State private var scanWarnings: [String]? = nil
+    @State private var scanPhotos: [String] = []
+    @State private var showDocCamera = false
+    @State private var showPhotoPicker = false
+    @State private var pickedPhoto: PhotosPickerItem? = nil
+    @State private var scanning = false
+    @State private var scanMessage: String? = nil
     @State private var mail: OutgoingMail? = nil
     @State private var confirmDelete = false
     @State private var askPrintPhotos = false
@@ -63,7 +72,41 @@ struct MainView: View {
             .toolbar { toolbar }
             .sheet(isPresented: $showSettings, onDismiss: refreshStorage) { SettingsView() }
             .sheet(isPresented: $showChamp) { ChampionshipView() }
-            .sheet(item: $editing) { s in SessionEditor(original: s, isNew: store.session(s.id) == nil) }
+            .sheet(item: $editing, onDismiss: { scanWarnings = nil; scanPhotos = [] }) { s in
+                SessionEditor(original: s, isNew: store.session(s.id) == nil, scanWarnings: scanWarnings, addedPhotos: scanPhotos)
+            }
+            .fullScreenCover(isPresented: $showDocCamera) {
+                Group {
+                    if DocumentCameraView.isSupported {
+                        DocumentCameraView(onFinish: { pages in showDocCamera = false; if let p = pages.first { scan(p) } },
+                                           onCancel: { showDocCamera = false })
+                    } else {
+                        CameraPicker { img in scan(img) }
+                    }
+                }
+                .ignoresSafeArea()
+            }
+            .photosPicker(isPresented: $showPhotoPicker, selection: $pickedPhoto, matching: .images)
+            .onChange(of: pickedPhoto) { _, item in
+                guard let item else { return }
+                pickedPhoto = nil
+                Task {
+                    if let data = try? await item.loadTransferable(type: Data.self), let img = UIImage(data: data) { scan(img) }
+                    else { scanMessage = tx.scanFail }
+                }
+            }
+            .overlay {
+                if scanning {
+                    ZStack {
+                        Color.black.opacity(0.35).ignoresSafeArea()
+                        VStack(spacing: 12) { ProgressView(); Text(tx.scanReading).font(.headline) }
+                            .padding(24).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                    }
+                }
+            }
+            .alert(scanMessage ?? "", isPresented: Binding(get: { scanMessage != nil }, set: { if !$0 { scanMessage = nil } })) {
+                Button(tx.ok, role: .cancel) {}
+            }
             .mailOrShare($mail)
             .confirmationDialog(tx.confirmDelete(selection.count, photos: photoCount(selection)), isPresented: $confirmDelete, titleVisibility: .visible) {
                 Button(tx.delete, role: .destructive) {
@@ -282,7 +325,12 @@ struct MainView: View {
             } label: { FitLabel(full: isSelecting ? tx.done : tx.select, short: isSelecting ? tx.done : tx.select) }
                 .buttonStyle(TopButtonStyle(prominent: false))
                 .disabled(store.sessions.isEmpty)
-            Button { editing = newSession() } label: { FitLabel(full: tx.newSession, short: tx.newSessionShort) }
+            // New: enter by hand, or read the range printout from a photo
+            Menu {
+                Button { scanWarnings = nil; scanPhotos = []; editing = newSession() } label: { Label(tx.newManual, systemImage: "square.and.pencil") }
+                Button { showDocCamera = true } label: { Label(tx.newTakePhoto, systemImage: "camera") }
+                Button { showPhotoPicker = true } label: { Label(tx.newLoadPhoto, systemImage: "photo") }
+            } label: { FitLabel(full: tx.newSession, short: tx.newSessionShort) }
                 .buttonStyle(TopButtonStyle(prominent: true))
                 .disabled(isSelecting)
         }
@@ -300,6 +348,21 @@ struct MainView: View {
         }
         s.series = [Series(format: s.discipline.defaultFormat)]
         return s
+    }
+    /// Reads the printout on the photo and opens the editor with the shots filled in (and the photo attached).
+    private func scan(_ image: UIImage) {
+        scanning = true
+        Task {
+            defer { scanning = false }
+            do {
+                let results = try await ShootingResultScanner().scan(image)
+                guard !results.isEmpty else { scanMessage = tx.scanNone; return }
+                var (s, warnings) = ScanImport.session(from: results, base: newSession(), tx: tx)
+                if let id = store.addPhoto(image) { s.photos = [id]; scanPhotos = [id] } else { scanPhotos = [] }
+                scanWarnings = warnings
+                editing = s
+            } catch { scanMessage = tx.scanFail }
+        }
     }
     private func printSelection(photos: Bool) {
         SessionPrinter.shared.print(store.sessions.filter { selection.contains($0.id) }, store: store, tx: tx, photos: photos)

@@ -97,6 +97,17 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import kotlinx.coroutines.delay
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import io.github.mcas.schiessbuch.scan.ScanImport
+import io.github.mcas.schiessbuch.scan.ScanOcr
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
@@ -105,6 +116,29 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var chartOpen by remember { mutableStateOf(prefs.chartOpen) }
+    // New: enter by hand, or read the range printout from a photo
+    var newMenu by remember { mutableStateOf(false) }
+    var scanning by remember { mutableStateOf(false) }
+    var scanMessage by remember { mutableStateOf<String?>(null) }
+    fun scan(uri: Uri) {
+        scanning = true
+        scope.launch {
+            try {
+                val results = ScanOcr.read(context, uri)
+                if (results.isEmpty()) scanMessage = tx.scanNone
+                else {
+                    var (s, warnings) = ScanImport.session(results, newSession(store), tx)
+                    val photo = store.addPhoto(uri)
+                    if (photo != null) s = s.copy(photos = listOf(photo))
+                    nav.push(Screen.Editor(s, true, warnings, listOfNotNull(photo)))
+                }
+            } catch (e: Exception) { scanMessage = tx.scanFail }
+            scanning = false
+        }
+    }
+    val scanFile = remember { java.io.File(store.shareDir(), "scan.jpg") }
+    val takePhoto = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok -> if (ok) scan(Uri.fromFile(scanFile)) }
+    val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> if (uri != null) scan(uri) }
     var filter by rememberSaveable { mutableStateOf(prefs.filterDiscipline) }
     var cats by remember { mutableStateOf(prefs.filterCategories) }
     var openYears by remember { mutableStateOf<Set<String>?>(null) }
@@ -169,8 +203,16 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
                 TopButton(tx.chTitle, tx.chTitleShort, prominent = false, modifier = Modifier.weight(1f)) { nav.push(Screen.Champ) }
                 TopButton(if (selecting) tx.done else tx.select, if (selecting) tx.done else tx.select, prominent = false,
                     enabled = store.sessions.isNotEmpty(), modifier = Modifier.weight(1f)) { if (selecting) endSelection() else selecting = true }
-                TopButton(tx.newSession, tx.newSessionShort, prominent = true, enabled = !selecting, modifier = Modifier.weight(1f)) {
-                    nav.push(Screen.Editor(newSession(store), true))
+                Box(Modifier.weight(1f)) {
+                    TopButton(tx.newSession, tx.newSessionShort, prominent = true, enabled = !selecting, modifier = Modifier.fillMaxWidth()) { newMenu = true }
+                    DropdownMenu(expanded = newMenu, onDismissRequest = { newMenu = false }) {
+                        DropdownMenuItem(text = { Text(tx.newManual) }, leadingIcon = { Icon(Icons.Outlined.EditNote, null) },
+                            onClick = { newMenu = false; nav.push(Screen.Editor(newSession(store), true)) })
+                        DropdownMenuItem(text = { Text(tx.newTakePhoto) }, leadingIcon = { Icon(Icons.Outlined.CameraAlt, null) },
+                            onClick = { newMenu = false; runCatching { takePhoto.launch(context.uriFor(scanFile)) } })
+                        DropdownMenuItem(text = { Text(tx.newLoadPhoto) }, leadingIcon = { Icon(Icons.Outlined.Image, null) },
+                            onClick = { newMenu = false; pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) })
+                    }
                 }
             }
           }
@@ -307,6 +349,16 @@ fun MainScreen(store: Store, prefs: Prefs, tx: Tx, nav: Nav) {
     if (confirmDelete) {
         val photos = store.sessions.filter { it.id in selection }.sumOf { it.photos.size }
         ConfirmDialog(tx.confirmDelete(selection.size, photos), tx.delete, tx.keep, onConfirm = { store.delete(selection); endSelection() }, onDismiss = { confirmDelete = false })
+    }
+    if (scanning) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)).clickable(enabled = true) {}, contentAlignment = Alignment.Center) {
+        Card { Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+            androidx.compose.material3.CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 3.dp)
+            Spacer(Modifier.width(14.dp)); Text(tx.scanReading, fontWeight = FontWeight.SemiBold)
+        } }
+    }
+    scanMessage?.let { m ->
+        androidx.compose.material3.AlertDialog(onDismissRequest = { scanMessage = null }, text = { Text(m) },
+            confirmButton = { TextButton(onClick = { scanMessage = null }) { Text(tx.ok) } })
     }
     if (askPrintPhotos) {
         val chosen = store.sessions.filter { it.id in selection }

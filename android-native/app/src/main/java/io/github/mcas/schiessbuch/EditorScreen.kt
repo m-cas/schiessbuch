@@ -35,6 +35,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Backspace
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Remove
@@ -46,6 +48,7 @@ import androidx.compose.material.icons.outlined.RemoveCircleOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -101,12 +104,13 @@ private val Orange = Color(0xFFE08A1E)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun EditorScreen(store: Store, tx: Tx, nav: Nav, original: Session, isNew: Boolean) {
+fun EditorScreen(store: Store, tx: Tx, nav: Nav, original: Session, isNew: Boolean, scanWarnings: List<String>? = null, addedPhotos: List<String> = emptyList()) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     var draft by remember(original.id) { mutableStateOf(original) }
     var active by remember { mutableIntStateOf(0) }
-    var added by remember { mutableStateOf(listOf<String>()) }
+    var added by remember { mutableStateOf(addedPhotos) }
+    var showScanNote by remember { mutableStateOf(scanWarnings != null) }
     var removed by remember { mutableStateOf(listOf<String>()) }
     var confirmDiscard by remember { mutableStateOf(false) }
     var alert by remember { mutableStateOf<String?>(null) }
@@ -199,6 +203,20 @@ fun EditorScreen(store: Store, tx: Tx, nav: Nav, original: Session, isNew: Boole
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = pad.calculateTopPadding() + 4.dp, bottom = pad.calculateBottomPadding() + 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            // what was read from the photo of the printout, and what to check
+            if (showScanNote && scanWarnings != null) item {
+                val ok = scanWarnings.isEmpty()
+                Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = if (ok) MaterialTheme.colorScheme.primaryContainer else androidx.compose.ui.graphics.Color(0x33E0A800))) {
+                    Row(Modifier.padding(start = 12.dp, top = 10.dp, bottom = 10.dp), verticalAlignment = Alignment.Top) {
+                        Icon(if (ok) Icons.Filled.CheckCircle else Icons.Filled.Warning, null, tint = if (ok) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color(0xFFB88A00))
+                        Column(Modifier.weight(1f).padding(start = 10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(if (ok) tx.scanOk else tx.scanCheck, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                            scanWarnings.forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                        }
+                        IconButton(onClick = { showScanNote = false }) { Icon(Icons.Filled.Close, tx.close) }
+                    }
+                }
+            }
             item { SectionLabel(tx.details) }
             item {
                 Card(Modifier.fillMaxWidth()) {

@@ -194,6 +194,25 @@ struct Tx {
     var print: String { p("Drucken", "Print") }
     var printTitle: String { p("Schiessresultate", "Shooting results") }
     var printTotal: String { "Total" }
+    // new session from a photo of the range printout
+    var close: String { p("Schliessen", "Close") }
+    var newManual: String { p("Manuell erfassen", "Enter manually") }
+    var newTakePhoto: String { p("Foto aufnehmen", "Take picture") }
+    var newLoadPhoto: String { p("Foto laden", "Load picture") }
+    var scanReading: String { p("Ausdruck wird gelesen…", "Reading the printout…") }
+    var scanNone: String { p("Keine Schüsse gefunden. Streifen flach hinlegen, Spiegelungen vermeiden und den Druck möglichst bildfüllend fotografieren.", "No shots found. Lay the strip flat, avoid glare and let the printed area fill the photo.") }
+    var scanFail: String { p("Das Foto konnte nicht gelesen werden.", "The photo could not be read.") }
+    var scanCheck: String { p("Bitte die gelesenen Werte prüfen:", "Please check the values read from the photo:") }
+    var scanOk: String { p("Aus dem Foto gelesen: alle gedruckten Totale stimmen. Bitte vor dem Speichern kontrollieren.", "Read from the photo: all printed totals match. Please check before saving.") }
+    func scanNote(_ x: String) -> String { p("Aus Foto gelesen", "Read from photo") + (x.isEmpty ? "" : ": " + x) }
+    var scanTarget: String { p("Scheibe", "Target") }
+    func scanWSeries(_ s: Int, _ pr: String, _ c: String) -> String { p("Serie \(s): gedruckt \(pr), die Schüsse ergeben \(c).", "Series \(s): printed \(pr), shots add up to \(c).") }
+    func scanWSeriesH(_ s: Int, _ pr: Int, _ c: Int) -> String { p("Serie \(s): gedrucktes 100er-Total \(pr), die Schüsse ergeben \(c).", "Series \(s): printed 100-total \(pr), shots add up to \(c).") }
+    func scanWTotal(_ pr: String, _ c: String) -> String { p("Gedrucktes Total \(pr), die Serien ergeben \(c).", "Printed total \(pr), series add up to \(c).") }
+    func scanWTotalH(_ pr: Int, _ c: Int) -> String { p("Gedrucktes 100er-Total \(pr), die Schüsse ergeben \(c).", "Printed 100-total \(pr), shots add up to \(c).") }
+    func scanWShot(_ n: Int, _ v: String, _ h: Int) -> String { p("Schuss \(n): Ring \(v) passt nicht zum 100er-Wert \(h).", "Shot \(n): ring \(v) does not fit the 100-value \(h).") }
+    func scanWMissing(_ x: String) -> String { p("Schuss \(x) konnte nicht gelesen werden.", "Shot(s) \(x) could not be read.") }
+    var scanWCopies: String { p("Die Kopien auf dem Streifen wurden unterschiedlich gelesen.", "The copies on the strip were read differently.") }
     func printAsk(_ n: Int) -> String { p("Mit den Scheibenfotos (\(n)) drucken?", "Print with the target photos (\(n))?") }
     var printPhotos: String { p("Mit Fotos", "With photos") }
     var printNoPhotos: String { p("Ohne Fotos", "Without photos") }

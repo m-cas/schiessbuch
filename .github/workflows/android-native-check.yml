@@ -35,7 +35,7 @@ jobs:
         working-directory: android-native
         run: |
           set -o pipefail
-          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log | grep -E "^e: |^w: .*\.kt|error:|BUILD (SUCCESSFUL|FAILED)|What went wrong" || true
+          gradle assembleDebug testDebugUnitTest --no-daemon --stacktrace 2>&1 | tee build.log | grep -E "^e: |^w: .*\.kt|error:|BUILD (SUCCESSFUL|FAILED)|What went wrong" || true
           grep -q "BUILD SUCCESSFUL" build.log
 
       - name: Enable KVM for the emulator

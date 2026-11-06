@@ -54,7 +54,7 @@ class Prefs(context: Context) {
 sealed class Screen {
     data object Main : Screen()
     data class Detail(val id: String) : Screen()
-    data class Editor(val session: Session, val isNew: Boolean) : Screen()
+    data class Editor(val session: Session, val isNew: Boolean, val scanWarnings: List<String>? = null, val addedPhotos: List<String> = emptyList()) : Screen()
     data object Settings : Screen()
     data object Champ : Screen()
     data object ChampSettings : Screen()
@@ -91,7 +91,7 @@ fun App(store: Store, prefs: Prefs, startScreen: String?) {
     when (val s = nav.current) {
         Screen.Main -> MainScreen(store, prefs, tx, nav)
         is Screen.Detail -> DetailScreen(store, tx, nav, s.id)
-        is Screen.Editor -> EditorScreen(store, tx, nav, s.session, s.isNew)
+        is Screen.Editor -> EditorScreen(store, tx, nav, s.session, s.isNew, s.scanWarnings, s.addedPhotos)
         Screen.Settings -> SettingsScreen(store, prefs, tx, nav)
         Screen.Champ -> ChampScreen(store, tx, nav)
         Screen.ChampSettings -> ChampSettingsScreen(store, tx, nav)

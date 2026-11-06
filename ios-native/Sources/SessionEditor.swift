@@ -20,10 +20,16 @@ struct SessionEditor: View {
     @State private var fullCount = 0
     @FocusState private var numberField: NumberField?
 
-    init(original: Session, isNew: Bool) {
+    /// Notes from reading a photo of the printout (nil when the session was not scanned).
+    let scanWarnings: [String]?
+    @State private var showScanNote = true
+
+    init(original: Session, isNew: Bool, scanWarnings: [String]? = nil, addedPhotos: [String] = []) {
         self.original = original
         self.isNew = isNew
+        self.scanWarnings = scanWarnings
         _draft = State(initialValue: original)
+        _added = State(initialValue: addedPhotos)
     }
 
     private var tx: Tx { Tx(lang) }
@@ -32,6 +38,20 @@ struct SessionEditor: View {
     var body: some View {
         NavigationStack {
             Form {
+                if let w = scanWarnings, showScanNote {
+                    Section {
+                        HStack(alignment: .top) {
+                            Image(systemName: w.isEmpty ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                                .foregroundStyle(w.isEmpty ? Color.accentColor : Color.yellow)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(w.isEmpty ? tx.scanOk : tx.scanCheck).font(.subheadline.weight(.semibold))
+                                ForEach(w, id: \.self) { Text($0).font(.footnote) }
+                            }
+                            Spacer()
+                            Button { showScanNote = false } label: { Image(systemName: "xmark") }.buttonStyle(.borderless).accessibilityLabel(tx.close)
+                        }
+                    }
+                }
                 detailsSection
                 ForEach(draft.series.indices, id: \.self) { i in
                     SeriesEditorSection(series: $draft.series[i], index: i, discipline: draft.discipline, isActive: i == active, canRemove: draft.series.count > 1, tx: tx, focus: $numberField,

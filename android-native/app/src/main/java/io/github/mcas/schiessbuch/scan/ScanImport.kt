@@ -1,0 +1,156 @@
+package io.github.mcas.schiessbuch.scan
+
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Matrix
+import android.graphics.Paint
+import android.net.Uri
+import androidx.exifinterface.media.ExifInterface
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.Text
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import io.github.mcas.schiessbuch.Discipline
+import io.github.mcas.schiessbuch.Series
+import io.github.mcas.schiessbuch.SeriesFormat
+import io.github.mcas.schiessbuch.Session
+import io.github.mcas.schiessbuch.Shot
+import io.github.mcas.schiessbuch.Target
+import io.github.mcas.schiessbuch.Tx
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.math.max
+import kotlin.math.roundToInt
+
+/** Reads a photo of the range printout on the device (ML Kit text recognition, no network). */
+object ScanOcr {
+    suspend fun read(context: Context, uri: Uri): List<ScanResult> = withContext(Dispatchers.Default) {
+        val bmp = prepare(load(context, uri) ?: error("unreadable"))
+        val words = recognize(bmp).flatMap { block -> block.lines.flatMap { line -> line.elements.map { word(it.text, it.boundingBox, bmp) } } }.filterNotNull()
+        val results = Scan.mergeCopies(Scan.columns(words).flatMap { Scan.parseAll(it) })
+        // name, club and weapon printed sideways on SIUS-style strips (Pg strips have none)
+        if (results.isNotEmpty() && results.any { r -> r.program?.all { it.isDigit() } != true }) {
+            val heads = listOf(90f, -90f).map { deg ->
+                val turned = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, Matrix().apply { postRotate(deg) }, true)
+                Scan.parseHeader(Scan.rows(recognize(turned).flatMap { b -> b.lines.mapNotNull { word(it.text, it.boundingBox, turned) } }))
+            }
+            heads.maxBy { it.score }.takeIf { it.score > 0 }?.let { Scan.applyHeader(it, results) }
+        }
+        results
+    }
+
+    private fun word(text: String, box: android.graphics.Rect?, bmp: Bitmap): Word? {
+        if (box == null || text.isBlank()) return null
+        val w = bmp.width.toDouble(); val h = bmp.height.toDouble()
+        return Word(text.trim(), box.left / w, 1 - box.bottom / h, box.width() / w, box.height() / h)
+    }
+
+    private suspend fun recognize(bmp: Bitmap): List<Text.TextBlock> = suspendCancellableCoroutine { cont ->
+        val client = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        client.process(InputImage.fromBitmap(bmp, 0))
+            .addOnSuccessListener { cont.resume(it.textBlocks); client.close() }
+            .addOnFailureListener { cont.resumeWithException(it); client.close() }
+    }
+
+    /** Upright, at most 2400 px on the longer side. */
+    private fun load(context: Context, uri: Uri): Bitmap? {
+        val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        var sample = 1
+        while (max(bounds.outWidth, bounds.outHeight) / (sample * 2) >= 2400) sample *= 2
+        var bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample }) ?: return null
+        val rotation = when (ExifInterface(bytes.inputStream()).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+            ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+            ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+            else -> 0f
+        }
+        if (rotation != 0f) bmp = Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, Matrix().apply { postRotate(rotation) }, true)
+        return bmp
+    }
+
+    /** Grey and more contrast, so blue, yellow and grey paper look the same to the text recognition. */
+    private fun prepare(src: Bitmap): Bitmap {
+        val out = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
+        val c = 1.35f; val t = (1 - c) * 128
+        val m = ColorMatrix().apply { setSaturation(0f) }
+        m.postConcat(ColorMatrix(floatArrayOf(c, 0f, 0f, 0f, t, 0f, c, 0f, 0f, t, 0f, 0f, c, 0f, t, 0f, 0f, 0f, 1f, 0f)))
+        Canvas(out).drawBitmap(src, 0f, 0f, Paint().apply { colorFilter = ColorMatrixColorFilter(m) })
+        return out
+    }
+}
+
+/** Turns scan results into a new session: one series per printout, known 300 m programs get their format. */
+object ScanImport {
+    fun session(results: List<ScanResult>, base: Session, tx: Tx): Pair<Session, List<String>> {
+        val r0 = results.first()
+        val labels = results.mapNotNull { r ->
+            val pg = r.program?.takeIf { p -> p.all { it.isDigit() } }?.let { "Pg $it" }
+            val target = r.targetLabel?.let { if (pg == null) "${tx.scanTarget} $it" else it }
+            listOfNotNull(pg, target).takeIf { it.isNotEmpty() }?.joinToString(" · ")
+        }
+        val s = base.copy(
+            preset = Discipline.R300.key,
+            date = r0.date?.let(::isoDay) ?: base.date,
+            series = results.map(::series),
+            desc = (r0.competition ?: r0.event)?.takeIf { it.isNotBlank() } ?: base.desc,
+            weapon = r0.weapon ?: base.weapon,
+            notes = tx.scanNote(labels.joinToString("; ")),
+        )
+        val warnings = results.flatMapIndexed { i, r -> r.warnings.map { (if (results.size > 1) "${i + 1}: " else "") + text(it, tx) } }
+        return s to warnings
+    }
+
+    /** "19.9.2026" → "2026-09-19" */
+    fun isoDay(d: String): String? {
+        val p = d.split('.', '/', '-').mapNotNull { it.toIntOrNull() }
+        if (p.size != 3 || p[0] !in 1..31 || p[1] !in 1..12) return null
+        val y = if (p[2] < 100) 2000 + p[2] else p[2]
+        return "%04d-%02d-%02d".format(y, p[1], p[0])
+    }
+
+    fun series(r: ScanResult): Series {
+        val all = r.shots
+        val shots = all.map { Shot.Value(it.value.roundToInt()) }
+        val prac = r.sighters.map { Shot.Value(it.value.roundToInt()) }
+        val counts = r.series.map { it.shots.size }
+        val maxV = shots.maxOfOrNull { it.v } ?: 0
+        // Tiefschuss: printed T/P value, or the best 100-value of the counted shots
+        val deep = r.deepShots.maxOfOrNull { it.value } ?: all.mapNotNull { it.hundred }.maxOrNull()
+        fun fixed(f: SeriesFormat, list: List<Shot>) = Series(type = f.key, target = Target.A10.key, planned = f.parts?.sumOf { it.count } ?: list.size, practice = 0, shots = list, tief = deep)
+        fun custom(t: Target) = Series(type = SeriesFormat.CUSTOM.key, target = t.key, planned = shots.size, practice = prac.size, shots = prac + shots, tief = if (t == Target.A100) null else deep)
+        return when {
+            r.scoringMode == ScoringMode.HUNDRED -> custom(Target.A100)
+            counts == listOf(6, 3, 3, 6) && maxV <= 4 && prac.isEmpty() -> fixed(SeriesFormat.FS300, shots)
+            counts == listOf(5, 5, 2, 3, 5) && maxV <= 5 && prac.isEmpty() -> fixed(SeriesFormat.OP300, shots)
+            prac.size == 2 && counts == listOf(5, 2, 3) -> fixed(SeriesFormat.P2S5R23, prac + shots)
+            prac.size == 2 && counts == listOf(6, 4) -> fixed(SeriesFormat.P2S6R4, prac + shots)
+            prac.isEmpty() && counts == listOf(6, 4) -> fixed(SeriesFormat.S6R4, shots)
+            prac.isEmpty() && counts == listOf(10, 10) -> fixed(SeriesFormat.S2X10, shots)
+            prac.isEmpty() && shots.size == 10 -> fixed(SeriesFormat.S10, shots)
+            else -> custom(if (maxV <= 4 && shots.size >= 6) Target.B4 else Target.A10)
+        }
+    }
+
+    fun text(w: ScanWarning, tx: Tx): String {
+        val f = Scan::fmt
+        return when (w) {
+            ScanWarning.NoShots -> tx.scanNone
+            is ScanWarning.SeriesTotal -> tx.scanWSeries(w.series, f(w.printed), f(w.computed))
+            is ScanWarning.SeriesHundred -> tx.scanWSeriesH(w.series, w.printed, w.computed)
+            is ScanWarning.GrandTotal -> tx.scanWTotal(f(w.printed), f(w.computed))
+            is ScanWarning.HundredTotal -> tx.scanWTotalH(w.printed, w.computed)
+            is ScanWarning.ShotValue -> tx.scanWShot(w.shot, f(w.value), w.hundred)
+            is ScanWarning.Missing -> tx.scanWMissing(w.numbers.joinToString(", "))
+            ScanWarning.Copies -> tx.scanWCopies
+        }
+    }
+}
