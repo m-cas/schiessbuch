@@ -18,3 +18,4 @@ android-native/app/build/
 android-native/build.log
 android-native/shots/
 android-native/local.properties
+__pycache__/
