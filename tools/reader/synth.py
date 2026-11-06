@@ -110,19 +110,45 @@ WORDS = ["Total", "Subtota", "Scheibe", "Benutzer", "Auszeichnung", "Kranzkarte"
 
 
 def sius_lines(rng):
-    L = [("text", f"Scheibe {rng.integers(1, 30)}/{rng.integers(1, 30)}"),
-         ("text", f"{rng.integers(1, 29)}.{rng.integers(1, 13)}.2026 {rng.integers(7, 22):02d}:{rng.integers(0, 60):02d}")]
-    if rng.random() < 0.6: L.append(("text", f"{rng.choice(['C1', 'E1', 'A1'])} A10 {rng.choice(WORDS)}"))
+    """Thermal strips (SIUS): German "Scheibe … Subtota … Total" or French "Cible … total part … Total",
+    ring + 100-value per shot (ring = 100-value / 10 rounded up), sighters marked P, best shot repeated
+    in parentheses, Mouche * or #, optional running number column and trailing K."""
+    fr = rng.random() < 0.25
+    k = " K" if rng.random() < 0.7 and not fr else ""
+    L = [("text", f"{'Cible' if fr else 'Scheibe'} {rng.integers(1, 30)}/{rng.integers(1, 30)}{k}"),
+         ("text", f"{rng.integers(1, 29)}.{rng.integers(1, 13)}.20{rng.integers(24, 27)} {rng.integers(7, 22):02d}:{rng.integers(0, 60):02d}{k}")]
+    if rng.random() < 0.7:
+        L.append(("text", f"{rng.choice(['', '(1) ', '(2) ', 'C1 '])}A10 {rng.choice(['Benutzerprogra', 'Benutzerpr', 'Vignoble', 'Repartition'] + WORDS)}"))
+    if rng.random() < 0.5:
+        L.append(("text", f"{rng.integers(0, 2)}-{rng.integers(10000, 99999)}({rng.integers(10, 99)}) {rng.choice(['Muster', 'Shooter', 'Castel'])}"))
+    extra = rng.random() < 0.2   # running number after the 100-value
+    run = int(rng.integers(1, 30))
+    def row(n, h, sighter=False):
+        nonlocal run
+        v = 0 if h <= 0 else min(10, -(-h // 10))
+        star = "*" if h >= 100 or (v == 10 and rng.random() < 0.15) else ""
+        tail = f" {run}" if extra else ""
+        if extra and rng.random() < 0.5: run += 1
+        return v, f"{n:>3} {ARROWCH} {v:>2}{star} {h:>3}{'P' if sighter else ''}{tail}{k}"
+    if rng.random() < 0.4:
+        for j in range(int(rng.integers(1, 3))):
+            _, t = row(j + 1, int(rng.integers(55, 101)), True); L.append(("row", t))
     tot, htot, n = 0, 0, 0
-    for s in [[10], [6, 4], [5, 5]][rng.integers(3)]:
-        st = sh = 0
-        for k in range(s):
-            n += 1; h = int(rng.integers(60, 101)); v = min(10, h // 10 + (1 if h % 10 >= 5 and h < 100 else 0)) if h >= 10 else 0
-            v = max(0, min(10, round(h / 10) if h < 100 else 10))
-            st += v; sh += h
-            L.append(("row", f"{n:>3} {ARROWCH} {v:>2}{'*' if h >= 100 else ''} {h:>3} K"))
-        L.append(("text", f"Subtota {st:>3} {sh:>3} K")); tot += st; htot += sh
-    L.append(("text", f"Total {tot:>3} {htot:>3} K"))
+    groups = [[10], [6, 4], [5, 5], [5, 2, 3], [6, 2, 2], [10, 5], [3, 3], [5, 3, 2]][rng.integers(8)]
+    for s in groups:
+        st = sh = 0; best = None
+        for _ in range(s):
+            n += 1; h = int(rng.integers(55, 101))
+            v, t = row(n, h); st += v; sh += h
+            if best is None or h > best[1]: best = (n, h, v)
+            L.append(("row", t))
+        if rng.random() < 0.4:
+            L.append(("row", f"( {best[0]} {ARROWCH} {best[2]:>2} {best[1]:>3}){k}"))
+        if len(groups) > 1 or rng.random() < 0.5:
+            L.append(("text", f"{'total part' if fr else 'Subtota'} {st:>3} {sh:>3}{k}"))
+        tot += st; htot += sh
+        if rng.random() < 0.3: L.append(("blank", ""))
+    L.append(("text", f"Total {tot:>3} {htot:>3}{k}"))
     return L, tot
 
 

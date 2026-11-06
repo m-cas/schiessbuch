@@ -165,9 +165,9 @@
 
   // ---------- strip parser ----------
   const PG_RE = /^\s*[PF][g9qs]\s*(\d{1,3})\s+(\d{1,3}\s*\/\s*\d{2,4})/i;
-  const SCHEIBE_RE = /^\s*scheibe\s*(\d{1,3}(?:\s*\/\s*\d{1,3})?)/i;
+  const SCHEIBE_RE = /^\s*(?:scheibe|cible|bersaglio)\s*(\d{1,3}(?:\s*\/\s*\d{1,3})?)/i;   // "Cible 5/20" on French strips
   const DEEP_RE = /^\s*[TI1l]\s*\/\s*[PF]\s*(\d{1,2})\s+(\d{1,3})\b/i;
-  const SUBTOTAL_WORDS = ["subtot", "zwischen", "summe", "sous-tot", "somme", "somma"];
+  const SUBTOTAL_WORDS = ["subtot", "zwischen", "summe", "sous-tot", "somme", "somma", "total part", "tot. part", "totale parz"];
   const TOTAL_WORDS = ["tota", "gesamt", "résultat", "resultat", "risultato"];
   const NEUTRAL = new Set(["ring", "ringe", "pkt", "pts", "punkte", "points", "punti"]);
   const SINGLE_DIGITS = { O: 0, o: 0, I: 1, l: 1, Z: 2, J: 3, S: 5, G: 6, B: 8 };
@@ -234,7 +234,12 @@
   }
 
   function stripParse(lines) {
-    const rows = lines.map(makeRow);
+    // a running number after the 100-value on some thermal strips ("1 ↙ 9 85 37"): not part of the shot
+    const rows = lines.map(makeRow).map((row) => {
+      const n = row.nums;
+      if (n.length === 4 && n[2].value > 10 && n[2].value <= 109 && ringForHundred(n[2].value) === n[1].value && n[3].value < n[2].value) return { ...row, nums: n.slice(0, 3) };
+      return row;
+    });
     const layout = detectLayout(rows);
     // how often the shot numbering starts again at 1 (once: sighters before; more often: groups numbered from 1)
     let restarts = 0, seen = false;
@@ -292,6 +297,9 @@
       if (layout !== "rh") {
         const computed = Math.round(round1(st.series.reduce((a, s) => a + sTotal(s), 0)));
         const cand = values.find((v) => v === computed) ?? lastV;
+        // a number with fewer digits than the shots add up to is not a total (Pg 31 prints none; smudge below the strip)
+        const shotSum = Math.round(st.series.reduce((a, s) => a + s.shots.reduce((b, x) => b + x.value, 0), 0));
+        if (cand !== computed && cand !== shotSum && shotSum >= 10 && String(cand).length < String(shotSum).length) return;
         if (st.pt == null || cand === computed) st.pt = cand;
       } else if (values.length >= 2) { st.pt = values[values.length - 2]; st.pht = lastV; }
       else { const n = st.series.reduce((a, s) => a + s.shots.length, 0); if (lastV > 10 * n) st.pht = lastV; else st.pt = lastV; }
@@ -322,7 +330,7 @@
       // Several restarts: groups numbered from 1 each (Obligatorisch on the form: 5 shots per group) - a new series.
       if (nums.length >= 2 && nums[0].value === 1 && st.last > 0) {
         const before = st.series.flatMap((x) => x.shots).concat(st.pending);
-        if (restarts === 1 && !st.sighters.length && st.pt == null && before.length <= 5) { st.sighters = before; st.series = []; st.pending = []; st.pt = null; }
+        if (restarts === 1 && !st.sighters.length && st.pt == null && before.length <= 3) { st.sighters = before; st.series = []; st.pending = []; st.pt = null; }
         else close();
         st.last = 0;
       }
@@ -331,6 +339,9 @@
       // also a piece of a cut-off copy next to it ("36 10 > 3 36")
       if (nums.length >= 3 && nums[0].value !== expected0 && nums[0].value !== expected0 - 1 && nums[1].value === expected0) nums.shift();
       const expected = expected0, first = nums[0];
+      // a printout continuing an earlier one (Feldschiessen on the form: PgFS2 starts at shot 7, PgFS3 at 13)
+      if (st.last === 0 && !st.series.length && !st.pending.length && nums.length >= 2 && first.value > 1 && first.value <= 30
+          && nextShotNumber(i, rows) === first.value + 1 && commit(first.value, nums.slice(1))) return;
       if (nums.length >= 2) {
         let index = null;
         if (first.value === expected) index = expected;
@@ -385,7 +396,21 @@
       if (cfg.scoringMode === "decimal" || (cfg.scoringMode === "automatic" && looksDecimal(sec))) return genericParse(sec, cfg);
       const s = stripParse(sec);
       return s.series.length ? s : genericParse(sec, cfg);
-    }).filter((r) => r.series.length);
+    }).filter((r) => r.series.length).reduce(joinContinued, []);
+  }
+  // A printout whose shot numbers continue the one before is the same program (PgFS1/PgFS2/PgFS3, shots 1-18).
+  function joinContinued(out, r) {
+    const prev = out[out.length - 1];
+    const first = rShots(r)[0], last = prev && rShots(prev)[rShots(prev).length - 1];
+    if (prev && first && last && first.number != null && last.number != null && first.number === last.number + 1 && !r.sighters.length) {
+      prev.series = prev.series.concat(r.series.map((x, i) => ({ ...x, number: prev.series.length + i + 1 })));
+      prev.printedTotal = null; prev.printedHundredTotal = null;
+      prev.deepShots = prev.deepShots.concat(r.deepShots);
+      prev.warnings = validate(prev, []);
+      return out;
+    }
+    out.push(r);
+    return out;
   }
 
   // ---------- header (sideways text) ----------

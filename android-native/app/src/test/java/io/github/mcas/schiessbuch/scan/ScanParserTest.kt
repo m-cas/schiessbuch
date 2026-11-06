@@ -130,4 +130,24 @@ class ScanParserTest {
         assertEquals(0, r.sighters.size); assertEquals(listOf(22.0, 14.0, 18.0, 18.0), r.series.map { it.printedTotal })
         assertEquals(72.0, r.total, 0.0); assertTrue(r.warnings.toString(), r.isVerified)
     }
+
+    @Test fun frenchCibleWithTotalPart() {
+        val rs = Scan.parseAll(listOf("Cible 5/20", "6.9.2025 13:47", "[1] A10 Vignoble", "1 ↑ 8 78", "2 ↖ 9 89", "3 ↘ 10 93", "4 ↓ 9 87", "5 ↙ 9 86", "total part 45 433", "",
+            "6 ↗ 7 66", "7 ← 9 84", "( 7 ← 9 84)", "total part 16 150", "", "8 ← 9 84", "9 → 10 91", "10 ← 10 91", "( 9 → 10 91)", "total part 29 266", "Total 90 849", "",
+            "Cible 5/22", "6.9.2025 13:53", "[2] A10 Répartition", "1 ← 8 71", "2 ↓ 8 78", "3 ↓ 9 88", "total part 25 237", "", "4 ↖ 10 93", "5 ← 8 72", "6 ← 8 73", "( 4 ↖ 10 93)", "total part 26 238", "Total 51 475"))
+        assertEquals(listOf("5/20", "5/22"), rs.map { it.targetLabel }); assertEquals(listOf(90.0, 51.0), rs.map { it.total })
+        assertTrue(rs.all { it.isVerified })
+    }
+
+    @Test fun runningNumberAfterHundredValue() {
+        val r = one(listOf("Scheibe 24/4", "16.8.2025 08:36", "1 ↖ 8 73P 3", "2 ↖ 8 73P 3", "1 ↙ 9 85 37", "2 ← 8 73 37", "3 ← 9 82 38", "4 ↗ 7 63 38", "5 ↓ 8 77 39", "Subtota 41 380",
+            "6 ↙ 10 91 39", "7 ↖ 8 76 40", "( 6 ↙ 10 91)", "Subtota 18 167", "", "8 ↙ 7 67 40", "9 → 10 91 40", "10 ↙ 9 83 41", "( 9 → 10 91)", "Subtota 26 241", "Total 85 788"))
+        assertEquals(2, r.sighters.size); assertEquals(10, r.shots.size); assertEquals(85.0, r.total, 0.0); assertEquals(788, r.hundredTotal); assertTrue(r.warnings.toString(), r.isVerified)
+    }
+
+    @Test fun feldschiessenOnTheFormContinues() {
+        val rs = Scan.parseAll(listOf("PgFS1 24/0016", "1 ← 4", "2 ↓ 4", "3 ← 4", "4 ↖ 4", "5 ↗ 4", "6 → 3 23", "", "PgFS2 24/0017", "7 ← 3", "8 ← 3", "9 ↖ 3", "10 ↓ 4", "11 ↖ 3", "12 ↖ 3 19", "",
+            "PgFS3 24/0018", "13 ↙ 3", "14 ← 4", "15 ↙ 4", "16 ← 4", "17 ↖ 3", "18 ← 4 22"))
+        assertEquals(1, rs.size); assertEquals(18, rs[0].shots.size); assertEquals(64.0, rs[0].total, 0.0); assertTrue(rs[0].warnings.toString(), rs[0].isVerified)
+    }
 }

@@ -17,10 +17,27 @@ public struct ResultParser: Sendable {
 
     /// All results found in the lines (only those with at least one shot).
     public func parseAll(lines: [String]) -> [ShootingResult] {
-        sections(of: lines).compactMap { section in
+        let results = sections(of: lines).compactMap { section -> ShootingResult? in
             let result = parseSection(section)
             return result.series.isEmpty ? nil : result
         }
+        // A printout whose shot numbers continue the one before is the same program (PgFS1/PgFS2/PgFS3, shots 1-18).
+        var out: [ShootingResult] = []
+        for r in results {
+            if var prev = out.last, let first = r.shots.first?.number, let last = prev.shots.last?.number,
+               first == last + 1, r.sighters.isEmpty {
+                let start = prev.series.count
+                prev.series += r.series.enumerated().map { i, s in var x = s; x.number = start + i + 1; return x }
+                prev.printedTotal = nil
+                prev.printedHundredTotal = nil
+                prev.deepShots += r.deepShots
+                prev.warnings = StripParser.validate(prev, missing: [])
+                out[out.count - 1] = prev
+            } else {
+                out.append(r)
+            }
+        }
+        return out
     }
 
     /// The first result, or an empty result carrying `.noShotsFound`.

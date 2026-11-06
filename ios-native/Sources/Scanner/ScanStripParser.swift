@@ -50,7 +50,15 @@ struct StripParser: Sendable {
     // MARK: - Parse
 
     func parse(lines: [String]) -> ShootingResult {
-        let rows = lines.map(Self.makeRow)
+        // a running number after the 100-value on some thermal strips ("1 ↙ 9 85 37"): not part of the shot
+        let rows = lines.map(Self.makeRow).map { row -> Row in
+            let n = row.nums
+            guard n.count == 4, (11...109).contains(n[2].value), ScoreMath.ring(forHundred: n[2].value) == n[1].value,
+                  n[3].value < n[2].value else { return row }
+            var r = row
+            r.nums = Array(n.prefix(3))
+            return r
+        }
         let layout = Self.detectLayout(rows)
         var result = ShootingResult(scoringMode: layout == .hundreds ? .hundred : .integer, recognizedLines: lines)
         var state = State(layout: layout)
@@ -121,7 +129,7 @@ struct StripParser: Sendable {
             // Several restarts: groups numbered from 1 each (Obligatorisch on the form: 5 shots per group) - a new series.
             if nums.count >= 2, nums[0].value == 1, lastIndex > 0 {
                 let before = series.flatMap(\.shots) + pending
-                if restarts == 1, sighters.isEmpty, printedTotal == nil, before.count <= 5 {
+                if restarts == 1, sighters.isEmpty, printedTotal == nil, before.count <= 3 {
                     sighters = before; series = []; pending = []; printedTotal = nil
                 } else {
                     closePending()
@@ -135,6 +143,12 @@ struct StripParser: Sendable {
             }
             let expected = lastIndex + 1
             let first = nums[0]
+            // a printout continuing an earlier one (Feldschiessen on the form: PgFS2 starts at shot 7, PgFS3 at 13)
+            if lastIndex == 0, series.isEmpty, pending.isEmpty, nums.count >= 2, (2...30).contains(first.value),
+               StripParser.nextShotNumber(after: i, in: rows) == first.value + 1,
+               commitShot(number: first.value, values: Array(nums.dropFirst())) {
+                return
+            }
 
             // 1. "<nr> [arrow] <value> [subtotal]"
             if nums.count >= 2 {
@@ -259,6 +273,9 @@ struct StripParser: Sendable {
             case .rings, .hundreds:
                 let computed = Int(ScoreMath.round1(series.reduce(0) { $0 + $1.total }))
                 let candidate = values.first { $0 == computed } ?? lastValue
+                // A number with fewer digits than the shots add up to is not a total (Pg 31 prints none; smudge below the strip).
+                let shotSum = Int(series.reduce(0) { $0 + $1.shots.reduce(0) { $0 + $1.value } }.rounded())
+                if candidate != computed, candidate != shotSum, shotSum >= 10, String(candidate).count < String(shotSum).count { return }
                 // A misread copy of the total must not overwrite one that matches.
                 if printedTotal == nil || candidate == computed { printedTotal = Double(candidate) }
             case .ringsAndHundreds:
@@ -380,7 +397,7 @@ struct StripParser: Sendable {
     // MARK: - Metadata
 
     static let pgPattern = #"(?i)^\s*[PF][g9qs]\s*(\d{1,3})\s+(\d{1,3}\s*/\s*\d{2,4})"#
-    static let scheibePattern = #"(?i)^\s*scheibe\s*(\d{1,3}(?:\s*/\s*\d{1,3})?)"#
+    static let scheibePattern = #"(?i)^\s*(?:scheibe|cible|bersaglio)\s*(\d{1,3}(?:\s*/\s*\d{1,3})?)"#   // "Cible 5/20" on French strips
     static let deepShotPattern = #"(?i)^\s*[TI1l]\s*/\s*[PF]\s*(\d{1,2})\s+(\d{1,3})\b"#
 
     /// "Pg 32  23/0005", "Scheibe 3/14", or a misread header that still ends in a run number ("g32 23/0005")
@@ -415,7 +432,7 @@ struct StripParser: Sendable {
 
     // MARK: - Vocabulary
 
-    static let subtotalWords = ["subtot", "zwischen", "summe", "sous-tot", "somme", "somma"]
+    static let subtotalWords = ["subtot", "zwischen", "summe", "sous-tot", "somme", "somma", "total part", "tot. part", "totale parz"]
     static let totalWords = ["tota", "gesamt", "résultat", "resultat", "risultato"]
     static let neutralWords: Set<String> = ["ring", "ringe", "pkt", "pts", "punkte", "points", "punti"]
     static let singleCharDigits: [String: Int] = [

@@ -110,6 +110,28 @@ eq("piece of the other copy in front", [P.shots(r).length, P.total(r), P.verifie
 r = one(["Pg31 23/0001", "1 > 5", "2 > 7", "3 > 4", "4 > 5", "5 > 5", "6 > 6", "7 > 9", "8 + 10", "9 > 7", "> 7"]);
 eq("number lost in a smudge", P.shots(r).map((x) => x.value), [5, 7, 4, 5, 5, 6, 9, 10, 7, 7]);
 
+// Pg 31 prints no total: a single digit from the smudge below the strip is not one
+r = one(["Pg 31 23/0003", "1 > 9", "2 > 8", "3 > 8", "4 > 10", "5 > 8", "6 + 10", "7 > 7", "8 > 8", "9 > 8", "10 + 10", "7"]);
+eq("no total on Pg 31", [P.shots(r).length, P.total(r), r.warnings.length], [10, 86, 0]);
+
+// French thermal strip: "Cible", "total part"; two programs one under the other
+let rs = P.parseAll(["Cible 5/20", "6.9.2025 13:47", "[1] A10 Vignoble", "1 ↑ 8 78", "2 ↖ 9 89", "3 ↘ 10 93", "4 ↓ 9 87", "5 ↙ 9 86", "total part 45 433", "",
+  "6 ↗ 7 66", "7 ← 9 84", "( 7 ← 9 84)", "total part 16 150", "", "8 ← 9 84", "9 → 10 91", "10 ← 10 91", "( 9 → 10 91)", "total part 29 266", "Total 90 849", "",
+  "Cible 5/22", "6.9.2025 13:53", "[2] A10 Répartition", "1 ← 8 71", "2 ↓ 8 78", "3 ↓ 9 88", "total part 25 237", "", "4 ↖ 10 93", "5 ← 8 72", "6 ← 8 73", "( 4 ↖ 10 93)", "total part 26 238", "Total 51 475"]);
+eq("cible", rs.map((x) => [x.targetLabel, P.total(x), P.hundredTotal(x), P.verified(x)]), [["5/20", 90, 849, true], ["5/22", 51, 475, true]]);
+// running number after the 100-value (Bischofstein)
+r = one(["Scheibe 24/4", "16.8.2025 08:36", "1 ↖ 8 73P 3", "2 ↖ 8 73P 3", "1 ↙ 9 85 37", "2 ← 8 73 37", "3 ← 9 82 38", "4 ↗ 7 63 38", "5 ↓ 8 77 39", "Subtota 41 380",
+  "6 ↙ 10 91 39", "7 ↖ 8 76 40", "( 6 ↙ 10 91)", "Subtota 18 167", "", "8 ↙ 7 67 40", "9 → 10 91 40", "10 ↙ 9 83 41", "( 9 → 10 91)", "Subtota 26 241", "Total 85 788"]);
+eq("extra column", [r.sighters.length, P.shots(r).length, P.total(r), P.hundredTotal(r), P.verified(r)], [2, 10, 85, 788, true]);
+// Feldschiessen on the form: three headers, shot numbers continue
+rs = P.parseAll(["PgFS1 24/0016", "1 ← 4", "2 ↓ 4", "3 ← 4", "4 ↖ 4", "5 ↗ 4", "6 → 3 23", "", "PgFS2 24/0017", "7 ← 3", "8 ← 3", "9 ↖ 3", "10 ↓ 4", "11 ↖ 3", "12 ↖ 3 19", "",
+  "PgFS3 24/0018", "13 ↙ 3", "14 ← 4", "15 ↙ 4", "16 ← 4", "17 ↖ 3", "18 ← 4 22"]);
+eq("continued printouts", rs.map((x) => [P.shots(x).length, P.total(x), P.verified(x)]), [[18, 64, true]]);
+// Obligatorisch numbered 1-5, 1-5, 6-10, 11-15: five shots before the restart are not sighters
+r = one(["1 ← 3", "2 ↖ 4", "3 ↙ 4", "4 ← 5", "5 ↖ 4 20", "", "1 ↙ 3", "2 ↙ 3", "3 ↙ 3", "4 ← 3", "5 ↙*4 16", "", "6 ↙ 3", "7 ↙ 3", "8 ↙ 2", "9 ↙ 4", "10 ↙ 4 16", "",
+  "11 ↙ 3", "12 ↙ 3", "13 ↓ 4", "14 ↙ 4", "15 ↙ 3 17", "Warner 69"]);
+eq("five before restart", [r.sighters.length, P.shots(r).length, P.total(r)], [0, 20, 69]);
+
 // generic sheet
 r = one(["Serie 1  10.5 10.2 9.8 10.1 10.4 9.9 10.0 10.3 10.6 9.7 = 101.5"]);
 eq("generic", [r.scoringMode, P.shots(r).length, r.series[0].printedTotal, P.verified(r)], ["decimal", 10, 101.5, true]);

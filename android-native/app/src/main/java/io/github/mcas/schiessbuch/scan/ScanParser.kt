@@ -215,9 +215,9 @@ object Scan {
 
     // ---------- strip parser ----------
     private val PG_RE = Regex("""^\s*[PF][g9qs]\s*(\d{1,3})\s+(\d{1,3}\s*/\s*\d{2,4})""", RegexOption.IGNORE_CASE)
-    private val SCHEIBE_RE = Regex("""^\s*scheibe\s*(\d{1,3}(?:\s*/\s*\d{1,3})?)""", RegexOption.IGNORE_CASE)
+    private val SCHEIBE_RE = Regex("""^\s*(?:scheibe|cible|bersaglio)\s*(\d{1,3}(?:\s*/\s*\d{1,3})?)""", RegexOption.IGNORE_CASE)   // "Cible 5/20" on French strips
     private val DEEP_RE = Regex("""^\s*[TI1l]\s*/\s*[PF]\s*(\d{1,2})\s+(\d{1,3})\b""", RegexOption.IGNORE_CASE)
-    private val SUBTOTAL_WORDS = listOf("subtot", "zwischen", "summe", "sous-tot", "somme", "somma")
+    private val SUBTOTAL_WORDS = listOf("subtot", "zwischen", "summe", "sous-tot", "somme", "somma", "total part", "tot. part", "totale parz")
     private val TOTAL_WORDS = listOf("tota", "gesamt", "résultat", "resultat", "risultato")
     private val NEUTRAL = setOf("ring", "ringe", "pkt", "pts", "punkte", "points", "punti")
     private val SINGLE_DIGITS = mapOf("O" to 0, "o" to 0, "I" to 1, "l" to 1, "Z" to 2, "J" to 3, "S" to 5, "G" to 6, "B" to 8)
@@ -284,7 +284,13 @@ object Scan {
     private class Made(val shot: ScanShot, val sub: Int?)
 
     private fun stripParse(lines: List<String>): ScanResult {
-        val rows = lines.map(::makeRow)
+        // a running number after the 100-value on some thermal strips ("1 ↙ 9 85 37"): not part of the shot
+        val rows = lines.map(::makeRow).map { row ->
+            val n = row.nums
+            if (n.size == 4 && n[2].value in 11..109 && ringForHundred(n[2].value) == n[1].value && n[3].value < n[2].value)
+                Row(row.raw, row.lower, n.take(3), row.isSighter, row.hasWords, row.isBlank, row.isParen)
+            else row
+        }
         val layout = detectLayout(rows)
         // how often the shot numbering starts again at 1 (once: sighters before; more often: groups numbered from 1)
         var restarts = 0; var seen = false
@@ -346,6 +352,9 @@ object Scan {
             if (layout != Layout.RH) {
                 val computed = round1(series.sumOf { it.total }).roundToInt()
                 val cand = values.firstOrNull { it == computed } ?: lastV
+                // a number with fewer digits than the shots add up to is not a total (Pg 31 prints none; smudge below the strip)
+                val shotSum = series.sumOf { s -> s.shots.sumOf { it.value } }.roundToInt()
+                if (cand != computed && cand != shotSum && shotSum >= 10 && cand.toString().length < shotSum.toString().length) return
                 if (pt == null || cand == computed) pt = cand.toDouble()
             } else if (values.size >= 2) { pt = values[values.size - 2].toDouble(); pht = lastV }
             else { val n = series.sumOf { it.shots.size }; if (lastV > 10 * n) pht = lastV else pt = lastV.toDouble() }
@@ -376,7 +385,7 @@ object Scan {
             // Several restarts: groups numbered from 1 each (Obligatorisch on the form: 5 shots per group) - a new series.
             if (nums.size >= 2 && nums[0].value == 1 && last > 0) {
                 val before = series.flatMap { it.shots } + pending
-                if (restarts == 1 && sighters.isEmpty() && pt == null && before.size <= 5) { sighters += before; series.clear(); pending = mutableListOf(); pt = null }
+                if (restarts == 1 && sighters.isEmpty() && pt == null && before.size <= 3) { sighters += before; series.clear(); pending = mutableListOf(); pt = null }
                 else close()
                 last = 0
             }
@@ -384,6 +393,9 @@ object Scan {
             // "6 20 + 7 89", "36 10 > 3 36"
             if (nums.size >= 3 && nums[0].value != last + 1 && nums[0].value != last && nums[1].value == last + 1) nums = nums.drop(1)
             val expected = last + 1; val first = nums[0]
+            // a printout continuing an earlier one (Feldschiessen on the form: PgFS2 starts at shot 7, PgFS3 at 13)
+            if (last == 0 && series.isEmpty() && pending.isEmpty() && nums.size >= 2 && first.value in 2..30
+                && nextShotNumber(i) == first.value + 1 && commit(first.value, nums.drop(1))) return@forEachIndexed
             if (nums.size >= 2) {
                 val index = when {
                     first.value == expected -> expected
@@ -432,7 +444,19 @@ object Scan {
         return sections.filter { it.isNotEmpty() }.map { sec ->
             if (mode == ScoringMode.DECIMAL || (mode == ScoringMode.AUTOMATIC && looksDecimal(sec))) genericParse(sec, mode, shotsPerSeries)
             else stripParse(sec).let { if (it.series.isNotEmpty()) it else genericParse(sec, mode, shotsPerSeries) }
-        }.filter { it.series.isNotEmpty() }
+        }.filter { it.series.isNotEmpty() }.fold(mutableListOf<ScanResult>()) { out, r -> joinContinued(out, r); out }
+    }
+
+    /** A printout whose shot numbers continue the one before is the same program (PgFS1/PgFS2/PgFS3, shots 1-18). */
+    private fun joinContinued(out: MutableList<ScanResult>, r: ScanResult) {
+        val prev = out.lastOrNull()
+        val first = r.shots.firstOrNull()?.number; val last = prev?.shots?.lastOrNull()?.number
+        if (prev != null && first != null && last != null && first == last + 1 && r.sighters.isEmpty()) {
+            prev.series = prev.series + r.series.mapIndexed { i, x -> ScanSeries(prev.series.size + i + 1, x.shots, x.printedTotal, x.printedHundredTotal) }
+            prev.printedTotal = null; prev.printedHundredTotal = null
+            prev.deepShots = prev.deepShots + r.deepShots
+            prev.warnings = validate(prev, emptyList()).toMutableList()
+        } else out += r
     }
 
     // ---------- header (sideways text on SIUS-style strips) ----------
