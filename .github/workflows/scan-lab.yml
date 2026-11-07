@@ -62,6 +62,8 @@ jobs:
           cp tools/scan-lab/reader-main.swift ios-native/Sources/Scanner/ScanReader.swift ios-native/Sources/Scanner/ScanLayoutAnalyzer.swift build/
           cd build && mv reader-main.swift main.swift && swiftc -O main.swift ScanReader.swift ScanLayoutAnalyzer.swift -o readercheck
           ./readercheck ../ios-native/Resources/reader.json ../ios-native/Resources/reader.bin ../lab/ios.json ../tools/scan-samples/*.jpg
+      - name: Read the photos with Apple Vision (the iPhone's own text recognition)
+        run: swift tools/scan-lab/vision-dump.swift lab/vision.json tools/scan-samples/*.jpg
       - uses: actions/upload-artifact@v4
         with:
           name: vision
