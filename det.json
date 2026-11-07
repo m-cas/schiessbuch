@@ -1,0 +1,127 @@
+{
+ "layers": [
+  {
+   "op": "conv",
+   "cin": 1,
+   "cout": 16,
+   "kh": 3,
+   "kw": 3,
+   "dh": 1,
+   "dw": 1,
+   "ph": 1,
+   "pw": 1,
+   "relu": true,
+   "offset": 0,
+   "count": 160
+  },
+  {
+   "op": "pool",
+   "kh": 2,
+   "kw": 2
+  },
+  {
+   "op": "conv",
+   "cin": 16,
+   "cout": 24,
+   "kh": 3,
+   "kw": 3,
+   "dh": 1,
+   "dw": 1,
+   "ph": 1,
+   "pw": 1,
+   "relu": true,
+   "offset": 160,
+   "count": 3480
+  },
+  {
+   "op": "pool",
+   "kh": 2,
+   "kw": 2
+  },
+  {
+   "op": "conv",
+   "cin": 24,
+   "cout": 24,
+   "kh": 3,
+   "kw": 3,
+   "dh": 1,
+   "dw": 1,
+   "ph": 1,
+   "pw": 1,
+   "relu": true,
+   "offset": 3640,
+   "count": 5208
+  },
+  {
+   "op": "conv",
+   "cin": 24,
+   "cout": 24,
+   "kh": 3,
+   "kw": 3,
+   "dh": 2,
+   "dw": 2,
+   "ph": 2,
+   "pw": 2,
+   "relu": true,
+   "offset": 8848,
+   "count": 5208
+  },
+  {
+   "op": "conv",
+   "cin": 24,
+   "cout": 24,
+   "kh": 3,
+   "kw": 3,
+   "dh": 4,
+   "dw": 4,
+   "ph": 4,
+   "pw": 4,
+   "relu": true,
+   "offset": 14056,
+   "count": 5208
+  },
+  {
+   "op": "conv",
+   "cin": 24,
+   "cout": 24,
+   "kh": 3,
+   "kw": 3,
+   "dh": 8,
+   "dw": 8,
+   "ph": 8,
+   "pw": 8,
+   "relu": true,
+   "offset": 19264,
+   "count": 5208
+  },
+  {
+   "op": "conv",
+   "cin": 24,
+   "cout": 24,
+   "kh": 3,
+   "kw": 3,
+   "dh": 1,
+   "dw": 1,
+   "ph": 1,
+   "pw": 1,
+   "relu": true,
+   "offset": 24472,
+   "count": 5208
+  },
+  {
+   "op": "conv",
+   "cin": 24,
+   "cout": 5,
+   "kh": 1,
+   "kw": 1,
+   "dh": 1,
+   "dw": 1,
+   "ph": 0,
+   "pw": 0,
+   "relu": false,
+   "offset": 29680,
+   "count": 125
+  }
+ ],
+ "charset": "0123456789/.:-+*()>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+}

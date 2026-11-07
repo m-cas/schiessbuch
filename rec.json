@@ -1,0 +1,151 @@
+{
+ "layers": [
+  {
+   "op": "conv",
+   "cin": 1,
+   "cout": 32,
+   "kh": 3,
+   "kw": 3,
+   "dh": 1,
+   "dw": 1,
+   "ph": 1,
+   "pw": 1,
+   "relu": true,
+   "offset": 0,
+   "count": 320
+  },
+  {
+   "op": "pool",
+   "kh": 2,
+   "kw": 2
+  },
+  {
+   "op": "conv",
+   "cin": 32,
+   "cout": 64,
+   "kh": 3,
+   "kw": 3,
+   "dh": 1,
+   "dw": 1,
+   "ph": 1,
+   "pw": 1,
+   "relu": true,
+   "offset": 320,
+   "count": 18496
+  },
+  {
+   "op": "pool",
+   "kh": 2,
+   "kw": 2
+  },
+  {
+   "op": "conv",
+   "cin": 64,
+   "cout": 96,
+   "kh": 3,
+   "kw": 3,
+   "dh": 1,
+   "dw": 1,
+   "ph": 1,
+   "pw": 1,
+   "relu": true,
+   "offset": 18816,
+   "count": 55392
+  },
+  {
+   "op": "conv",
+   "cin": 96,
+   "cout": 96,
+   "kh": 3,
+   "kw": 3,
+   "dh": 1,
+   "dw": 1,
+   "ph": 1,
+   "pw": 1,
+   "relu": true,
+   "offset": 74208,
+   "count": 83040
+  },
+  {
+   "op": "pool",
+   "kh": 2,
+   "kw": 1
+  },
+  {
+   "op": "conv",
+   "cin": 96,
+   "cout": 128,
+   "kh": 3,
+   "kw": 3,
+   "dh": 1,
+   "dw": 1,
+   "ph": 1,
+   "pw": 1,
+   "relu": true,
+   "offset": 157248,
+   "count": 110720
+  },
+  {
+   "op": "pool",
+   "kh": 2,
+   "kw": 1
+  },
+  {
+   "op": "conv",
+   "cin": 128,
+   "cout": 128,
+   "kh": 2,
+   "kw": 1,
+   "dh": 1,
+   "dw": 1,
+   "ph": 0,
+   "pw": 0,
+   "relu": true,
+   "offset": 267968,
+   "count": 32896
+  },
+  {
+   "op": "conv",
+   "cin": 128,
+   "cout": 128,
+   "kh": 1,
+   "kw": 3,
+   "dh": 1,
+   "dw": 1,
+   "ph": 0,
+   "pw": 1,
+   "relu": true,
+   "offset": 300864,
+   "count": 49280
+  },
+  {
+   "op": "conv",
+   "cin": 128,
+   "cout": 128,
+   "kh": 1,
+   "kw": 3,
+   "dh": 1,
+   "dw": 2,
+   "ph": 0,
+   "pw": 2,
+   "relu": true,
+   "offset": 350144,
+   "count": 49280
+  },
+  {
+   "op": "conv",
+   "cin": 128,
+   "cout": 72,
+   "kh": 1,
+   "kw": 1,
+   "dh": 1,
+   "dw": 1,
+   "ph": 0,
+   "pw": 0,
+   "relu": false,
+   "offset": 399424,
+   "count": 9288
+  }
+ ],
+ "charset": "0123456789/.:-+*()>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+}
